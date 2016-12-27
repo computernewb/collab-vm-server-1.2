@@ -1,0 +1,440 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\guacamole">
+      <UniqueIdentifier>{6f94442a-cd1e-4e67-ae13-927a17a1db3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\VMControllers">
+      <UniqueIdentifier>{280a0c8d-be0a-4717-a3ed-0f596c726913}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Database">
+      <UniqueIdentifier>{8f6c3d17-32f3-43b0-bfe7-23b6b1b2d2a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UnitTests">
+      <UniqueIdentifier>{191ec237-e04a-4104-9ec9-60b5b2a6d294}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Sockets">
+      <UniqueIdentifier>{dc698a18-80e2-4203-9afd-3c36ee4505cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\uriparser">
+      <UniqueIdentifier>{0247f12f-e426-4912-838d-e077fbb657de}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Guacamole\unicode.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\error.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_clipboard.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_cursor.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_display.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_dot_cursor.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_iconv.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_list.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_pointer_cursor.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_rect.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_string.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\guac_surface.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\hash.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\id.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\palette.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\pool.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\protocol.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Guacamole\timestamp.cpp">
+      <Filter>Source Files\guacamole</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Database\Database.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Database\Config-odb.cxx">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuacSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuacWebSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuacBroadcastSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuacClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuacUser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuacVNCClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GuacInstructionParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VMControllers\VMController.cpp">
+      <Filter>Source Files\VMControllers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CollabVM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Database\VMSettings-odb.cxx">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VMControllers\QEMUController.cpp">
+      <Filter>Source Files\VMControllers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UnitTests\QMPTest.cpp">
+      <Filter>Source Files\UnitTests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Sockets\AgentClient.cpp">
+      <Filter>Source Files\Sockets</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UnitTests\AgentClientTest.cpp">
+      <Filter>Source Files\UnitTests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Sockets\QMPClient.cpp">
+      <Filter>Source Files\Sockets</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriIp4Base.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriNormalize.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriNormalizeBase.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriParse.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriParseBase.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriQuery.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriRecompose.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriResolve.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriShorten.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriCommon.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriCompare.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriEscape.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriFile.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+    <ClCompile Include="src\uriparser\UriIp4.c">
+      <Filter>Source Files\uriparser</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Guacamole\unicode.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\unistd.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\user-constants.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\user-fntypes.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\user-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\audio.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\audio-fntypes.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\audio-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\client-constants.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\client-fntypes.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\client-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\config.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\error.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\error-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_clipboard.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_cursor.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_display.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_dot_cursor.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_iconv.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_list.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_pointer_cursor.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_rect.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_string.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\guac_surface.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\hash.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\id.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\layer.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\layer-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\palette.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\plugin.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\plugin-constants.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\pool.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\pool-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\protocol.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\protocol-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\pthread.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\sched.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\socket-constants.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\socket-fntypes.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\socket-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\stream.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\stream-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\timestamp.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Guacamole\timestamp-types.h">
+      <Filter>Source Files\guacamole</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Database\Config-odb.hxx">
+      <Filter>Source Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Database\Database.h">
+      <Filter>Source Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="src\VMControllers\VMController.h">
+      <Filter>Source Files\VMControllers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuacVNCClient.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuacBroadcastSocket.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuacClient.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuacInstructionParser.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuacSocket.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuacUser.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GuacWebSocket.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UserList.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CollabVMUser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CollabVM.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Base64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Database\VMSettings.h">
+      <Filter>Source Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Database\VMSettings-odb.hxx">
+      <Filter>Source Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Database\Config.h">
+      <Filter>Source Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="src\VMControllers\QEMUController.h">
+      <Filter>Source Files\VMControllers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sockets\SocketClient.h">
+      <Filter>Source Files\Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sockets\TCPSocketClient.h">
+      <Filter>Source Files\Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sockets\LocalSocketClient-Unix.hpp">
+      <Filter>Source Files\Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sockets\LocalSocketClient-Win.hpp">
+      <Filter>Source Files\Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sockets\LocalSocketClient.h">
+      <Filter>Source Files\Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sockets\QMPClient.h">
+      <Filter>Source Files\Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sockets\AgentClient.h">
+      <Filter>Source Files\Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\collab-vm-agent\collab-vm-agent\include\AgentProtocol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UploadInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\UriIp4.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\UriIp4Base.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\UriNormalizeBase.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\UriParseBase.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\Uri.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\UriBase.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\UriCommon.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\UriDefsAnsi.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\UriDefsConfig.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uriparser\UriDefsUnicode.h">
+      <Filter>Source Files\uriparser</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Database\Config-odb.ixx">
+      <Filter>Source Files\Database</Filter>
+    </None>
+    <None Include="src\Database\VMSettings-odb.ixx">
+      <Filter>Source Files\Database</Filter>
+    </None>
+  </ItemGroup>
+</Project>

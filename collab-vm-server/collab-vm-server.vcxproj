@@ -1,0 +1,300 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{56FE050F-B463-4D41-AE01-797CAD62B2D3}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>collabvmserver</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>ASIO_STANDALONE;ASIO_HAS_STD_CHRONO;ASIO_ENABLE_CANCELIO;_WEBSOCKETPP_CPP11_STL_;WEBSOCKETPP_STRICT_MASKING;RAPIDJSON_HAS_STDSTRING;LIBODB_EXPORT;DATABASE_SQLITE;LIBODB_STATIC_LIB;LIBODB_SQLITE_STATIC_LIB;WIN32;NEED_PTHREADS;PTW32_STATIC_LIB;CAIRO_WIN32_STATIC_BUILD;_WIN32_WINNT=0x0501;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;src\Asio;src\Guacamole;src\msvc;src\utf8;..\collab-vm-agent\collab-vm-agent\include;..\ODB\libodb-2.4.0;..\ODB\libodb-sqlite-2.4.0;..\ODB\libodb-sqlite-2.4.0\etc\sqlite;..\cairo-1.14.2\build\release;..\libpng-1.6.18;..\libpng-1.6.18\build;..\LibVNCServer-0.9.10\LibVNCServer-0.9.10;..\LibVNCServer-0.9.10\LibVNCServer-0.9.10\compat\msvc;..\ossp-uuid\ossp-uuid\src;..\zlib128-dll\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ShowIncludes>false</ShowIncludes>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
+      <AdditionalLibraryDirectories>..\ODB\libodb-2.4.0\bin;..\ODB\libodb-sqlite-2.4.0\bin;..\ODB\libodb-sqlite-2.4.0\etc\sqlite\bin;..\zlib-1.2.8;..\libjpeg-turbo-1.4.1\build\Debug;..\ossp-uuid\Debug;..\cairo-1.14.2\build\debug;..\pthreads-w32-2-9-1\Debug;..\libpng-1.6.18\build\Debug;..\LibVNCServer-0.9.10\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>LibVNCServer-0.9.10.lib;ossp-uuid.lib;cairo-static.lib;pthreads-w32-2-9-1.lib;turbojpeg-static.lib;libpng16_static.lib;zlib.lib;sqlite3-d.lib;odb-sqlite-d-2.4-vc12.lib;odb-d-2.4-vc12.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>651rg516516516weg516a516aw16a6aw6aw516awg516wga516weg56w</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>165aweg516aweg516aweg;egaw516aweg516aweg516weg;egw516aweg516egaw516aweg;wea516egw516weg516;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>ASIO_STANDALONE;ASIO_HAS_STD_CHRONO;ASIO_ENABLE_CANCELIO;_WEBSOCKETPP_CPP11_STL_;WEBSOCKETPP_STRICT_MASKING;RAPIDJSON_HAS_STDSTRING;LIBODB_EXPORT;DATABASE_SQLITE;LIBODB_STATIC_LIB;LIBODB_SQLITE_STATIC_LIB;WIN32;NEED_PTHREADS;PTW32_STATIC_LIB;CAIRO_WIN32_STATIC_BUILD;_WIN32_WINNT=0x0501;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;src\Asio;src\Guacamole;src\msvc;src\utf8;..\collab-vm-agent\collab-vm-agent\include;..\ODB\libodb-2.4.0;..\ODB\libodb-sqlite-2.4.0;..\ODB\libodb-sqlite-2.4.0\etc\sqlite;..\cairo-1.14.2\build\release;..\libpng-1.6.18;..\libpng-1.6.18\build;..\LibVNCServer-0.9.10\LibVNCServer-0.9.10;..\LibVNCServer-0.9.10\LibVNCServer-0.9.10\compat\msvc;..\ossp-uuid\ossp-uuid\src;..\zlib128-dll\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ShowIncludes>false</ShowIncludes>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
+      <AdditionalDependencies>LibVNCServer-0.9.10.lib;ossp-uuid.lib;cairo-static.lib;pthreads-w32-2-9-1.lib;turbojpeg-static.lib;libpng16_static.lib;zlib.lib;sqlite3.lib;odb-sqlite-2.4-vc12.lib;odb-2.4-vc12.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\ODB\libodb-2.4.0\bin;..\ODB\libodb-sqlite-2.4.0\bin;..\ODB\libodb-sqlite-2.4.0\etc\sqlite\bin;..\zlib-1.2.8;..\libjpeg-turbo-1.4.1\build\Release;..\ossp-uuid\Release;..\cairo-1.14.2\build\release;..\pthreads-w32-2-9-1\Release;..\libpng-1.6.18\build\Release;%(AdditionalLibraryDirectories);C:\Program Files (x86)\OpenSSL-Win32\lib\VC\static;..\LibVNCServer-0.9.10\Release</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>651rg516516516weg516a516aw16a6aw6aw516awg516wga516weg56w</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>165aweg516aweg516aweg;egaw516aweg516aweg516weg;egw516aweg516egaw516aweg;wea516egw516weg516;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\CollabVM.cpp" />
+    <ClCompile Include="src\Database\Config-odb.cxx" />
+    <ClCompile Include="src\Database\Database.cpp" />
+    <ClCompile Include="src\Database\VMSettings-odb.cxx" />
+    <ClCompile Include="src\GuacClient.cpp" />
+    <ClCompile Include="src\Guacamole\error.cpp" />
+    <ClCompile Include="src\Guacamole\guac_clipboard.cpp" />
+    <ClCompile Include="src\Guacamole\guac_cursor.cpp" />
+    <ClCompile Include="src\Guacamole\guac_display.cpp" />
+    <ClCompile Include="src\Guacamole\guac_dot_cursor.cpp" />
+    <ClCompile Include="src\Guacamole\guac_iconv.cpp" />
+    <ClCompile Include="src\Guacamole\guac_list.cpp" />
+    <ClCompile Include="src\Guacamole\guac_pointer_cursor.cpp" />
+    <ClCompile Include="src\Guacamole\guac_rect.cpp" />
+    <ClCompile Include="src\Guacamole\guac_string.cpp" />
+    <ClCompile Include="src\Guacamole\guac_surface.cpp" />
+    <ClCompile Include="src\Guacamole\hash.cpp" />
+    <ClCompile Include="src\Guacamole\id.cpp" />
+    <ClCompile Include="src\Guacamole\palette.cpp" />
+    <ClCompile Include="src\Guacamole\pool.cpp" />
+    <ClCompile Include="src\Guacamole\protocol.cpp" />
+    <ClCompile Include="src\Guacamole\timestamp.cpp" />
+    <ClCompile Include="src\Guacamole\unicode.cpp" />
+    <ClCompile Include="src\GuacBroadcastSocket.cpp" />
+    <ClCompile Include="src\GuacInstructionParser.cpp" />
+    <ClCompile Include="src\GuacSocket.cpp" />
+    <ClCompile Include="src\GuacUser.cpp" />
+    <ClCompile Include="src\GuacVNCClient.cpp" />
+    <ClCompile Include="src\GuacWebSocket.cpp" />
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Sockets\AgentClient.cpp" />
+    <ClCompile Include="src\Sockets\QMPClient.cpp" />
+    <ClCompile Include="src\UnitTests\AgentClientTest.cpp" />
+    <ClCompile Include="src\UnitTests\QMPTest.cpp" />
+    <ClCompile Include="src\uriparser\UriCommon.c" />
+    <ClCompile Include="src\uriparser\UriCompare.c" />
+    <ClCompile Include="src\uriparser\UriEscape.c" />
+    <ClCompile Include="src\uriparser\UriFile.c" />
+    <ClCompile Include="src\uriparser\UriIp4.c" />
+    <ClCompile Include="src\uriparser\UriIp4Base.c" />
+    <ClCompile Include="src\uriparser\UriNormalize.c" />
+    <ClCompile Include="src\uriparser\UriNormalizeBase.c" />
+    <ClCompile Include="src\uriparser\UriParse.c" />
+    <ClCompile Include="src\uriparser\UriParseBase.c" />
+    <ClCompile Include="src\uriparser\UriQuery.c" />
+    <ClCompile Include="src\uriparser\UriRecompose.c" />
+    <ClCompile Include="src\uriparser\UriResolve.c" />
+    <ClCompile Include="src\uriparser\UriShorten.c" />
+    <ClCompile Include="src\VMControllers\QEMUController.cpp" />
+    <ClCompile Include="src\VMControllers\VMController.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\collab-vm-agent\collab-vm-agent\include\AgentProtocol.h" />
+    <ClInclude Include="src\Base64.h" />
+    <ClInclude Include="src\CollabVM.h" />
+    <ClInclude Include="src\CollabVMUser.h" />
+    <ClInclude Include="src\Database\Config-odb.hxx" />
+    <ClInclude Include="src\Database\Config.h" />
+    <ClInclude Include="src\Database\Database.h" />
+    <ClInclude Include="src\Database\VMSettings-odb.hxx" />
+    <ClInclude Include="src\Database\VMSettings.h" />
+    <ClInclude Include="src\GuacClient.h" />
+    <ClInclude Include="src\Guacamole\audio-fntypes.h" />
+    <ClInclude Include="src\Guacamole\audio-types.h" />
+    <ClInclude Include="src\Guacamole\audio.h" />
+    <ClInclude Include="src\Guacamole\client-constants.h" />
+    <ClInclude Include="src\Guacamole\client-fntypes.h" />
+    <ClInclude Include="src\Guacamole\client-types.h" />
+    <ClInclude Include="src\Guacamole\config.h" />
+    <ClInclude Include="src\Guacamole\error-types.h" />
+    <ClInclude Include="src\Guacamole\error.h" />
+    <ClInclude Include="src\Guacamole\guac_clipboard.h" />
+    <ClInclude Include="src\Guacamole\guac_cursor.h" />
+    <ClInclude Include="src\Guacamole\guac_display.h" />
+    <ClInclude Include="src\Guacamole\guac_dot_cursor.h" />
+    <ClInclude Include="src\Guacamole\guac_iconv.h" />
+    <ClInclude Include="src\Guacamole\guac_list.h" />
+    <ClInclude Include="src\Guacamole\guac_pointer_cursor.h" />
+    <ClInclude Include="src\Guacamole\guac_rect.h" />
+    <ClInclude Include="src\Guacamole\guac_string.h" />
+    <ClInclude Include="src\Guacamole\guac_surface.h" />
+    <ClInclude Include="src\Guacamole\hash.h" />
+    <ClInclude Include="src\Guacamole\id.h" />
+    <ClInclude Include="src\Guacamole\layer-types.h" />
+    <ClInclude Include="src\Guacamole\layer.h" />
+    <ClInclude Include="src\Guacamole\palette.h" />
+    <ClInclude Include="src\Guacamole\plugin-constants.h" />
+    <ClInclude Include="src\Guacamole\plugin.h" />
+    <ClInclude Include="src\Guacamole\pool-types.h" />
+    <ClInclude Include="src\Guacamole\pool.h" />
+    <ClInclude Include="src\Guacamole\protocol-types.h" />
+    <ClInclude Include="src\Guacamole\protocol.h" />
+    <ClInclude Include="src\Guacamole\pthread.h" />
+    <ClInclude Include="src\Guacamole\sched.h" />
+    <ClInclude Include="src\Guacamole\socket-constants.h" />
+    <ClInclude Include="src\Guacamole\socket-fntypes.h" />
+    <ClInclude Include="src\Guacamole\socket-types.h" />
+    <ClInclude Include="src\Guacamole\stream-types.h" />
+    <ClInclude Include="src\Guacamole\stream.h" />
+    <ClInclude Include="src\Guacamole\timestamp-types.h" />
+    <ClInclude Include="src\Guacamole\timestamp.h" />
+    <ClInclude Include="src\Guacamole\unicode.h" />
+    <ClInclude Include="src\Guacamole\unistd.h" />
+    <ClInclude Include="src\Guacamole\user-constants.h" />
+    <ClInclude Include="src\Guacamole\user-fntypes.h" />
+    <ClInclude Include="src\Guacamole\user-types.h" />
+    <ClInclude Include="src\GuacBroadcastSocket.h" />
+    <ClInclude Include="src\GuacInstructionParser.h" />
+    <ClInclude Include="src\GuacSocket.h" />
+    <ClInclude Include="src\GuacUser.h" />
+    <ClInclude Include="src\GuacVNCClient.h" />
+    <ClInclude Include="src\GuacWebSocket.h" />
+    <ClInclude Include="src\Sockets\AgentClient.h" />
+    <ClInclude Include="src\Sockets\LocalSocketClient-Unix.hpp" />
+    <ClInclude Include="src\Sockets\LocalSocketClient-Win.hpp" />
+    <ClInclude Include="src\Sockets\LocalSocketClient.h" />
+    <ClInclude Include="src\Sockets\QMPClient.h" />
+    <ClInclude Include="src\Sockets\SocketClient.h" />
+    <ClInclude Include="src\Sockets\TCPSocketClient.h" />
+    <ClInclude Include="src\UploadInfo.h" />
+    <ClInclude Include="src\uriparser\Uri.h" />
+    <ClInclude Include="src\uriparser\UriBase.h" />
+    <ClInclude Include="src\uriparser\UriCommon.h" />
+    <ClInclude Include="src\uriparser\UriDefsAnsi.h" />
+    <ClInclude Include="src\uriparser\UriDefsConfig.h" />
+    <ClInclude Include="src\uriparser\UriDefsUnicode.h" />
+    <ClInclude Include="src\uriparser\UriIp4.h" />
+    <ClInclude Include="src\uriparser\UriIp4Base.h" />
+    <ClInclude Include="src\uriparser\UriNormalizeBase.h" />
+    <ClInclude Include="src\uriparser\UriParseBase.h" />
+    <ClInclude Include="src\UserList.h" />
+    <ClInclude Include="src\VMControllers\QEMUController.h" />
+    <ClInclude Include="src\VMControllers\VMController.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Database\Config-odb.ixx" />
+    <None Include="src\Database\VMSettings-odb.ixx" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
