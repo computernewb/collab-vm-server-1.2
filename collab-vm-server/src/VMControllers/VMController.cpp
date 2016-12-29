@@ -129,7 +129,7 @@ void VMController::Vote(CollabVMUser& user, bool vote)
 			{
 				IPData::VoteDecision prev_vote = user.ip_data.votes[this];
 				bool changed = false;
-				// A vote is already in progress so count the user's vote
+				// A vote is already in progress so count the user's vote 
 				if (vote && prev_vote != IPData::VoteDecision::kYes)
 				{
 					if (prev_vote == IPData::VoteDecision::kNo)
