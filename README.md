@@ -19,6 +19,8 @@ Compilation is semi-complicated as this was intended for personal use only, sorr
 
 By the way, compilation was only tested on i386 and amd64 machines. I don't know if this will work on any other architecture, but theoretically, Collab VM Server should be able to run on armhf or powerpc.
 
+Having trouble compiling collab-vm-server? Download a build environment here: https://github.com/computernewb/collab-vm-server/wiki/Collab-VM-Server-Build-Environment
+
 ## Windows
 You need Visual Studio 2015 to compile the server on Windows. Community (the free version) will work just fine.
 
