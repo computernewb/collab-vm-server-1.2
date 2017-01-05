@@ -138,4 +138,4 @@ collab_vm_server_SOURCES = \
 	uriparser/UriRecompose.c
 collab_vm_server_LDFLAGS = -static-libstdc++
 
-collab_vm_server_LDADD = -lpthread -lgnutls -lsqlite3 -luuid -lvncclient -lpng -lgcrypt -lcairo /usr/local/lib/libpng.a /usr/local/lib/libz.a /usr/local/lib/libuuid.a /usr/local/lib/libvncclient.a /usr/local/lib/libturbojpeg.a /usr/local/lib/libcairo.a /usr/local/lib/libpixman-1.a /usr/local/lib/libodb-sqlite.a /usr/local/lib/libodb.a /usr/local/lib/libsqlite3.a -ldl
+collab_vm_server_LDADD = -lpthread -lsqlite3 -luuid -lvncclient -lpng -lcairo /usr/local/lib/libpng.a /usr/local/lib/libz.a /usr/local/lib/libuuid.a /usr/local/lib/libvncclient.a /usr/local/lib/libturbojpeg.a /usr/local/lib/libcairo.a /usr/local/lib/libpixman-1.a /usr/local/lib/libodb-sqlite.a /usr/local/lib/libodb.a /usr/local/lib/libsqlite3.a -ldl
