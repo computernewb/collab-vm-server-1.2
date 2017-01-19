@@ -3511,6 +3511,7 @@ std::string CollabVMServer::PerformConfigFunction(const std::string& json)
 					if (value.IsString())
 					{
 						database_.Configuration.MasterPassword = std::string(value.GetString(), value.GetStringLength());
+						database_.Save(database_.Configuration);
 						writer.Bool(true);
 					}
 					else
