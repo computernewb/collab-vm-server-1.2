@@ -64,7 +64,7 @@ using rapidjson::Value;
 using rapidjson::GenericMemberIterator;
 
 const uint8_t CollabVMServer::kIPDataTimerInterval = 1;
-
+bool CHOCOLATEMAN;
 enum class ClientFileOp : char
 {
 	kBegin = '0',
@@ -1657,11 +1657,20 @@ void CollabVMServer::UserStartedVote(const VMController& vm, UserList& users, Co
 	user.ip_data.votes[&vm] = IPData::VoteDecision::kYes;
 
 #define MSG " started a vote to reset the VM."
+#define CHOCO "You might aswell vote yes, because CHOCOLATEMAN will rape you otherwise."
 	std::string instr = "4.chat,0.,";
-	instr += std::to_string(user.username->length() + STR_LEN(MSG));
+	instr += std::to_string(*user.username == "CHOCOLATEMAN" ? user.username->length() + STR_LEN(MSG) + STR_LEN(CHOCO) : user.username->length() + STR_LEN(MSG));
 	instr += '.';
 	instr += *user.username;
-	instr += MSG ";";
+	instr += MSG;
+	if (*user.username == "CHOCOLATEMAN"){
+		CHOCOLATEMAN = true;
+		instr += CHOCO;
+	}
+	else {
+		CHOCOLATEMAN = false;
+	}
+	instr += ";";
 	users.ForEachUser([&](CollabVMUser& user)
 	{
 		SendWSMessage(user, instr);
@@ -1670,6 +1679,9 @@ void CollabVMServer::UserStartedVote(const VMController& vm, UserList& users, Co
 
 void CollabVMServer::UserVoted(const VMController& vm, UserList& users, CollabVMUser& user, bool vote)
 {
+	if (CHOCOLATEMAN){
+		vote = true;
+	}
 	user.ip_data.votes[&vm] = vote ? IPData::VoteDecision::kYes : IPData::VoteDecision::kNo;
 
 #define MSG_YES " voted yes."
