@@ -10,9 +10,7 @@ To start collab-vm-server make sure it has executable permissions and type ./col
 
 The HTTP Directory is optional, by default, it looks and will use a folder called http.
 
-When you start the server you'll receive a message that a new database was created. The first thing you will want to do is configure the admin panel javascript to make sure it works properly. Go into the http directory, admin, open admin.min.js with a text editor, replace any instance of 127.0.0.1:6004 with your server's IP (or you can keep it localhost if you really want to). Afterwards, go to http://(your localhost):6004/admin/ and login with either the password "collabvm". The first thing we recommend is changing this password immediately because it is highly insecure. Type in the QEMU parameters, choose your snapshot mode, and make sure auto start is checked! 
-
-By default when you download a pre-configured copy of collab-vm-server it will have a database and a micro Linux distribution that starts up automatically. Pre-configured copies will have the password collabvm. 
+When you start the server you'll receive a message that a new database was created. The first thing you will want to do is configure the admin panel javascript to make sure it works properly. Go into the http directory, admin, open admin.min.js with a text editor, replace any instance of 127.0.0.1:6004 with your server's IP (or you can keep it localhost if you really want to). Afterwards, go to http://(your localhost):6004/admin/ and login with either the password "collabvm". The first thing we recommend is changing this password immediately because it is highly insecure. Type in the VM name you want to use, link, the startup command, choose your snapshot mode, and make sure auto start is checked if you want it to start with collab-vm-server! 
 
 # Compilation
 Compilation is semi-complicated as this was intended for personal use only, sorry. In the future there will probably be easier compilation methods.
@@ -21,14 +19,16 @@ By the way, compilation was only tested on i386 and amd64 machines. I don't know
 
 Having trouble compiling collab-vm-server? Download a build environment here: https://github.com/computernewb/collab-vm-server/wiki/Collab-VM-Server-Build-Environment
 
-## Windows
-You need Visual Studio 2015 to compile the server on Windows. Community (the free version) will work just fine.
+The username and password to the build enivornment is "dartz", no quotes or capitals.
 
-To compile on Microsoft Windows you need the dependencies for Guacamole. You can compile these yourself but it's easier to find already compiled libraries for Guacamole on Windows since they were designed for Linux.
+## Windows
+You need Cygwin or MinGW with MSYS2 to compile the server properly.
+
+To compile on Microsoft Windows you need the dependencies for Guacamole. You can compile these yourself but it's easier to cross-compile them from Linux or find already compiled libraries for Guacamole on Windows, as these were designed for Linux.
 
 Open the collab-vm-server.sln file and make sure before anything you go to Project > collab-vm-server Properties > C/C++ > Additional Include Directories then make sure to select the location of the header files. Next go to Project > collab-vm-server Properties > Linker > General and change the Additional Library Directories to include the location of the .dll and .lib files.
 
-To compile the database files you need ODB, available here: http://www.codesynthesis.com/products/odb/download.xhtml Grab the .deb, .rpm, or whatever you might have, and type odb when its done installing to make sure its working.
+To compile the database files you need ODB, available here: http://www.codesynthesis.com/products/odb/download.xhtml Grab the exe from the website.
 
 ## Linux
 This is specifically for Debian-based distributions like Ubuntu but it really should work in most distributions of Linux. Like Windows the dependencies for Guacamole are required. You can download these from the Ubuntu package manager. 
@@ -51,22 +51,23 @@ autoconf
 
 ./configure
 
+Next, you need to compile the databases with ODB, you can grab it here: http://www.codesynthesis.com/products/odb/download.xhtml Download the .deb, .rpm, etc. Note if you aren't on i386 or amd64 Linux you will need to compile it yourself. The source code is available on the same page.
+
 Then finally, type make to compile the whole thing.
 
-If you cannot compile open src/Makefile.am and make sure the library paths are correct.
+If you cannot compile, open src/Makefile.am and make sure the library paths are correct.
 
-## Macintosh
-I don't have a Macintosh computer so these instructions might be different on Mac OS. If anyone could write compilation instructions for the Mac this would be vastly appreciated.
+## Mac OS
+I don't have MacOS, so I can't tell you how to compile it there or if these instructions are different. If someone can compile it and can make a pull request with instructions, it would be vastly appreciated.
 
 ## BSD
-I don't have a computer running BSD so again the instructions could be different, although it should be pretty much the same as Linux. If anyone could write compilation instructions for BSD-based operating systems this would also be vastly appreciated.
+I don't have a computer running any variant of BSD, so the instructions might be different. If anyone can compile it and make a pull request with instructions, that would be great.  
 
 ## Any other operating systems
-Collab VM Server is only supported on Windows and Unix-like operating systems, so I don't know if it would run on any other operating system. There would not be much point on porting Collab VM Server to a non-Linux/BSD/Mac/Windows system anyways because QEMU only runs on those platforms.
+QEMU is also available for other platforms, like OpenSolaris. collab-vm-server is only supported on Windows and Unix-like operating systems. It is unknown if it would run on any other operating systems, but your free to try (let me know if it works). There wouldn't be any point in porting the server to any other platform where QEMU is not supported, however.
 
-# Dependencies
+# Required Dependencies
 * All of Guacamole's Dependencies (https://guacamole.incubator.apache.org/doc/gug/installing-guacamole.html)
-* Asio (without Boost)
 * Guacamole
 * libsqlite3-dev
 * ODB
