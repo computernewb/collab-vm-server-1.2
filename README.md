@@ -35,13 +35,11 @@ To compile the database files you need ODB, available here: http://www.codesynth
 ## Linux
 This is specifically for Debian-based distributions like Ubuntu but it should work in most distributions of Linux. Like Windows the dependencies for Guacamole are required. You can download these from the Ubuntu package manager. These instructions also apply for Windows Subsystem for Linux.
 
-When you've got all the dependencies for Guacamole you need to get ODB. Again it is available in the link above. This is compiled with GCC 6, although it might work with older versions. 
+The first thing we need to do is compile the databases with ODB. You can grab it here: http://www.codesynthesis.com/products/odb/download.xhtml Download the .deb, .rpm, etc. Note if you aren't on i386 or amd64 Linux you will need to compile it yourself. The source code for odb is available on the same page.
 
-The first thing we need to do is compile the databases. When you have odb ready, go to collab-vm-server/src/Database and type this command in:
+Go to collab-vm-server/src/Database and type this command in: odb -d sqlite -s -q Config.h VMSettings.h
 
-odb -d sqlite -s -q Config.h VMSettings.h
-
-Make sure you have the mysql and sqlite database runtime libraries before compiling, again available in the codesynthesis website. Just extract the odb folder from both of the zip files into collab-vm-server/src.
+Make sure you have the mysql and sqlite database runtime libraries before compiling, again available in the CodeSynthesis website. 
 
 Next we go into the collab-vm-server folder and type in the following commands:
 
@@ -53,7 +51,6 @@ autoconf
 
 ./configure
 
-Next, you need to compile the databases with ODB, you can grab it here: http://www.codesynthesis.com/products/odb/download.xhtml Download the .deb, .rpm, etc. Note if you aren't on i386 or amd64 Linux you will need to compile it yourself. The source code is available on the same page.
 
 Then finally, type make to compile the whole thing.
 
