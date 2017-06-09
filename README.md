@@ -22,16 +22,18 @@ Having trouble compiling collab-vm-server? Download a build environment here: ht
 The username and password to the build enivornment is "dartz", no quotes or capitals.
 
 ## Windows
-You need Cygwin or MinGW with MSYS2 to compile the server properly.
+You need Visual Studio 2015, Cygwin or MinGW with MSYS2 to compile the server properly.
 
 To compile on Microsoft Windows you need the dependencies for Guacamole. You can compile these yourself but it's easier to cross-compile them from Linux or find already compiled libraries for Guacamole on Windows, as these were designed for Linux.
 
-Open the collab-vm-server.sln file and make sure before anything you go to Project > collab-vm-server Properties > C/C++ > Additional Include Directories then make sure to select the location of the header files. Next go to Project > collab-vm-server Properties > Linker > General and change the Additional Library Directories to include the location of the .dll and .lib files.
+Visual Studio 2015: Open the collab-vm-server.sln file and make sure before anything you go to Project > collab-vm-server Properties > C/C++ > Additional Include Directories then make sure to select the location of the header files. Next go to Project > collab-vm-server Properties > Linker > General and change the Additional Library Directories to include the location of the .dll and .lib files. Then compile the server.
+
+Cygwin/MinGW: Instructions are the same for Linux.
 
 To compile the database files you need ODB, available here: http://www.codesynthesis.com/products/odb/download.xhtml Grab the exe from the website.
 
 ## Linux
-This is specifically for Debian-based distributions like Ubuntu but it really should work in most distributions of Linux. Like Windows the dependencies for Guacamole are required. You can download these from the Ubuntu package manager. 
+This is specifically for Debian-based distributions like Ubuntu but it should work in most distributions of Linux. Like Windows the dependencies for Guacamole are required. You can download these from the Ubuntu package manager. These instructions also apply for Windows Subsystem for Linux.
 
 When you've got all the dependencies for Guacamole you need to get ODB. Again it is available in the link above. This is compiled with GCC 6, although it might work with older versions. 
 
@@ -64,7 +66,7 @@ I don't have MacOS, so I can't tell you how to compile it there or if these inst
 I don't have a computer running any variant of BSD, so the instructions might be different. If anyone can compile it and make a pull request with instructions, that would be great.  
 
 ## Any other operating systems
-QEMU is also available for other platforms, like OpenSolaris. collab-vm-server is only supported on Windows and Unix-like operating systems. It is unknown if it would run on any other operating systems, but your free to try (let me know if it works). There wouldn't be any point in porting the server to any other platform where QEMU is not supported, however.
+QEMU is also available for other platforms, like OpenSolaris and OpenIndiana. collab-vm-server is only supported on Windows and Unix-like operating systems. It is unknown if it would run on any other operating systems, but your free to try (let me know if it works). There wouldn't be any point in porting the server to any other platform where QEMU is not supported, however (although in the future, there will be many more emulators/hypervisors supported).
 
 # Required Dependencies
 * All of Guacamole's Dependencies (https://guacamole.incubator.apache.org/doc/gug/installing-guacamole.html)
