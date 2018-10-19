@@ -200,17 +200,21 @@ void VMController::TurnRequest(const std::shared_ptr<CollabVMUser>& user)
 		current_turn_ == user || user->waiting_turn)
 		return;
 
-	if (!current_turn_)
-	{
+	if (!current_turn_){
 		// If no one currently has a turn then give the requesting user control
 		current_turn_ = user;
 		// Start the turn timer
 		asio::error_code ec;
 		turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
 		turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
-	}
-	else
-	{
+	} else if(user->user_rank == UserRank::kAdmin || user->admin_connected ){
+		// User is logged into the admin panel, allow them to "push" in front of everyone.
+		current_turn_ = user;
+		// Start the turn timer
+		asio::error_code ec;
+		turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
+		turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
+	} else {
 		// Otherwise add them to the queue
 		turn_queue_.push_back(user);
 		user->waiting_turn = true;
