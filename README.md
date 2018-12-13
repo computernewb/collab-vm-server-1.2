@@ -15,22 +15,22 @@ When you start the server you'll receive a message that a new database was creat
 # Compilation
 Compilation is semi-complicated as this was intended for personal use only, sorry. In the future there will probably be easier compilation methods.
 
-By the way, compilation was only tested on i386 and amd64 machines. I don't know if this will work on any other architecture, but theoretically, Collab VM Server should be able to run on armhf or powerpc.
+By the way, compilation was only tested on i386, amd64, and armhf machines. I don't know if this will work on any other architecture, but theoretically, Collab VM Server should be able to run on mips or powerpc.
 
 Having trouble compiling collab-vm-server? Download a build environment here: https://github.com/computernewb/collab-vm-server/wiki/Collab-VM-Server-Build-Environment
 
 The username and password to the build enivornment is "dartz", no quotes or capitals.
 
 ## Windows
-You need Visual Studio 2015, Cygwin or MinGW with MSYS2 to compile the server properly.
+You need Visual Studio 2015/2017, Cygwin, or MinGW with MSYS2 to compile the server properly.
 
 To compile on Microsoft Windows you need the dependencies for Guacamole. You can compile these yourself but it's easier to cross-compile them from Linux or find already compiled libraries for Guacamole on Windows, as these were designed for Linux.
 
-Visual Studio 2015: Open the collab-vm-server.sln file and make sure before anything you go to Project > collab-vm-server Properties > C/C++ > Additional Include Directories then make sure to select the location of the header files. Next go to Project > collab-vm-server Properties > Linker > General and change the Additional Library Directories to include the location of the .dll and .lib files. Then compile the server.
+Visual Studio 2017: Open the collab-vm-server.sln file and make sure before anything you go to Project > collab-vm-server Properties > C/C++ > Additional Include Directories then make sure to select the location of the header files. Next go to Project > collab-vm-server Properties > Linker > General and change the Additional Library Directories to include the location of the .dll and .lib files. Then compile the server.
 
-Cygwin/MinGW: Instructions are the same for Linux.
+Cygwin/MinGW: Instructions are the same for Linux. 
 
-To compile the database files you need ODB, available here: http://www.codesynthesis.com/products/odb/download.xhtml Grab the exe from the website.
+To compile the database files you need ODB, available here: http://www.codesynthesis.com/products/odb/download.xhtml Grab the exe from the website. Then go to the collab-vm-server/src/Database folder and type this command in: odb -d sqlite -s -q Config.h VMSettings.h
 
 ## Linux
 This is specifically for Debian-based distributions like Ubuntu but it should work in most distributions of Linux. Like Windows the dependencies for Guacamole are required. You can download these from the Ubuntu package manager. These instructions also apply for Windows Subsystem for Linux.
@@ -50,7 +50,6 @@ automake --add-missing
 autoconf
 
 ./configure
-
 
 Then finally, type make to compile the whole thing.
 
