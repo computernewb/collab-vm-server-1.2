@@ -1,0 +1,9 @@
+# Ignore the binaries and library roots
+/**/bin/
+/**/obj/
+/**/cvmlib/
+/**/cvmlib32/
+/**/cvmlib_lx/
+
+
+
