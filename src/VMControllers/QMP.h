@@ -5,6 +5,7 @@
 #include <mutex>
 #include <chrono>
 #include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <functional>
 #include <map>
 #include "rapidjson/document.h"
