@@ -45,11 +45,12 @@ build(){
 			UNAME_KERN=$(printf "Windows %s" $WIN_VER)
 			log "Building on $UNAME_KERN x86.";
 		else
-			# Just use uname result (or check for common distros?)
+			# LSB defines /etc/os-release (Some distros also use lsb-release, however os-release is ACTUALLY the one LSB defines as standard, and thus will be pressent in more
+			# than a couple distros)
+			UNAME_KERN=$(cat /etc/os-release | grep "PRETTY_NAME" | sed 's/PRETTY_NAME=//g' | sed 's/\"//g');
 			log "Building on $UNAME_KERN.";
 		fi
 	fi
-	
 
 	log "Copying sources."
 	[[ ! -d "http/" ]] && mkdir http

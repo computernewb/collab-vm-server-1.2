@@ -85,7 +85,7 @@ QEMU is also available for other platforms, like OpenSolaris and OpenIndiana. co
 
 ### All Required Dependencies
 * Boost (I've only tested 1.68, however older versions with a proper chrono::steady_timer constructor that allow a delayed construction should work)
-* GCC 6 (at least)
+* GCC 5 (at least)
 * libvncserver 
 * libpng
 * libturbojpeg
