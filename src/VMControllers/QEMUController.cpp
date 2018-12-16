@@ -488,20 +488,15 @@ void QEMUController::StartQEMU()
 	char* qemu_args_creproc_friendly = (char*)calloc(1, qemu_cmdline.length() + 1);
 	strncpy(qemu_args_creproc_friendly, qemu_cmdline.c_str(), qemu_cmdline.length());
 
-	CreateProcess(
-		NULL, // Use CMDLINE
-		/*(char*)*/qemu_args_creproc_friendly,
-		NULL,
-		NULL,
-		FALSE,
-		0,
-		NULL,
-		NULL,
-		&si,
-		&qemu_process_);
-		
-	qemu_running_ = true;
-	std::cout << "QEMU PID: " << qemu_process_.dwProcessId << std::endl;
+	BOOL cre_status = CreateProcess(NULL, qemu_args_creproc_friendly, NULL, NULL, FALSE, 0, NULL, NULL, &si, &qemu_process_);
+
+	if(cre_status != TRUE) {
+		/* Error state (CreateProcess returns non-TRUE (1) on error) */
+		std::cout << "QEMU failed to start. Error code: " << GetLastError() << "\n";
+	} else {
+		qemu_running_ = true;
+		std::cout << "QEMU PID: " << qemu_process_.dwProcessId << std::endl;
+	}
 #else
 	pid_t pId = fork();
 	if (pId == 0)
