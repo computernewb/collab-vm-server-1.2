@@ -75,7 +75,15 @@ make
 ```
 
 #### MacOS X
-While the server should build on MacOS (X), I don't have a Mac computer to test this on so I don't know what the build instructions are, but they should be the same as Linux. (If you get it to compile and you can write instructions, that'd be vastly appreciated!)
+**NOTE**: This is untested and isn't guaranteed to work.
+
+- Open a Terminal and a web browser. Go to https://brew.sh.
+- Copy the command from the home page.
+- Enter your password if it asks and start the installation.
+- Once it is finished installing, run the following command: **brew install boost cairo gcc ossp-uuid sqlite3 **
+- Because libvncserver is not available in the Homebrew Forumlas, it will have to be compiled manually. Type **git clone https://github.com/LibVNC/libvncserver**. Make sure you have the dependencies and build it with **cmake -DLIBVNCSERVER_WITH_WEBSOCKETS=OFF**
+- Compile libodb and libodb-sqlite by downloading the files from Code Synthesis's website.
+- Verify all the dependencies have been successfully installed and build the solution.
 
 #### BSD
 While the server should build on BSD-based operating systems, I don't have a BSD computer to test this on so I don't know what the build instructions are, but they should be the same as Linux. (If you get it to compile and you can write instructions, that'd be vastly appreciated!)
