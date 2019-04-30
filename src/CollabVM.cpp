@@ -2463,7 +2463,7 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 {
 	if (args.size() != 1 || !user->username)
 		return;
-
+	std::bool isVote = false;
 	// Limit message send rate
 	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
 	if (user->ip_data.chat_muted)
@@ -2515,10 +2515,10 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 	string msg = EncodeHTMLString(args[0], str_len);
 	if (msg.empty())
 		return;
-	if (user->vm_controller != nullptr && user->username && msg.rfind("vmvote ", 0) == 0)
+	if (user->vm_controller != nullptr && user->username && msg.rfind("vmvote ", 0) == 0 && (std::stoi(msg[7]) == 1 || std::stoi(msg[7]) == 0))
 	{
-		if(stoi(msg[7]) == 1 || stoi(msg[7]) == 0)
-		   user->vm_controller->Vote(*user, args[0][0] == msg[7]);
+		isVote = true;
+		user->vm_controller->Vote(*user, args[0][0] == msg[7]);
 	}
 	if (database_.Configuration.ChatMsgHistory)
 	{
@@ -2550,19 +2550,20 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 			chat_history_end_++;
 	}
 
-
-	std::string instr = "4.chat,";
-	instr += std::to_string(user->username->length());
-	instr += '.';
-	instr += *user->username;
-	instr += ',';
-	instr += std::to_string(msg.length());
-	instr += '.';
-	instr += msg;
-	instr += ';';
-
+	if(!isVote)
+	{
+		std::string instr = "4.chat,";
+		instr += std::to_string(user->username->length());
+		instr += '.';
+		instr += *user->username;
+		instr += ',';
+		instr += std::to_string(msg.length());
+		instr += '.';
+		instr += msg;
+		instr += ';';
 	for (auto it = connections_.begin(); it != connections_.end(); it++)
 		SendWSMessage(**it, instr);
+	}
 }
 
 void CollabVMServer::OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args)
