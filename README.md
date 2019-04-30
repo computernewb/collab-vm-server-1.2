@@ -40,9 +40,9 @@ pacman -S --noconf mingw-w64-i686-toolchain git
 pacman -S --noconf mingw-w64-x86_64-toolchain git
 # Restart MSYS again.
 # Get all of the CollabVM Server dependencies (for Win64).
-./scripts/grab_deps_w64.sh
+./scripts/grab_deps_mw64.sh
 # Get all of the CollabVM Server dependencies (for Win32).
-./scripts/grab_deps_w32.sh
+./scripts/grab_deps_mw32.sh
 # If you get a Permission Denied error, go into the scripts directory and type chmod +x *.sh.
 # Compile the databases
 odb -d sqlite -s -q src\Database\Config.h src\Database\VMSettings.h
