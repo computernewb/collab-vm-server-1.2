@@ -2520,7 +2520,7 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 		isVote = true;
 		user->vm_controller->Vote(*user, args[0][0] == msg[7]);
 	}
-	if (database_.Configuration.ChatMsgHistory)
+	if (database_.Configuration.ChatMsgHistory && !isVote)
 	{
 		// Add the message to the chat history
 		ChatMessage* chat_message = &chat_history_[chat_history_end_];
