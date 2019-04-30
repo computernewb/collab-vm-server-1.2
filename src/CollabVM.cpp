@@ -2561,8 +2561,8 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 		instr += '.';
 		instr += msg;
 		instr += ';';
-	for (auto it = connections_.begin(); it != connections_.end(); it++)
-		SendWSMessage(**it, instr);
+		for (auto it = connections_.begin(); it != connections_.end(); it++)
+			SendWSMessage(**it, instr);
 	}
 }
 
