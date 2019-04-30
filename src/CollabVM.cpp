@@ -2569,7 +2569,7 @@ void CollabVMServer::OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user
 
 void CollabVMServer::OnVoteInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args)
 {
-	if (args.size() == 1 && user->vm_controller != nullptr && user->username)
+	if (args.size() == 1 && user->vm_controller != nullptr && user->username && user.ip_data.votes[&vm] != IPData::VoteDecision::kNotVoted)
 		user->vm_controller->Vote(*user, args[0][0] == '1');
 }
 
