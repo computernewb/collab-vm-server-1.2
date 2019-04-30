@@ -130,22 +130,34 @@ void VMController::Vote(CollabVMUser& user, bool vote)
 			{
 				IPData::VoteDecision prev_vote = user.ip_data.votes[this];
 				bool changed = false;
-				// A vote is already in progress so count the user's vote 
-				if (vote && prev_vote != IPData::VoteDecision::kYes)
-				{
-					if (prev_vote == IPData::VoteDecision::kNo)
-						vote_count_no_--;
+				if(user.voted_limit == false) {
 
-					vote_count_yes_++;
-					changed = true;
-				}
-				else if (!vote && prev_vote != IPData::VoteDecision::kNo)
-				{
-					if (prev_vote == IPData::VoteDecision::kYes)
-						vote_count_yes_--;
+					if(user.voted_amount >= 5) {
+						user.voted_limit = true;
+						goto _vote_limit_die;
+					}
 
-					vote_count_no_++;
-					changed = true;
+					// A vote is already in progress so count the user's vote unless they've hit the limit
+					if (vote && prev_vote != IPData::VoteDecision::kYes)
+					{
+						if (prev_vote == IPData::VoteDecision::kNo)
+							vote_count_no_--, user.voted_amount++;
+
+						vote_count_yes_++;
+						user.voted_amount++;
+						changed = true;
+					}
+					else if (!vote && prev_vote != IPData::VoteDecision::kNo )
+					{
+						if (prev_vote == IPData::VoteDecision::kYes)
+							vote_count_yes_--, user.voted_amount++;
+
+						vote_count_no_++;
+						user.voted_amount++;
+						changed = true;
+					}
+
+					_vote_limit_die: {}						
 				}
 
 				if (changed)

@@ -164,7 +164,9 @@ public:
 		last_nop_instr(std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now())),
 		ip_data(ip_data),
 		upload_info(nullptr),
-		waiting_for_upload(false)
+		waiting_for_upload(false),
+		voted_amount(0),
+		voted_limit(false)
 	{
 	}
 
@@ -234,5 +236,12 @@ public:
 	 * True when the user is waiting in the upload_queue_.
 	 */
 	bool waiting_for_upload;
+
+	/**
+	 * How many times the user has voted during a vote.
+	 * (TODO: I should move this into IPData possibly)
+	 */
+	int voted_amount;
+	bool voted_limit;
 
 };
