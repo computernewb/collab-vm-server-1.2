@@ -2515,7 +2515,11 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 	string msg = EncodeHTMLString(args[0], str_len);
 	if (msg.empty())
 		return;
-
+	if (user->vm_controller != nullptr && user->username && msg.rfind("vmvote ", 0) == 0)
+	{
+		if(stoi(msg[7]) == 1 || stoi(msg[7]) == 0)
+		   user->vm_controller->Vote(*user, args[0][0] == msg[7]);
+	}
 	if (database_.Configuration.ChatMsgHistory)
 	{
 		// Add the message to the chat history
