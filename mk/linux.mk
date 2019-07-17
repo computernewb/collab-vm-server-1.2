@@ -1,6 +1,6 @@
 CXX = g++
 CC = gcc
-LIBS = -static-libstdc++ -lpthread -lboost_system -lpng -lz -luuid -lvncclient -lturbojpeg -lcairo -lpixman-1 -ldl -Lcvmlib_lx/lib -lodb-sqlite -lodb -lsqlite3  -s
+LIBS = -static-libstdc++ -lpthread -lboost_system -lpng -lz -lossp-uuid -lvncclient -lturbojpeg -lcairo -lpixman-1 -ldl -Lcvmlib_lx/lib -lodb-sqlite -lodb -lsqlite3  -s
 OBJDIR = obj/linux/
 BINDIR = bin/linux
 .PHONY: all pre clean

@@ -9,7 +9,7 @@ Colonel Seizureton/Colonel Munchkin
 CtrlAltDel
 FluffyVulpix
 hannah
-Ir0nlake
+Ir0nlake/mc80/modeco80
 LoveEevee
 Matthew
 Vanilla
@@ -1668,6 +1668,7 @@ void CollabVMServer::UserStartedVote(const VMController& vm, UserList& users, Co
 	instr += '.';
 	instr += *user.username;
 	instr += MSG ";";
+	user.voted_amount++;
 	users.ForEachUser([&](CollabVMUser& user)
 	{
 		SendWSMessage(user, instr);
@@ -1676,7 +1677,14 @@ void CollabVMServer::UserStartedVote(const VMController& vm, UserList& users, Co
 
 void CollabVMServer::UserVoted(const VMController& vm, UserList& users, CollabVMUser& user, bool vote)
 {
-	user.ip_data.votes[&vm] = vote ? IPData::VoteDecision::kYes : IPData::VoteDecision::kNo;
+
+	if(user.voted_limit) {
+		// if you're a votebomber you shouldn't have a decision anyways
+		user.ip_data.votes[&vm] = IPData::VoteDecision::kNotVoted;
+		return;
+	} else {
+		user.ip_data.votes[&vm] = vote ? IPData::VoteDecision::kYes : IPData::VoteDecision::kNo;
+	}
 
 #define MSG_YES " voted yes."
 #define MSG_NO " voted no."
@@ -1686,6 +1694,8 @@ void CollabVMServer::UserVoted(const VMController& vm, UserList& users, CollabVM
 	instr += '.';
 	instr += *user.username;
 	instr += vote ? MSG_YES ";" : MSG_NO ";";
+
+
 	users.ForEachUser([&](CollabVMUser& user)
 	{
 		SendWSMessage(user, instr);
@@ -1700,6 +1710,10 @@ void CollabVMServer::BroadcastVoteEnded(const VMController& vm, UserList& users,
 	{
 		SendWSMessage(user, "4.vote,1.2;");
 		SendWSMessage(user, instr);
+		// Reset the vote amount for all users.
+		// TODO: Make this only act on users who have voted at least once
+		if(user.voted_amount) { user.voted_amount = 0; }
+		user.voted_limit = false;
 	});
 
 	// Reset for next vote and allow IPData to be deleted
