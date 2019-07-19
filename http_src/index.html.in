@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Collab VM Server v1.2.7 on [HOST_UNAME_OS] [HOST_UNAME_ARCH] - It Works</title>
+	<title>Collab VM Server v1.2.8 on [HOST_UNAME_OS] [HOST_UNAME_ARCH] - It Works</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- load MUI -->
     <link href="http://cdn.muicss.com/mui-0.9.4/css/mui.min.css" rel="stylesheet" type="text/css" />
@@ -13,7 +13,7 @@
     <!-- example content -->
     <div class="mui-container">
       <div class="mui-panel">
-        <center><img src="http://computernewb.com/collabvmlogo.png" height="96" width="96"></center>
+        <center><img src="http://computernewb.com/collabvmlogo.png" height="100" width="100"></center>
         <center><h1>Collab VM Default Page</h1>
         <b>Congratulations!</b> If you're reading this, that means you did not mess up and you set Collab VM up correctly. This is the default page you see when you first set up Collab VM. You can access the administrator panel by going to /admin/. You can find the default password in the README. <br><br>Please note that you may need to change the IP Address in admin.min.js. Open a text editor, search  "127.0.0.1:6004" and replace the IP with your current one. Alternatively, you can compile collab-vm-admin-webapp to use it or if 127.0.0.1 works for you, you can just leave it as default. As for this page, you can either keep it, modify it, or remove it, its your choice. 
         <h1>Details about this host & Collab VM</h1>
