@@ -44,13 +44,14 @@ namespace GuacInstructionParser
 		for (size_t i = start_index; i < len; i++)
 		{
 			char c = str[i];
-			if (c >= '0' && c <= '9')
+			if (c >= '0' && c <= '9' && element_len <= 9999999)
 			{
 				element_len = element_len * 10 + c - '0';
 			}
 			else if (c == '.')
 			{
 				i++;
+				if (i + element_len >= len) return -1;
 				c = str[i + element_len];
 				// Check for a valid terminator
 				if (c == ',' || c == ';')
