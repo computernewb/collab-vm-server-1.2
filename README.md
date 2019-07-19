@@ -100,6 +100,7 @@ QEMU is also available for other platforms, like OpenSolaris and OpenIndiana. co
 * libsqlite3-dev
 * libodb
 * libodb-sqlite
+* libossp-uuid-dev
 * RapidJSON
 * UriParser
 * Websocket++
