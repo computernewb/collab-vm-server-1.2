@@ -51,7 +51,7 @@ protected:
 private:
 	void ConnectCallback(const boost::system::error_code& ec, std::shared_ptr<SocketCtx> ctx)
 	{
-		if (ctx->IsStopped)
+		if (ctx->IsStopped())
 			return;
 
 		if (ec)
