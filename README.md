@@ -17,15 +17,15 @@ When you start the server you'll receive a message that a new database was creat
 Compilation was only tested on i386, amd64, and armhf machines on Linux and Windows. It is unknown if this will work on any other architecture but theoretically Collab VM Server should be able to run on MIPS or PowerPC.
 
 #### Windows
-You need Visual Studio 2015/2017, or MSYS2 with MinGW-w64 to compile the server properly.
+You need MSYS2 with MinGW-w64 to compile the server properly.
+
+Visual Studio is currently not supported, but if you have successfully compiled collab-vm-server with Visual Studio, let us know.
 
 To compile on Microsoft Windows you need the dependencies for Guacamole. You can compile these yourself but it's easier to cross-compile them from Linux or find already compiled libraries for Guacamole on Windows, as these were designed for Linux.
 
 To compile the database files you need ODB, available [here.](http://www.codesynthesis.com/products/odb/download.xhtml)
  - Grab the executable for your platform from the website.
 	 - Go to the src/Database folder and type this command in: `odb -d sqlite -s -q Config.h VMSettings.h`
-
-Visual Studio 2015/2017: Open the collab-vm-server.sln file and make sure before anything you go to Project > collab-vm-server Properties > C/C++ > Additional Include Directories then make sure to select the location of the header files. Next go to Project > collab-vm-server Properties > Linker > General and change the Additional Library Directories to include the location of the .dll and .lib files. Then compile the server.
 
 MSYS2 with MinGW-w64:
 Run the following commands:
@@ -45,7 +45,7 @@ pacman -S --noconf mingw-w64-x86_64-toolchain git
 ./scripts/grab_deps_mw32.sh
 # If you get a Permission Denied error, go into the scripts directory and type chmod +x *.sh.
 # Compile the databases
-odb -d sqlite -s -q src\Database\Config.h src\Database\VMSettings.h
+odb -d sqlite -o src/Database -s -q src/Database/Config.h src/Database/VMSettings.h
 # Finally, build the CollabVM Server.
 make
 # Or for Win32.
@@ -69,7 +69,7 @@ sudo yum groupinstall 'Development Tools'
 ./scripts/grab_deps_linux.sh 
 # If you get a Permission Denied error, go into the scripts directory and type chmod +x *.sh.
 # Compile the databases
-odb -d sqlite -s -q src\Database\Config.h src\Database\VMSettings.h
+odb -d sqlite -o src/Database -s -q src/Database/Config.h src/Database/VMSettings.h
 # Finally, build the CollabVM Server.
 make
 ```
