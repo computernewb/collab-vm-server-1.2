@@ -51,6 +51,7 @@ main(){
 	triplet_install "dlfcn";
 	triplet_install "boost";
 	triplet_install "sqlite3";
+	triplet_install "cyrus-sasl";
 
 	# Install other deps
 	[[ ! -d "cvmlib_src32/" ]] && mkdir cvmlib_src32;
