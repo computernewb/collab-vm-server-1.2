@@ -310,11 +310,11 @@ void QEMUController::InitQMP()
 {
 #ifdef _WIN32
 	qmp_address_ = settings_->QMPAddress;
-	std::string port = std::to_string(settings_->QMPPort);
+	std::string port = std::to_string(settings_->VNCPort - 100);
 	qmp_address_.reserve(qmp_address_.length() + 1 + port.length());
 	qmp_address_ += ':';
 	qmp_address_ += port;
-	qmp_ = std::make_shared<QMPTCPClient>(*qmp_service_, settings_->QMPAddress, settings_->QMPPort);
+	qmp_ = std::make_shared<QMPTCPClient>(*qmp_service_, "127.0.0.1", settings_->VNCPort - 100);
 #else 
 	if (settings_->QMPSocketType == VMSettings::SocketType::kTCP)
 	{
