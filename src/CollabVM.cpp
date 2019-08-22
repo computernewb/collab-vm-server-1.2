@@ -1920,6 +1920,46 @@ void CollabVMServer::SendOnlineUsersList(CollabVMUser& user)
 
 void CollabVMServer::ChangeUsername(const std::shared_ptr<CollabVMUser>& data, const std::string& new_username, UsernameChangeResult result, bool send_history)
 {
+	// Ratelimit these username changes
+	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
+	if (data->ip_data.name_fixed)
+	{
+		if ((now - data->ip_data.last_name_chg).count() >= database_.Configuration.ChatMuteTime)
+			data->ip_data.name_fixed = false;
+		else
+			return;
+	}
+	if (database_.Configuration.ChatRateCount && database_.Configuration.ChatRateTime)
+	{
+		// Calculate the time since the user's last name change
+		if ((now - data->ip_data.last_name_chg).count() < database_.Configuration.ChatRateTime)
+		{
+			if (++data->ip_data.name_chg_count >= database_.Configuration.ChatRateCount)
+			{
+				std::string mute_time = std::to_string(database_.Configuration.ChatMuteTime);
+				std::cout << "[Change Username] Username script detected. It has been stopped for " << mute_time <<
+					" seconds. IP: " << data->ip_data.GetIP() << " Username: \"" <<
+					*data->username << '"' << std::endl;
+				// Keep the user from changing their name for attempting to go over the
+				// name change limit
+				data->ip_data.last_name_chg = now;
+				data->ip_data.name_fixed = true;
+#define npart1 "Your username cannot be changed for "
+#define npart2 " seconds. Please stop your username script."
+				std::string instr = "4.chat,0.,";
+				instr += std::to_string(mute_time.length() + sizeof(npart1) + sizeof(npart2) - 2);
+				instr += "." npart1;
+				instr += mute_time;
+				instr += npart2 ";";
+				SendWSMessage(*data, instr);
+				return;
+			}
+		}
+		else
+		{
+			data->ip_data.name_chg_count = 0;
+		}
+	}
 	// Send a rename instruction to the client telling them their username
 	std::string instr;
 	instr = "6.rename,1.0,1.";
@@ -1993,7 +2033,9 @@ void CollabVMServer::ChangeUsername(const std::shared_ptr<CollabVMUser>& data, c
 		data->username = std::make_shared<std::string>(new_username);
 		std::cout << "[Username Assigned] IP: " << data->ip_data.GetIP() << " New username: \"" << new_username << '"' << std::endl;
 	}
-
+	// Count the rename as a chat message
+	data->ip_data.name_chg_count++;
+	data->ip_data.last_name_chg = now;
 	usernames_[new_username] = data;
 }
 
@@ -2503,7 +2545,6 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 				// chat message limit
 				user->ip_data.last_chat_msg = now;
 				user->ip_data.chat_muted = true;
-
 #define part1 "You have been muted for "
 #define part2 " seconds."
 				std::string instr = "4.chat,0.,";

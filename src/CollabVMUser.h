@@ -30,6 +30,21 @@ struct IPData
 	uint8_t connections;
 
 	/**
+	 * The last time the username was changed from this IP.
+	 */
+	std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> last_name_chg;
+
+	/**
+	 * The number of times the username was changed within a certain amount of time.
+	 */
+	uint8_t name_chg_count;
+
+	/**
+	 * Whether the user's username is fixed (can't change).
+	 */
+	bool name_fixed;
+
+	/**
 	 * The last time a chat message was sent from this IP.
 	 */
 	std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> last_chat_msg;
