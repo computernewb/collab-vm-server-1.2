@@ -2033,7 +2033,7 @@ void CollabVMServer::ChangeUsername(const std::shared_ptr<CollabVMUser>& data, c
 		data->username = std::make_shared<std::string>(new_username);
 		std::cout << "[Username Assigned] IP: " << data->ip_data.GetIP() << " New username: \"" << new_username << '"' << std::endl;
 	}
-	// Count the rename as a chat message
+	// Count the renames
 	data->ip_data.name_chg_count++;
 	data->ip_data.last_name_chg = now;
 	usernames_[new_username] = data;
