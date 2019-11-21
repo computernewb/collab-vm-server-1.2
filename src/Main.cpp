@@ -119,12 +119,16 @@ void WorkerThread(F func)
 
 void IgnorePipe() {
 	// Ignore SIGPIPE to prevent LibVNCClient from crashing
+#ifndef _WIN32
 	struct sigaction pipe;
 	pipe.sa_handler = SIG_IGN;
 	pipe.sa_flags = 0;
 	if(sigaction(SIGPIPE, &pipe, 0) == -1) {
 		std::cout << "Failed to ignore SIGPIPE. Crashies may occur now\n";
 	}
+#else
+	// TODO: is this a problem on Windows?
+#endif
 }
 
 #ifndef UNIT_TEST
