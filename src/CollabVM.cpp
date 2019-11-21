@@ -1,28 +1,31 @@
-/* Collab VM 
+/* Collab VM
 Created By:
-Cosmic Sans 
+Cosmic Sans
 Dartz
 Geodude
+
 Special Thanks:
+
 CHOCOLATEMAN
 Colonel Seizureton/Colonel Munchkin
 CtrlAltDel
 FluffyVulpix
+modeco80
 hannah
-Ir0nlake/mc80/modeco80
 LoveEevee
 Matthew
 Vanilla
-and the rest of the Collab VM Community for all their help over the 
-years, including, but of course not limited to: donating, using the 
-site, telling their friends/family, being a great help, and more.
-A special shoutout to the Collab VM community for being such a great 
-help. You've made the last 2 years great. Here is the team's special 
-thanks to you - the Collab VM Server Source Code. We really hope you 
-enjoy and we hope you continue using the website. Thank you all.
-The Webframe source code is here: 
-https://github.com/computernewb/collab-vm-web-app
+and the rest of the Collab VM Community for all their help over the years, including, but of course not limited to:
+
+donating, using the site, telling their friends/family, being a great help, and more.
+A special shoutout to the Collab VM community for being such a great help. 
+You've made the last 2 years great. 
+Here is the team's special thanks to you - the Collab VM Server Source Code. We really hope you enjoy and we hope you continue using the website. 
+Thank you all.
+The Webframe source code is here: https://github.com/computernewb/collab-vm-web-app
+
 Please email rightowner@gmail.com for any assistance.
+
 ~Cosmic Sans, Dartz, and Geodude
 */
 #include "CollabVM.h"
@@ -226,6 +229,8 @@ static const std::string snapshot_modes_[]{
 	"vm",
 	"hd"
 };
+
+void IgnorePipe();
 
 CollabVMServer::CollabVMServer(boost::asio::io_service& service) :
 	service_(service),
@@ -1096,6 +1101,7 @@ void CollabVMServer::UpdateVMStatus(const std::string& vm_name, VMController::Co
 
 void CollabVMServer::ProcessingThread()
 {
+	IgnorePipe();
 	while (true)
 	{
 		std::unique_lock<std::mutex> lock(process_queue_lock_);
