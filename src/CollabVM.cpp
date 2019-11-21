@@ -15,13 +15,14 @@ hannah
 LoveEevee
 Matthew
 Vanilla
-and the rest of the Collab VM Community for all their help over the years, including, but of course not limited to:
+and the rest of the Collab VM Community for all their help over the years,
+including, but of course not limited to:
+Donating, using the site, telling their friends/family, being a great help, and more.
 
-donating, using the site, telling their friends/family, being a great help, and more.
-A special shoutout to the Collab VM community for being such a great help. 
-You've made the last 2 years great. 
-Here is the team's special thanks to you - the Collab VM Server Source Code. We really hope you enjoy and we hope you continue using the website. 
-Thank you all.
+A special shoutout to the Collab VM community for being such a great help.
+You've made the last 5 years great.
+Here is the team's special thanks to you - the Collab VM Server Source Code.
+We really hope you enjoy and we hope you continue using the website. Thank you all.
 The Webframe source code is here: https://github.com/computernewb/collab-vm-web-app
 
 Please email rightowner@gmail.com for any assistance.
