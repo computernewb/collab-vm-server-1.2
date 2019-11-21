@@ -126,8 +126,6 @@ void IgnorePipe() {
 	if(sigaction(SIGPIPE, &pipe, 0) == -1) {
 		std::cout << "Failed to ignore SIGPIPE. Crashies may occur now\n";
 	}
-#else
-	// TODO: is this a problem on Windows?
 #endif
 }
 
