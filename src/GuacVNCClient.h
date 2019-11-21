@@ -35,7 +35,7 @@ public:
 	void Stop() override;
 	void CleanUp() override;
 	~GuacVNCClient();
-	
+
 private:
 
 	void OnUserJoin(GuacUser& user);

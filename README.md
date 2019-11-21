@@ -44,9 +44,6 @@ pacman -S --noconf mingw-w64-x86_64-toolchain git
 # Get all of the CollabVM Server dependencies (for Win32).
 ./scripts/grab_deps_mw32.sh
 # If you get a Permission Denied error, go into the scripts directory and type chmod +x *.sh.
-# Compile the databases
-odb -d sqlite -o src/Database -s -q src/Database/Config.h src/Database/VMSettings.h
-# Finally, build the CollabVM Server.
 make
 # Or for Win32.
 make WARCH=w32
@@ -66,11 +63,9 @@ sudo apt install -y build-essential
 # on Fedora/Red Hat/CentOS/Etc
 sudo yum groupinstall 'Development Tools'
 # Get all of the CollabVM Server dependencies for Linux.
-./scripts/grab_deps_linux.sh 
 # If you get a Permission Denied error, go into the scripts directory and type chmod +x *.sh.
-# Compile the databases
-odb -d sqlite -o src/Database -s -q src/Database/Config.h src/Database/VMSettings.h
-# Finally, build the CollabVM Server.
+./scripts/grab_deps_linux.sh 
+# Finally, build the CollabVM Server (This now includes ODB compile steps).
 make
 ```
 
