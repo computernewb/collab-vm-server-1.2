@@ -50,6 +50,6 @@ clean:
 	@echo "[>] RMDIR 'obj/'"
 	@rm -rf obj/
 help:
-	@echo -e "CollabVM Server 1.2.8 Makefile help:\n"
+	@echo -e "CollabVM Server 1.2.9 Makefile help:\n"
 	@echo "make - Build release"
 	@echo "make DEBUG=1 - Build a debug build (Adds extra trace information and debug symbols)"

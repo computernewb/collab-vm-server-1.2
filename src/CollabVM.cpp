@@ -2144,7 +2144,7 @@ void CollabVMServer::OnRenameInstruction(const std::shared_ptr<CollabVMUser>& us
 		ChangeUsername(user, username, UsernameChangeResult::kSuccess, args.size() > 1);
 		return;
 	}
-		
+
 	ChangeUsername(user, gen_username ? GenerateUsername() : *user->username.get(), result, args.size() > 1);
 }
 
@@ -2272,6 +2272,7 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 	{
 	case kStop:
 		user->admin_connected = false;
+		user->user_rank = UserRank::kUnregistered;
 		admin_connections_.erase(user);
 		break;
 	case kSeshID:
@@ -2286,9 +2287,14 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			if (!admin_session_id_.empty() && args[1] == admin_session_id_)
 			{
 				user->admin_connected = true;
+				user->user_rank = UserRank::kAdmin;
 				admin_connections_.insert(user);
+
 				// Send login success response
 				SendWSMessage(*user, "5.admin,1.0,1.1;");
+
+				if(user->vm_controller != nullptr)
+					SendOnlineUsersList(*user); // send userlist if connected to a VM
 			}
 			else
 			{
@@ -2301,9 +2307,14 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 		if (args.size() == 2 && args[1] == database_.Configuration.MasterPassword)
 		{
 			user->admin_connected = true;
+			user->user_rank = UserRank::kAdmin;
 			admin_connections_.insert(user);
+
 			// Send login success response
 			SendWSMessage(*user, "5.admin,1.0,1.1;");
+
+			if(user->vm_controller != nullptr)
+				SendOnlineUsersList(*user); // send userlist if connected to a VM
 		}
 		else
 		{
