@@ -11,6 +11,6 @@ namespace GuacInstructionParser
 	 * @param data The connection data belonging to the client that sent the instruction.
 	 * @param instruction The instruction to parse.
 	 */
-	void ParseInstruction(CollabVMServer& server, const std::shared_ptr<CollabVMUser>& user, const char* instr, size_t instr_len);
+	void ParseInstruction(CollabVMServer& server, const std::shared_ptr<CollabVMUser>& user, const std::string& instruction);
 }
 
