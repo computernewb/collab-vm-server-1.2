@@ -1,6 +1,7 @@
 #include "GuacInstructionParser.h"
 #include "CollabVM.h"
 #include <vector>
+
 #include <functional>
 #include <string>
 
@@ -29,105 +30,83 @@ namespace GuacInstructionParser
 		{ "vote", &CollabVMServer::OnVoteInstruction },
 		{ "file", &CollabVMServer::OnFileInstruction }
 	};
+	
+	constexpr size_t instruction_count = sizeof(instructions)/sizeof(Instruction);
 
 	/**
-	* Reads the length prefix from a guacamole instruction.
-	* @param str The beginning of the string.
-	* @param len The total length of the string.
-	* @param start_index The index to start reading from.
-	* @param index A pointer to a size_t that receives the index of the element.
-	* @returns The length of the element or -1 if there was a parsing error.
-	*/
-	static size_t ReadGuacElement(const char* str, size_t len, int start_index, size_t* index)
+	 * Max element size of a Guacamole element.
+	 */
+	constexpr std::uint64_t MAX_GUAC_ELEMENT_LENGTH = 2500;
+		
+	/**
+	 * Max size of a Guacamole frame.
+	 */
+	constexpr std::uint64_t MAX_GUAC_FRAME_LENGTH = 6144;
+		
+	 /**
+	  * Decode an instruction from a string.
+	  * \param[in] input input guacamole string to decode
+	  */
+	std::vector<std::string> Decode(const std::string& input) 
 	{
-		size_t element_len = 0;
-		for (size_t i = start_index; i < len; i++)
-		{
-			char c = str[i];
-			if (c >= '0' && c <= '9' && element_len <= 9999999)
-			{
-				element_len = element_len * 10 + c - '0';
+		std::vector<std::string> output;
+		if (input.back() != ';') 
+			return output;
+
+		if(input.empty() || input.length() >= MAX_GUAC_FRAME_LENGTH)
+			return output;
+		
+		std::istringstream iss{input};
+		while (iss) {
+			unsigned long long length{0};
+			iss >> length;
+
+			if (!iss) 
+				return std::vector<std::string>();
+			
+			// Ignore weird elements that could be an attempt to crash the server
+			if(length >= MAX_GUAC_ELEMENT_LENGTH || length >= input.length())
+				return std::vector<std::string>();
+
+			if (iss.peek() != '.') 
+				return std::vector<std::string>();
+
+			iss.get();  // remove the period
+		
+			std::vector<char> content(length + 1, '\0');
+			iss.read(content.data(), static_cast<std::streamsize>(length));
+			output.push_back(std::string(content.data()));
+
+			const char& separator = iss.peek();
+			if (separator != ',') {
+				if (separator == ';') 
+					return output;
+				return std::vector<std::string>();
 			}
-			else if (c == '.')
-			{
-				i++;
-				if (i + element_len >= len) return -1;
-				c = str[i + element_len];
-				// Check for a valid terminator
-				if (c == ',' || c == ';')
-				{
-					*index = i;
-					return element_len;
-				}
-				break;
-			}
-			else
-			{
-				break;
-			}
+			iss.get();
 		}
-		return -1;
+		return std::vector<std::string>();
 	}
 
-	void ParseInstruction(CollabVMServer& server, const std::shared_ptr<CollabVMUser>& user, const char* instr, size_t instr_len)
+	void ParseInstruction(CollabVMServer& server, const std::shared_ptr<CollabVMUser>& user, const std::string& instruction)
 	{
-		size_t index;
-		size_t len = ReadGuacElement(instr, instr_len, 0, &index);
-		if (len == -1)
-		{
-			// Parse error
+		std::vector<std::string> decoded = Decode(instruction);
+		if(decoded.empty()) 
 			return;
-		}
-
-		const char* opcode = &instr[index];
-		// Look for the opcode in the instruction array
-		int i;
-		for (i = 0; i < sizeof(instructions)/sizeof(Instruction); i++)
-		{
-			if (!instructions[i].opcode.compare(0, std::string::npos, opcode, len))
-			{
-				goto valid_opcode;
+		
+		for(size_t i = 0; i < instruction_count; ++i) {
+			if(instructions[i].opcode == decoded[0]) {
+				auto arguments = std::vector<std::string>(decoded.begin() + 1, decoded.end());
+				auto argument_conv = std::vector<char*>();
+				argument_conv.resize(arguments.size());
+				for(size_t j = 0; j < arguments.size(); ++j) 
+					argument_conv[j] = const_cast<char*>(arguments[j].c_str());
+				
+				// Call the instruction handler
+				InstructionHandler x = instructions[i].handler;
+				(server.*x)(user, argument_conv);
+				argument_conv.clear();
 			}
 		}
-		// Return if the instruction was not found in the array of handlers
-		return;
-
-	valid_opcode:
-		// Copy the instr to a mutable buffer
-		char* instr_buf = new char[instr_len];
-		std::memcpy(instr_buf, instr, instr_len);
-
-		// If the instruction was recognized, continue parsing the remaining arguments
-		std::vector<char*> arguments;
-		char c = instr_buf[index + len];
-		while (index + len + 1 < instr_len && c == ',')
-		{
-			len = ReadGuacElement(instr_buf, instr_len, index + len + 1, &index);
-			if (len == -1)
-			{
-				delete[] instr_buf;
-				return;
-			}
-
-			// Remember previous value
-			c = instr_buf[index + len];
-			// Add null terminator after opcode
-			instr_buf[index + len] = '\0';
-
-			arguments.push_back(&instr_buf[index]);
-		}
-		// TODO: Some of these checks may be unnecessary
-		if (len == -1 || index + len + 1 != instr_len || c != ';')
-		{
-			delete[] instr_buf;
-			return;
-		}
-
-		// Call the instruction handler
-		InstructionHandler x = instructions[i].handler;
-		(server.*x)(user, arguments);
-
-		delete[] instr_buf;
 	}
-
 }

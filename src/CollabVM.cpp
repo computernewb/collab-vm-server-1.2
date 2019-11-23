@@ -1,4 +1,5 @@
-/* Collab VM
+/*
+Collab VM
 Created By:
 Cosmic Sans
 Dartz
@@ -1124,7 +1125,7 @@ void CollabVMServer::ProcessingThread()
 			if (msg_action->user->connected)
 			{
 				const std::string& instr = msg_action->message->get_payload();
-				GuacInstructionParser::ParseInstruction(*this, msg_action->user, instr.c_str(), instr.length());
+				GuacInstructionParser::ParseInstruction(*this, msg_action->user, instr);
 			}
 			break;
 		}
@@ -2322,8 +2323,7 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			SendWSMessage(*user, "5.admin,1.0,1.0;");
 		}
 		break;
-	case kGetSettings:
-	{
+	case kGetSettings: {
 		ostringstream ss("5.admin,1.1,", ostringstream::in | ostringstream::out | ostringstream::ate);
 		string resp = GetServerSettings();
 		ss << resp.length() << '.' << resp << ';';
