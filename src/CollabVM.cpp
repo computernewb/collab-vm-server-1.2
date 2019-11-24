@@ -1,28 +1,33 @@
-/* Collab VM 
+/*
+Collab VM
 Created By:
-Cosmic Sans 
+Cosmic Sans
 Dartz
 Geodude
+
 Special Thanks:
+
 CHOCOLATEMAN
 Colonel Seizureton/Colonel Munchkin
 CtrlAltDel
 FluffyVulpix
+modeco80
 hannah
-Ir0nlake/mc80/modeco80
 LoveEevee
 Matthew
 Vanilla
-and the rest of the Collab VM Community for all their help over the 
-years, including, but of course not limited to: donating, using the 
-site, telling their friends/family, being a great help, and more.
-A special shoutout to the Collab VM community for being such a great 
-help. You've made the last 2 years great. Here is the team's special 
-thanks to you - the Collab VM Server Source Code. We really hope you 
-enjoy and we hope you continue using the website. Thank you all.
-The Webframe source code is here: 
-https://github.com/computernewb/collab-vm-web-app
+and the rest of the Collab VM Community for all their help over the years,
+including, but of course not limited to:
+Donating, using the site, telling their friends/family, being a great help, and more.
+
+A special shoutout to the Collab VM community for being such a great help.
+You've made the last 5 years great.
+Here is the team's special thanks to you - the Collab VM Server Source Code.
+We really hope you enjoy and we hope you continue using the website. Thank you all.
+The Webframe source code is here: https://github.com/computernewb/collab-vm-web-app
+
 Please email rightowner@gmail.com for any assistance.
+
 ~Cosmic Sans, Dartz, and Geodude
 */
 #include "CollabVM.h"
@@ -226,6 +231,8 @@ static const std::string snapshot_modes_[]{
 	"vm",
 	"hd"
 };
+
+void IgnorePipe();
 
 CollabVMServer::CollabVMServer(boost::asio::io_service& service) :
 	service_(service),
@@ -1096,6 +1103,7 @@ void CollabVMServer::UpdateVMStatus(const std::string& vm_name, VMController::Co
 
 void CollabVMServer::ProcessingThread()
 {
+	IgnorePipe();
 	while (true)
 	{
 		std::unique_lock<std::mutex> lock(process_queue_lock_);
@@ -1117,7 +1125,7 @@ void CollabVMServer::ProcessingThread()
 			if (msg_action->user->connected)
 			{
 				const std::string& instr = msg_action->message->get_payload();
-				GuacInstructionParser::ParseInstruction(*this, msg_action->user, instr.c_str(), instr.length());
+				GuacInstructionParser::ParseInstruction(*this, msg_action->user, instr);
 			}
 			break;
 		}
@@ -2179,7 +2187,7 @@ void CollabVMServer::OnRenameInstruction(const std::shared_ptr<CollabVMUser>& us
 		ChangeUsername(user, username, UsernameChangeResult::kSuccess, args.size() > 1);
 		return;
 	}
-		
+
 	ChangeUsername(user, gen_username ? GenerateUsername() : *user->username.get(), result, args.size() > 1);
 }
 
@@ -2307,6 +2315,7 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 	{
 	case kStop:
 		user->admin_connected = false;
+		user->user_rank = UserRank::kUnregistered;
 		admin_connections_.erase(user);
 		break;
 	case kSeshID:
@@ -2321,9 +2330,14 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			if (!admin_session_id_.empty() && args[1] == admin_session_id_)
 			{
 				user->admin_connected = true;
+				user->user_rank = UserRank::kAdmin;
 				admin_connections_.insert(user);
+
 				// Send login success response
 				SendWSMessage(*user, "5.admin,1.0,1.1;");
+
+				if(user->vm_controller != nullptr)
+					SendOnlineUsersList(*user); // send userlist if connected to a VM
 			}
 			else
 			{
@@ -2336,9 +2350,14 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 		if (args.size() == 2 && args[1] == database_.Configuration.MasterPassword)
 		{
 			user->admin_connected = true;
+			user->user_rank = UserRank::kAdmin;
 			admin_connections_.insert(user);
+
 			// Send login success response
 			SendWSMessage(*user, "5.admin,1.0,1.1;");
+
+			if(user->vm_controller != nullptr)
+				SendOnlineUsersList(*user); // send userlist if connected to a VM
 		}
 		else
 		{
@@ -2346,8 +2365,7 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			SendWSMessage(*user, "5.admin,1.0,1.0;");
 		}
 		break;
-	case kGetSettings:
-	{
+	case kGetSettings: {
 		ostringstream ss("5.admin,1.1,", ostringstream::in | ostringstream::out | ostringstream::ate);
 		string resp = GetServerSettings();
 		ss << resp.length() << '.' << resp << ';';

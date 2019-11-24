@@ -116,6 +116,19 @@ void WorkerThread(F func)
 	work.reset();
 }
 
+
+void IgnorePipe() {
+	// Ignore SIGPIPE to prevent LibVNCClient from crashing
+#ifndef _WIN32
+	struct sigaction pipe;
+	pipe.sa_handler = SIG_IGN;
+	pipe.sa_flags = 0;
+	if(sigaction(SIGPIPE, &pipe, 0) == -1) {
+		std::cout << "Failed to ignore SIGPIPE. Crashies may occur now\n";
+	}
+#endif
+}
+
 #ifndef UNIT_TEST
 int main(int argc, char* argv[])
 {
@@ -160,6 +173,7 @@ int main(int argc, char* argv[])
 
 		boost::asio::signal_set interruptSignal(service_, SIGINT, SIGTERM);
 		interruptSignal.async_wait(std::bind(&SignalHandler));
+		IgnorePipe();
 #endif
 
 		server_ = std::make_shared<CollabVMServer>(service_);

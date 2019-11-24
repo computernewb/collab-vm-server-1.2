@@ -16,6 +16,8 @@ using std::chrono::duration;
 using std::chrono::milliseconds;
 typedef std::chrono::time_point<steady_clock, milliseconds> time_point;
 
+void IgnorePipe();
+
 GuacVNCClient::GuacVNCClient(CollabVMServer& server, VMController& controller, UserList& users, const std::string& hostname,
 	uint16_t port/*, uint16_t frame_duration*/) :
 	GuacClient(server, controller, users, hostname, port, /*frame_duration*/200),
@@ -460,6 +462,8 @@ static void guac_vnc_msleep(int msec)
 
 void GuacVNCClient::VNCThread()
 {
+	IgnorePipe();
+
 	// If the mutex is locked by the state_mutex_ object then it means
 	// that we do not want to connect to the VNC server yet
 	unique_lock<mutex> lock(state_mutex_);
@@ -684,6 +688,9 @@ void GuacVNCClient::OnUserLeave(GuacUser& user)
 
 void GuacVNCClient::MouseHandler(GuacUser& user, int x, int y, int button_mask)
 {
+#ifdef _DEBUG
+	//std::cout << "Mouse " << x << 'x' << y << " flags " << button_mask << '\n';
+#endif
 	/* Store current mouse location */
 	guac_common_cursor_move(cursor_, user, x, y);
 
@@ -692,6 +699,9 @@ void GuacVNCClient::MouseHandler(GuacUser& user, int x, int y, int button_mask)
 
 void GuacVNCClient::KeyHandler(GuacUser& user, int keysym, int pressed)
 {
+#ifdef _DEBUG
+	//std::cout << "Key " << keysym << " isPressed " << pressed << '\n';
+#endif
 	SendKeyEvent(rfb_client_, keysym, pressed);
 }
 
