@@ -1,75 +1,152 @@
 # Makedefs: Common make rules for building the CollabVM Server.
 
-CCFLAGS = -Isrc -Isrc/rapidjson -Isrc/Database -Isrc/VMControllers -Isrc/Sockets -Isrc/guacamole -Isrc/uriparser
+CCFLAGS = -Isrc -Isrc/uriparser
 
 ifeq ($(DEBUG),1)
 # debug mode
-CCFLAGS += -g -O0 -D_DEBUG
+CCFLAGS += -g -O0 -D_DEBUG -DDEBUG
 LDFLAGS = -g
 else
-CCFLAGS += -O2
+# nyoom speedy
+CCFLAGS += -O2 -ffast-math -march=native
 LDFLAGS = -s
 endif
 
-CXXFLAGS = -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings -fpermissive -std=c++11 $(CCFLAGS)
+ifeq ($(JPEG), 1) 
+# using JPEG instead of PNG
+CCFLAGS += -DUSE_JPEG
+endif
+
+CXXFLAGS = -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings -fpermissive -std=c++11 $(CCFLAGS) -Isrc -Isrc/rapidjson -Isrc/Database -Isrc/VMControllers -Isrc/Sockets -Isrc/guacamole -Isrc/uriparser
 
 
-OBJS = $(OBJDIR)/Config-odb.o $(OBJDIR)/VMSettings-odb.o $(OBJDIR)/Main.o $(OBJDIR)/CollabVM.o $(OBJDIR)/Database.o $(OBJDIR)/QMP.o $(OBJDIR)/QEMUController.o $(OBJDIR)/VMController.o $(OBJDIR)/QMPClient.o $(OBJDIR)/AgentClient.o $(OBJDIR)/unicode.o $(OBJDIR)/error.o $(OBJDIR)/guac_clipboard.o $(OBJDIR)/guac_cursor.o $(OBJDIR)/guac_display.o $(OBJDIR)/guac_dot_cursor.o $(OBJDIR)/guac_iconv.o $(OBJDIR)/guac_list.o $(OBJDIR)/guac_pointer_cursor.o $(OBJDIR)/guac_rect.o $(OBJDIR)/guac_string.o $(OBJDIR)/guac_surface.o $(OBJDIR)/hash.o $(OBJDIR)/id.o $(OBJDIR)/palette.o $(OBJDIR)/pool.o $(OBJDIR)/protocol.o $(OBJDIR)/timestamp.o $(OBJDIR)/GuacSocket.o $(OBJDIR)/GuacWebSocket.o $(OBJDIR)/GuacBroadcastSocket.o $(OBJDIR)/GuacClient.o $(OBJDIR)/GuacUser.o $(OBJDIR)/GuacVNCClient.o $(OBJDIR)/GuacInstructionParser.o $(OBJDIR)/UriCommon.o $(OBJDIR)/UriFile.o $(OBJDIR)/UriNormalizeBase.o $(OBJDIR)/UriParse.o $(OBJDIR)/UriResolve.o $(OBJDIR)/UriCompare.o $(OBJDIR)/UriIp4Base.o $(OBJDIR)/UriNormalize.o $(OBJDIR)/UriQuery.o $(OBJDIR)/UriShorten.o $(OBJDIR)/UriEscape.o $(OBJDIR)/UriIp4.o $(OBJDIR)/UriParseBase.o $(OBJDIR)/UriRecompose.o
+OBJS = $(OBJDIR)/Config-odb.o                    \
+       $(OBJDIR)/VMSettings-odb.o                \
+       $(OBJDIR)/Main.o                          \
+       $(OBJDIR)/CollabVM.o                      \
+       $(OBJDIR)/Database.o                      \
+       $(OBJDIR)/QMP.o                           \
+       $(OBJDIR)/QEMUController.o                \
+       $(OBJDIR)/VMController.o                  \
+       $(OBJDIR)/QMPClient.o                     \
+       $(OBJDIR)/AgentClient.o                   \
+       $(OBJDIR)/unicode.o                       \
+       $(OBJDIR)/error.o                         \
+       $(OBJDIR)/guac_clipboard.o                \
+       $(OBJDIR)/guac_cursor.o                   \
+       $(OBJDIR)/guac_display.o                  \
+       $(OBJDIR)/guac_dot_cursor.o               \
+       $(OBJDIR)/guac_iconv.o                    \
+       $(OBJDIR)/guac_list.o                     \
+       $(OBJDIR)/guac_pointer_cursor.o           \
+       $(OBJDIR)/guac_rect.o                     \
+       $(OBJDIR)/guac_string.o                   \
+       $(OBJDIR)/guac_surface.o                  \
+       $(OBJDIR)/hash.o                          \
+       $(OBJDIR)/id.o                            \
+       $(OBJDIR)/palette.o                       \
+       $(OBJDIR)/pool.o                          \
+       $(OBJDIR)/protocol.o                      \
+       $(OBJDIR)/timestamp.o                     \
+       $(OBJDIR)/GuacSocket.o                    \
+       $(OBJDIR)/GuacWebSocket.o                 \
+       $(OBJDIR)/GuacBroadcastSocket.o           \
+       $(OBJDIR)/GuacClient.o                    \
+       $(OBJDIR)/GuacUser.o                      \
+       $(OBJDIR)/GuacVNCClient.o                 \
+       $(OBJDIR)/GuacInstructionParser.o         \
+       $(OBJDIR)/UriCommon.o                     \
+       $(OBJDIR)/UriFile.o                       \
+       $(OBJDIR)/UriNormalizeBase.o              \
+       $(OBJDIR)/UriParse.o                      \
+       $(OBJDIR)/UriResolve.o                    \
+       $(OBJDIR)/UriCompare.o                    \
+       $(OBJDIR)/UriIp4Base.o                    \
+       $(OBJDIR)/UriNormalize.o                  \
+       $(OBJDIR)/UriQuery.o                      \
+       $(OBJDIR)/UriShorten.o                    \
+       $(OBJDIR)/UriEscape.o                     \
+       $(OBJDIR)/UriIp4.o                        \
+       $(OBJDIR)/UriParseBase.o                  \
+       $(OBJDIR)/UriRecompose.o
 
-all: pre $(BINDIR)/collab-vm-server
+ifeq ($(JPEG), 1)
+OBJS += $(OBJDIR)/cairo_jpg.o
+endif
 
-pre:
-	@if [ ! -d "$(BINDIR)/" ]; then echo "[>] MKDIR '$(BINDIR)/'" && mkdir -p $(BINDIR)/; fi; 
-	@if [ ! -d "$(OBJDIR)" ]; then echo "[>] MKDIR '$(OBJDIR)'" && mkdir -p $(OBJDIR)/; fi; 
+.PHONY: all dirs
+
+all: dirs $(BINDIR)/collab-vm-server
+
+$(BINDIR)/:
+	@echo "mkdir $@"
+	@mkdir -p $@
+
+$(OBJDIR)/:
+	@echo "mkdir $@"
+	@mkdir -p $@
+
+# meta-rules
+
+dirs: $(BINDIR)/ $(OBJDIR)/
+
+clean:
+	@echo "rmdir '$(BINDIR)/'"
+	@$(RM) -r $(BINDIR)/
+	@echo "rmdir '$(OBJDIR)'"
+	@$(RM) -r $(OBJDIR)/
+
+
+# LD rules
 
 $(BINDIR)/collab-vm-server: $(OBJS)
-	@echo "[>] Link $@"
-	@$(CXX) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
+	@echo " Link $@"
+	@$(CXX) $(OBJS) $(LIBS) $(LDFLAGS) -o $@
 
-# make rules for odb shit
+# Source generation rules
 
 src/Database/Config-odb.cxx: src/Database/Config.h
-	@echo "[>] Running ODB on $<"
+	@echo "Running ODB on $<"
 	@odb -d sqlite -o src/Database -s -q $<
 
 src/Database/VMSettings-odb.cxx: src/Database/VMSettings.h
-	@echo "[>] Running ODB on $<"
+	@echo "Running ODB on $<"
 	@odb -d sqlite -o src/Database -s -q $<
 
+# C/C++ compile rules
+
 $(OBJDIR)/%.o: src/%.cpp
-	@echo "[>] Compiling CXX object $@"
+	@echo "Compiling C++ source file $<"
 	@$(CXX) -c $< $(CXXFLAGS) -o $@ 
+	
+$(OBJDIR)/%.o: src/%.c
+	@echo "Compiling C source file $<"
+	@$(CC) -c $< $(CCFLAGS) -o $@
 
 $(OBJDIR)/%.o: src/Database/%.cpp
-	@echo "[>] Compiling CXX object $@"
+	@echo "Compiling C++ source file $<"
 	@$(CXX) -c $< $(CXXFLAGS) -o $@
 
 $(OBJDIR)/%.o: src/Database/%.cxx
-	@echo "[>] Compiling CXX object $@"
+	@echo "Compiling C++ source file $<"
 	@$(CXX) -c $< $(CXXFLAGS) -o $@
 
 $(OBJDIR)/%.o: src/VMControllers/%.cpp
-	@echo "[>] Compiling CXX object $@"
+	@echo "Compiling C++ source file $<"
 	@$(CXX) -c $< $(CXXFLAGS) -o $@
 
 $(OBJDIR)/%.o: src/Sockets/%.cpp
-	@echo "[>] Compiling CXX object $@"
+	@echo "Compiling C++ source file $<"
 	@$(CXX) -c $< $(CXXFLAGS) -o $@
 
 $(OBJDIR)/%.o: src/guacamole/%.cpp
-	@echo "[>] Compiling CXX object $@"
+	@echo "Compiling C++ source file $<"
 	@$(CXX) -c $< $(CXXFLAGS) -Isrc/guacamole -o $@
 
 $(OBJDIR)/%.o: src/guacamole/vnc/%.cpp
-	@echo "[>] Compiling CXX object $@"
+	@echo "Compiling C++ source file $<"
 	@$(CXX) -c $< $(CXXFLAGS) -Isrc/guacamole -o $@
 
 $(OBJDIR)/%.o: src/uriparser/%.c
-	@echo "[>] Compiling C object $@"
+	@echo "Compiling C source file $<"
 	@$(CC) -c $< $(CCFLAGS) -o $@
-
-clean:
-	@echo "[>] RMDIR '$(BINDIR)/'"
-	@$(RM) -r $(BINDIR)/
-	@echo "[>] RMDIR '$(OBJDIR)'"
-	@$(RM) -r $(OBJDIR)/
