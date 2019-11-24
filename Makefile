@@ -50,21 +50,16 @@ else
 $(info [>] Building in release mode)
 endif
 
-all: pre_common
+.PHONY: all clean help
+
+all:
 	@$(MAKE) -f $(MKCONFIG) DEBUG=$(DEBUG) JPEG=$(JPEG)
 	@./scripts/build_site.sh $(ARCH)
 	@mv -f http/ $(BINDIR)
 
-pre_common:
-	@if [ ! -d "bin" ]; then echo "[>] MKDIR 'bin'" && mkdir bin; fi
-	@if [ ! -d "obj" ]; then echo "[>] MKDIR 'obj'" && mkdir obj; fi
-
 clean:
 	@$(MAKE) -f $(MKCONFIG) clean
-	@echo "[>] RMDIR 'bin/'"
-	@rm -rf bin/
-	@echo "[>] RMDIR 'obj/'"
-	@rm -rf obj/
+
 help:
 	@echo -e "CollabVM Server 1.2.9 Makefile help:\n"
 	@echo "make - Build release"

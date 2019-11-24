@@ -100,7 +100,7 @@ clean:
 # LD rules
 
 $(BINDIR)/collab-vm-server: $(OBJS)
-	@echo " Link $@"
+	@echo "Link $@"
 	@$(CXX) $(OBJS) $(LIBS) $(LDFLAGS) -o $@
 
 # Source generation rules
