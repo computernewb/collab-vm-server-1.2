@@ -20,8 +20,7 @@ endif
 CXXFLAGS = -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings -fpermissive -std=c++11 $(CCFLAGS) -Isrc -Isrc/rapidjson -Isrc/Database -Isrc/VMControllers -Isrc/Sockets -Isrc/guacamole -Isrc/uriparser
 
 
-OBJS = \
-       $(OBJDIR)/Config-odb.o                    \
+OBJS = $(OBJDIR)/Config-odb.o                    \
        $(OBJDIR)/VMSettings-odb.o                \
        $(OBJDIR)/Main.o                          \
        $(OBJDIR)/CollabVM.o                      \
