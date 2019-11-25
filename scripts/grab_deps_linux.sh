@@ -1,8 +1,6 @@
 #!/bin/bash
-CVM_HOME=$(pwd)
-
 log(){
-	printf "[>] $1\n"
+	printf "$1\n"
 }
 
 # TODO: expand to other package managers

@@ -6,14 +6,14 @@ ifeq ($(OS), Windows_NT)
 
 ifneq ($(WARCH), win32)
 
-$(info [>] Compiling targeting Win64)
+$(info Compiling targeting Win64)
 MKCONFIG=mk/win64.mk
 ARCH=amd64
 BINDIR=bin/win64/
 
 else
 
-$(info [>] Compiling targeting x86 Windows)
+$(info Compiling targeting x86 Windows)
 MKCONFIG=mk/win32.mkc
 BINDIR=bin/win32/
 ARCH=x86
@@ -23,7 +23,7 @@ endif
 else
 
 # Assume Linux or other *nix-likes
-$(info [>] Compiling targeting *nix)
+$(info Compiling targeting *nix)
 MKCONFIG=mk/linux.mkc
 BINDIR=bin/
 ARCH=$(shell uname -m)
@@ -40,14 +40,14 @@ ifeq ($(JPEG),)
 JPEG = 0
 endif
 
-ifeq ($(JPEG),1)
-$(info [>] Building JPEG mode)
+ifeq ($(DEBUG),1)
+$(info Building in debug mode)
+else
+$(info Building in release mode)
 endif
 
-ifeq ($(DEBUG),1)
-$(info [>] Building in debug mode)
-else
-$(info [>] Building in release mode)
+ifeq ($(JPEG),1)
+$(info Building JPEG support)
 endif
 
 .PHONY: all clean help

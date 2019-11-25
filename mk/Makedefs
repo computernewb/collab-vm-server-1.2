@@ -7,8 +7,8 @@ ifeq ($(DEBUG),1)
 CCFLAGS += -g -O0 -D_DEBUG -DDEBUG
 LDFLAGS = -g
 else
-# nyoom speedy
-CCFLAGS += -O2 -ffast-math -march=native
+# release mode, build with optimizations
+CCFLAGS += -O2 -ffast-math -march=native -mtune=native
 LDFLAGS = -s
 endif
 
@@ -20,14 +20,15 @@ endif
 CXXFLAGS = -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings -fpermissive -std=c++11 $(CCFLAGS) -Isrc -Isrc/rapidjson -Isrc/Database -Isrc/VMControllers -Isrc/Sockets -Isrc/guacamole -Isrc/uriparser
 
 
-OBJS = $(OBJDIR)/Config-odb.o                    \
+OBJS = \
+       $(OBJDIR)/Config-odb.o                    \
        $(OBJDIR)/VMSettings-odb.o                \
        $(OBJDIR)/Main.o                          \
        $(OBJDIR)/CollabVM.o                      \
        $(OBJDIR)/Database.o                      \
-       $(OBJDIR)/QMP.o                           \
        $(OBJDIR)/QEMUController.o                \
        $(OBJDIR)/VMController.o                  \
+       $(OBJDIR)/QMP.o                           \
        $(OBJDIR)/QMPClient.o                     \
        $(OBJDIR)/AgentClient.o                   \
        $(OBJDIR)/unicode.o                       \
@@ -99,7 +100,7 @@ clean:
 	@echo "cleaning ODB source files"
 	@$(RM) -f src/Database/*.cxx src/Database/*.ixx src/Database/*.hxx
 
-# LD rules
+# Link rules
 
 $(BINDIR)/collab-vm-server: $(OBJS)
 	@echo "Link $@"
@@ -122,6 +123,10 @@ $(OBJDIR)/%.o: src/%.cpp
 	@$(CXX) -c $< $(CXXFLAGS) -o $@ 
 	
 $(OBJDIR)/%.o: src/%.c
+	@echo "Compiling C source file $<"
+	@$(CC) -c $< $(CCFLAGS) -o $@
+
+$(OBJDIR)/%.o: src/uriparser/%.c
 	@echo "Compiling C source file $<"
 	@$(CC) -c $< $(CCFLAGS) -o $@
 
@@ -149,6 +154,3 @@ $(OBJDIR)/%.o: src/guacamole/vnc/%.cpp
 	@echo "Compiling C++ source file $<"
 	@$(CXX) -c $< $(CXXFLAGS) -Isrc/guacamole -o $@
 
-$(OBJDIR)/%.o: src/uriparser/%.c
-	@echo "Compiling C source file $<"
-	@$(CC) -c $< $(CCFLAGS) -o $@

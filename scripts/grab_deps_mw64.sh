@@ -2,7 +2,7 @@
 CVM_HOME=$(pwd)
 
 log(){
-	printf "[>] $1\n"
+	printf "$1\n"
 }
 
 triplet_install(){
