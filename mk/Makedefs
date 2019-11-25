@@ -95,7 +95,9 @@ clean:
 	@$(RM) -r $(BINDIR)/
 	@echo "rmdir '$(OBJDIR)'"
 	@$(RM) -r $(OBJDIR)/
-
+# clean out generated source files
+	@echo "cleaning ODB source files"
+	@$(RM) -f src/Database/*.cxx src/Database/*.ixx src/Database/*.hxx
 
 # LD rules
 
@@ -106,11 +108,11 @@ $(BINDIR)/collab-vm-server: $(OBJS)
 # Source generation rules
 
 src/Database/Config-odb.cxx: src/Database/Config.h
-	@echo "Running ODB on $<"
+	@echo "Generating $@ using ODB"
 	@odb -d sqlite -o src/Database -s -q $<
 
 src/Database/VMSettings-odb.cxx: src/Database/VMSettings.h
-	@echo "Running ODB on $<"
+	@echo "Generating $@ using ODB"
 	@odb -d sqlite -o src/Database -s -q $<
 
 # C/C++ compile rules
