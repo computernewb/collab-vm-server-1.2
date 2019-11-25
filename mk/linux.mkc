@@ -1,7 +1,7 @@
 # CollabVM Server mkconfig for GNU/Linux
 CXX = g++
 CC = gcc
-LIBS = -static-libstdc++ -lpthread -lboost_system -lpng -lz -lossp-uuid -lvncclient -lturbojpeg -lcairo -lpixman-1 -ldl -lodb-sqlite -lodb -lsqlite3
+LIBS = -static-libstdc++ -pthread -lturbojpeg -ljpeg -lboost_system -lpng -lz -lossp-uuid -lvncclient -lcairo -lpixman-1 -ldl -lodb-sqlite -lodb -lsqlite3
 OBJDIR = obj
 BINDIR = bin
 

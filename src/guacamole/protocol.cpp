@@ -30,6 +30,13 @@
 #include "stream.h"
 #include "unicode.h"
 
+
+#ifdef USE_JPEG
+extern "C" {
+	#include <cairo_jpg.h>
+}
+#else
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,6 +50,9 @@ extern "C" {
 #include <pngstruct.h>
 #endif
 
+#endif
+
+
 #include <inttypes.h>
 #include <setjmp.h>
 #include <stdarg.h>
@@ -51,6 +61,16 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+
+#ifdef USE_JPEG
+/**
+ * JPEG compression quality
+ *
+ * Lower values will produce images quicker,
+ * but the image quality will be reduced
+ */
+constexpr int JPEG_COMPRESSION_QUALITY = 75;
+#endif
 
 /* Output formatting functions */
 // TODO: Move into GuacSocket
@@ -101,7 +121,7 @@ typedef struct __guac_socket_write_png_data
     int data_size;
 
 } __guac_socket_write_png_data;
-
+#ifndef USE_JPEG
 cairo_status_t __guac_socket_write_png_cairo(void* closure, const unsigned char* data, unsigned int length)
 {
     __guac_socket_write_png_data* png_data = (__guac_socket_write_png_data*) closure;
@@ -111,7 +131,7 @@ cairo_status_t __guac_socket_write_png_cairo(void* closure, const unsigned char*
 
     /* If need resizing, double buffer size until big enough */
     if (next_size > png_data->buffer_size)
-{
+	{
         char* new_buffer;
 
         do {
@@ -121,7 +141,7 @@ cairo_status_t __guac_socket_write_png_cairo(void* closure, const unsigned char*
         /* Resize buffer */
         new_buffer = (char*)realloc(png_data->buffer, png_data->buffer_size);
         png_data->buffer = new_buffer;
-}
+	}
 
     /* Append data to buffer */
     memcpy(png_data->buffer + png_data->data_size, data, length);
@@ -129,12 +149,42 @@ cairo_status_t __guac_socket_write_png_cairo(void* closure, const unsigned char*
 
     return CAIRO_STATUS_SUCCESS;
 }
+#else
+cairo_status_t __guac_socket_write_jpg_cairo(void* closure, const unsigned char* data, unsigned int length)
+{
+    __guac_socket_write_png_data* png_data = (__guac_socket_write_png_data*) closure;
+
+    /* Calculate next buffer size */
+    int next_size = png_data->data_size + length;
+
+    /* If need resizing, double buffer size until big enough */
+    if (next_size > png_data->buffer_size)
+	{
+        char* new_buffer;
+
+        do {
+            png_data->buffer_size <<= 1;
+        } while (next_size > png_data->buffer_size);
+
+        /* Resize buffer */
+        new_buffer = (char*)realloc(png_data->buffer, png_data->buffer_size);
+        png_data->buffer = new_buffer;
+	}
+
+    /* Append data to buffer */
+    memcpy(png_data->buffer + png_data->data_size, data, length);
+    png_data->data_size += length;
+
+    return CAIRO_STATUS_SUCCESS;
+}
+#endif
 
 int __guac_socket_write_length_png_cairo(GuacSocket& socket, cairo_surface_t* surface)
 {
     __guac_socket_write_png_data png_data(socket, 8192, 0);
     int base64_length;
 
+#ifndef USE_JPEG
     /* Write surface */
 	cairo_status_t status;
     if ((status = cairo_surface_write_to_png_stream(surface, __guac_socket_write_png_cairo, &png_data)) != CAIRO_STATUS_SUCCESS)
@@ -144,7 +194,17 @@ int __guac_socket_write_length_png_cairo(GuacSocket& socket, cairo_surface_t* su
         guac_error_message = "Cairo PNG backend failed";
         return -1;
 	}
-
+#else
+	// Write JPEG surface
+	cairo_status_t status;
+    	if ((status = cairo_image_surface_write_to_jpeg_stream(surface, __guac_socket_write_jpg_cairo, &png_data, JPEG_COMPRESSION_QUALITY)) != CAIRO_STATUS_SUCCESS)
+	{
+		const char* status_str = cairo_status_to_string(status);
+	        guac_error = GUAC_STATUS_INTERNAL_ERROR;
+	        guac_error_message = "Cairo JPEG backend failed";
+        	return -1;
+	}
+#endif
     base64_length = (png_data.data_size + 2) / 3 * 4;
 
     /* Write length and data */
@@ -201,6 +261,8 @@ void __guac_socket_flush_png(png_structp png)
 
 int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
 {
+
+#ifndef USE_JPEG
     png_structp png;
     png_infop png_info;
     png_byte** png_rows;
@@ -243,7 +305,7 @@ int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
         guac_error = GUAC_STATUS_INTERNAL_ERROR;
         guac_error_message = "libpng failed to create write structure";
         return -1;
-}
+	}
 
     png_info = png_create_info_struct(png);
     if (!png_info) {
@@ -251,7 +313,7 @@ int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
         guac_error = GUAC_STATUS_INTERNAL_ERROR;
         guac_error_message = "libpng failed to create info structure";
         return -1;
-}
+	}
 
     /* Set error handler */
     if (setjmp(png_jmpbuf(png))) {
@@ -259,7 +321,7 @@ int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
         guac_error = GUAC_STATUS_IO_ERROR;
         guac_error_message = "libpng output error";
         return -1;
-}
+	}
 
     /* Set up buffer structure */
 	__guac_socket_write_png_data png_data(socket, 8192, 0);
@@ -335,6 +397,10 @@ int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
 
 	free(png_data.buffer);
 	return 0;
+#else
+	// Force Cairo
+	return __guac_socket_write_length_png_cairo(socket, surface);
+#endif
 }
 
 /* Protocol functions */
