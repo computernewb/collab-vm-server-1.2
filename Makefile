@@ -7,7 +7,7 @@ ifeq ($(OS), Windows_NT)
 ifneq ($(WARCH), win32)
 
 $(info Compiling targeting Win64)
-MKCONFIG=mk/win64.mk
+MKCONFIG=mk/win64.mkc
 ARCH=amd64
 BINDIR=bin/win64/
 
