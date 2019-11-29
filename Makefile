@@ -55,7 +55,11 @@ endif
 all:
 	@$(MAKE) -f $(MKCONFIG) DEBUG=$(DEBUG) JPEG=$(JPEG)
 	@./scripts/build_site.sh $(ARCH)
-	@mv -f http/ $(BINDIR)
+	-@ [[ -d "$(BINDIR)/http" ]] && rm -rf $(BINDIR)/http
+	-@mv -f http/ $(BINDIR)
+ifeq ($(OS), Windows_NT)
+	@./scripts/copy_dlls_mw.sh $(ARCH) $(BINDIR)
+endif
 
 clean:
 	@$(MAKE) -f $(MKCONFIG) clean

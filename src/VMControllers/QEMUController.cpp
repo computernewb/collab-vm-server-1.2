@@ -485,18 +485,15 @@ void QEMUController::StartQEMU()
 	si.cb = sizeof(si);
 	ZeroMemory(&qemu_process_, sizeof(qemu_process_));
 
-	char* qemu_args_creproc_friendly = (char*)calloc(1, qemu_cmdline.length() + 1);
-	strncpy(qemu_args_creproc_friendly, qemu_cmdline.c_str(), qemu_cmdline.length());
+	char* QemuCmdLineMutable = (char*)calloc(qemu_cmdline.length() + 1, sizeof(char)); // more idomatic
+	strncpy(QemuCmdLineMutable, qemu_cmdline.c_str(), qemu_cmdline.length());
 
-	BOOL cre_status = CreateProcess(NULL, qemu_args_creproc_friendly, NULL, NULL, FALSE, 0, NULL, NULL, &si, &qemu_process_);
-
-	if(cre_status != TRUE) {
-		/* Error state (CreateProcess returns non-TRUE (1) on error) */
-		std::cout << "QEMU failed to start. Error code: " << GetLastError() << "\n";
-	} else {
-		qemu_running_ = true;
-		std::cout << "QEMU PID: " << qemu_process_.dwProcessId << std::endl;
-	}
+	BOOL ProcessCreateStatus = CreateProcess(NULL, QemuCmdLineMutable, NULL, NULL, FALSE, 0, NULL, NULL, &si, &qemu_process_);
+	
+	std::cout << "QEMU PID: " << qemu_process_.dwProcessId << std::endl;
+	
+	// free the mutable buffer to avoid a memleak
+	free((char*)QemuCmdLineMutable);
 #else
 	pid_t pId = fork();
 	if (pId == 0)
