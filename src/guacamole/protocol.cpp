@@ -1035,7 +1035,7 @@ int guac_protocol_send_png(GuacSocket& socket, guac_composite_mode mode,
 	
 #ifdef USE_JPEG
 	// Force PNG for any layer that is not the screen
-	if layer->index != 0) {
+	if (layer->index != 0) {
 		ret_val =
 			socket.WriteString("3.png,")
 			|| __guac_socket_write_length_int(socket, mode)
