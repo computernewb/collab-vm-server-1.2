@@ -149,15 +149,12 @@ int main(int argc, char* argv[])
 		int port = stoi(s, &i);
 		if (i != s.length() || !(port > 0 && port <= UINT16_MAX))
 		{
-			std::cout << "Invalid port for websocket server_." << std::endl;
+			std::cout << "Invalid port for WebSocket server." << std::endl;
 			return -1;
 		}
 
-#ifdef _WIN32
-		std::cout << "Collab VM Server started \nNotice: Collab VM Server for Windows is in an experimental state. It may not function correctly." << std::endl;
-#else
 		std::cout << "Collab VM Server started" << std::endl;
-#endif
+
 		// Set up Ctrl+C handler
 #ifdef _WIN32
 		if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE))

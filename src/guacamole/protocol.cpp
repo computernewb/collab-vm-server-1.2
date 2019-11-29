@@ -30,17 +30,26 @@
 #include "stream.h"
 #include "unicode.h"
 
+
+#ifdef USE_JPEG
+extern "C" {
+	#include <cairo_jpg.h>
+}
+#else
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <png.h>
-#include <cairo/cairo.h>
+	#include <png.h>
+	#include <cairo/cairo.h>
 #ifdef __cplusplus
 }
 #endif
 
 #ifdef HAVE_PNGSTRUCT_H
-#include <pngstruct.h>
+	#include <pngstruct.h>
+#endif
+
 #endif
 
 #include <inttypes.h>
@@ -51,6 +60,18 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+
+#ifdef USE_JPEG
+/**
+ * JPEG compression quality
+ *
+ * Lower values will produce images quicker,
+ * but the image quality will be reduced significantly.
+ *
+ * The range of this value is from 0 - 100. Other values above this will cause errors during runtime.
+ */
+constexpr int JPEG_COMPRESSION_QUALITY = 75;
+#endif
 
 /* Output formatting functions */
 // TODO: Move into GuacSocket
@@ -111,7 +132,7 @@ cairo_status_t __guac_socket_write_png_cairo(void* closure, const unsigned char*
 
     /* If need resizing, double buffer size until big enough */
     if (next_size > png_data->buffer_size)
-{
+	{
         char* new_buffer;
 
         do {
@@ -121,7 +142,7 @@ cairo_status_t __guac_socket_write_png_cairo(void* closure, const unsigned char*
         /* Resize buffer */
         new_buffer = (char*)realloc(png_data->buffer, png_data->buffer_size);
         png_data->buffer = new_buffer;
-}
+	}
 
     /* Append data to buffer */
     memcpy(png_data->buffer + png_data->data_size, data, length);
@@ -144,7 +165,6 @@ int __guac_socket_write_length_png_cairo(GuacSocket& socket, cairo_surface_t* su
         guac_error_message = "Cairo PNG backend failed";
         return -1;
 	}
-
     base64_length = (png_data.data_size + 2) / 3 * 4;
 
     /* Write length and data */
@@ -161,6 +181,39 @@ int __guac_socket_write_length_png_cairo(GuacSocket& socket, cairo_surface_t* su
     return 0;
 }
 
+#ifdef USE_JPEG
+int __guac_socket_write_length_jpeg(GuacSocket& socket, cairo_surface_t* surface)
+{
+    __guac_socket_write_png_data png_data(socket, 8192, 0);
+    int base64_length;
+
+	// Write JPEG surface
+	cairo_status_t status;
+    if ((status = cairo_image_surface_write_to_jpeg_stream(surface, __guac_socket_write_png_cairo, &png_data, JPEG_COMPRESSION_QUALITY)) != CAIRO_STATUS_SUCCESS)
+	{
+		const char* status_str = cairo_status_to_string(status);
+	        guac_error = GUAC_STATUS_INTERNAL_ERROR;
+	        guac_error_message = "Cairo JPEG backend failed";
+        	return -1;
+	}
+    base64_length = (png_data.data_size + 2) / 3 * 4;
+
+    /* Write length and data */
+    if (socket.WriteInt(base64_length)
+        || socket.WriteString(".")
+        || socket.WriteBase64(png_data.buffer, png_data.data_size)
+        || socket.FlushBase64())
+	{
+        free(png_data.buffer);
+        return -1;
+	}
+
+    free(png_data.buffer);
+    return 0;
+}
+#endif
+
+#ifndef USE_JPEG
 void __guac_socket_write_png(png_structp png,
         png_bytep data, png_size_t length)
 {
@@ -243,7 +296,7 @@ int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
         guac_error = GUAC_STATUS_INTERNAL_ERROR;
         guac_error_message = "libpng failed to create write structure";
         return -1;
-}
+	}
 
     png_info = png_create_info_struct(png);
     if (!png_info) {
@@ -251,7 +304,7 @@ int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
         guac_error = GUAC_STATUS_INTERNAL_ERROR;
         guac_error_message = "libpng failed to create info structure";
         return -1;
-}
+	}
 
     /* Set error handler */
     if (setjmp(png_jmpbuf(png))) {
@@ -259,7 +312,7 @@ int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
         guac_error = GUAC_STATUS_IO_ERROR;
         guac_error_message = "libpng output error";
         return -1;
-}
+	}
 
     /* Set up buffer structure */
 	__guac_socket_write_png_data png_data(socket, 8192, 0);
@@ -336,6 +389,7 @@ int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
 	free(png_data.buffer);
 	return 0;
 }
+#endif
 
 /* Protocol functions */
 
@@ -977,21 +1031,54 @@ int guac_protocol_send_png(GuacSocket& socket, guac_composite_mode mode,
         const guac_layer* layer, int x, int y, cairo_surface_t* surface)
 {
     int ret_val;
-
     socket.InstructionBegin();
-    ret_val =
-           socket.WriteString("3.png,")
-        || __guac_socket_write_length_int(socket, mode)
-        || socket.WriteString(",")
-        || __guac_socket_write_length_int(socket, layer->index)
-        || socket.WriteString(",")
-        || __guac_socket_write_length_int(socket, x)
-        || socket.WriteString(",")
-        || __guac_socket_write_length_int(socket, y)
-        || socket.WriteString(",")
-        || __guac_socket_write_length_png(socket, surface)
-        || socket.WriteString(";");
-
+	
+#ifdef USE_JPEG
+	// Force PNG for any layer that is not the screen
+	if (layer->index != 0) {
+		ret_val =
+			socket.WriteString("3.png,")
+			|| __guac_socket_write_length_int(socket, mode)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_int(socket, layer->index)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_int(socket, x)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_int(socket, y)
+			|| socket.WriteString(",")
+			// We use the Cairo fallback function for forcing png as the internal protocol function
+			// to use libpng natively will not be compiled into builds that use JPEG compression support.
+			|| __guac_socket_write_length_png_cairo(socket, surface)
+			|| socket.WriteString(";");
+	} else {
+		// Screen layer
+		ret_val =
+			socket.WriteString("3.png,")
+			|| __guac_socket_write_length_int(socket, mode)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_int(socket, layer->index)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_int(socket, x)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_int(socket, y)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_jpeg(socket, surface)
+			|| socket.WriteString(";");
+	}
+#else
+	ret_val =
+			socket.WriteString("3.png,")
+			|| __guac_socket_write_length_int(socket, mode)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_int(socket, layer->index)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_int(socket, x)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_int(socket, y)
+			|| socket.WriteString(",")
+			|| __guac_socket_write_length_png(socket, surface)
+			|| socket.WriteString(";");
+#endif
     socket.InstructionEnd();
     return ret_val;
 }
