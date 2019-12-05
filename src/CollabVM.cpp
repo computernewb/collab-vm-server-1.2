@@ -2129,7 +2129,7 @@ void CollabVMServer::OnMouseInstruction(const std::shared_ptr<CollabVMUser>& use
 		// Calculate the time since the user's last erratic movement
 		if ((now - user->ip_data.last_erratic_mouse).count() < 1)
 		{
-			if (++user->ip_data.erratic_mouse_count >= 50)
+			if (++user->ip_data.erratic_mouse_count >= 25)
 			{
 				// Disable user's turns for being a kitfag
 				user->ip_data.last_erratic_mouse = now;
@@ -2166,7 +2166,6 @@ void CollabVMServer::OnMouseInstruction(const std::shared_ptr<CollabVMUser>& use
 		{
 			user->ip_data.erratic_mouse_count = 0;
 		}
-		user->ip_data.erratic_mouse_count++;
 		user->ip_data.last_erratic_mouse = now;
 	}
 	// Only allow a user to send mouse instructions if it is their turn,
