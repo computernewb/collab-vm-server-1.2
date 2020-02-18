@@ -1,10 +1,8 @@
 
 ## collab-vm-server
-This repository contains all the necessary source files to compile the collab-vm-server. The collab-vm-server powers Collab VM, and it is what you use to host it. You can either download already compiled binaries or compile it yourself. Compilation instructions are below. 
+This repository contains all the necessary source files to compile the collab-vm-server. The collab-vm-server powers CollabVM, and it is what you use to host it. You can either download already compiled binaries or compile it yourself. Compilation instructions are below. 
 
-Collab VM was coded and written by Cosmic Sans, Dartz, and Geodude.
-
-Live Demo: http://computernewb.com/collab-vm/
+CollabVM was coded and written by Cosmic Sans, Dartz, and Geodude.
 
 ### How to use
 To start collab-vm-server make sure it has executable permissions and type ./collab-vm-server (port) (HTTP Directory (optional)). For instance, if you want to start collab-vm-server on port 6004 with the directory for the HTML files in a folder called "collabvm" you'd type ./collab-vm-server 6004 collabvm 
@@ -14,7 +12,7 @@ The HTTP Directory is optional, by default, it looks and will use a folder calle
 When you start the server you'll receive a message that a new database was created. The first thing you will want to do is configure the admin panel javascript to make sure it works properly. Go into the http directory, admin, open admin.min.js with a text editor, replace any instance of 127.0.0.1:6004 with your server's IP (or you can keep it localhost if you really want to). Afterwards, go to http://(your localhost):6004/admin/ and login with either the password "collabvm". The first thing we recommend is changing this password immediately because it is highly insecure. Type in the VM name you want to use, link, the startup command, choose your snapshot mode, and make sure auto start is checked if you want it to start with collab-vm-server! 
 
 ### Compilation
-Compilation was only tested on i386, amd64, and armhf machines on Linux and Windows. It is unknown if this will work on any other architecture but theoretically Collab VM Server should be able to run on MIPS or PowerPC.
+Compilation was only tested on i386, amd64, and armhf machines on Linux and Windows. It is unknown if this will work on any other architecture but theoretically CollabVM Server should be able to run on MIPS or PowerPC.
 
 #### Windows
 You need MSYS2 with MinGW-w64 to compile the server properly.
@@ -101,5 +99,5 @@ QEMU is also available for other platforms, like OpenSolaris and OpenIndiana. co
 * Websocket++
 
 ### License
-Collab VM Server, as well as the Web App and Admin Web App are licensed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
+CollabVM Server, as well as the Web App and Admin Web App are licensed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
 
