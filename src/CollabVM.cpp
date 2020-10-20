@@ -2124,7 +2124,7 @@ void CollabVMServer::OnMouseInstruction(const std::shared_ptr<CollabVMUser>& use
 	if (args.size() < 3)
 		return;
 	// Limit erratic mouse movements
-	if (abs(std::__cxx11::stoi(args[0]) - user->ip_data.last_x_pos) > 200 || abs(std::__cxx11::stoi(args[1]) - user->ip_data.last_y_pos) > 200)
+	if (abs(std::stoi(args[0]) - user->ip_data.last_x_pos) > 200 || abs(std::stoi(args[1]) - user->ip_data.last_y_pos) > 200)
 	{
 		// Calculate the time since the user's last erratic movement
 		if ((now - user->ip_data.last_erratic_mouse).count() < 1)
@@ -2175,8 +2175,8 @@ void CollabVMServer::OnMouseInstruction(const std::shared_ptr<CollabVMUser>& use
 		user->user_rank == UserRank::kAdmin ||
 		user->admin_connected) && user->guac_user != nullptr && user->guac_user->client_)
 	{
-		user->ip_data.last_x_pos = std::__cxx11::stoi(args[0]);
-		user->ip_data.last_y_pos = std::__cxx11::stoi(args[1]);
+		user->ip_data.last_x_pos = std::stoi(args[0]);
+		user->ip_data.last_y_pos = std::stoi(args[1]);
 		user->guac_user->client_->HandleMouse(*user->guac_user, args);
 	}
 }

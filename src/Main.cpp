@@ -7,6 +7,11 @@
 #ifndef _WIN32
 #include "StackTrace.hpp"
 #define STACKTRACE PrintStackTrace();
+#ifdef __CYGWIN__
+int backtrace (void **buffer, int size) { return 0;}
+char ** backtrace_symbols (void *const *buffer, int size) { return 0;}
+void backtrace_symbols_fd (void *const *buffer, int size, int fd) {}
+#endif
 #else
 #include <windows.h>
 #endif
