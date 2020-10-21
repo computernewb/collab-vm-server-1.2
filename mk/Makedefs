@@ -1,15 +1,16 @@
-# Makedefs: Common make rules for building the CollabVM Server.
+# Makedefs: 
+# Common makefile for building the CollabVM Server.
 
-CCFLAGS += -Isrc -Isrc/uriparser
+CCFLAGS = -Isrc -Isrc/uriparser
 
 ifeq ($(DEBUG),1)
 # debug mode
 CCFLAGS += -g -O0 -D_DEBUG -DDEBUG
-LDFLAGS += -g
+LDFLAGS = -g
 else
 # release mode, build with optimizations
-CCFLAGS += -O2 -ffast-math -march=native -mtune=native
-LDFLAGS += -s
+CCFLAGS += -O3 -ffast-math -march=native -mtune=native
+LDFLAGS = -s
 endif
 
 ifeq ($(JPEG), 1) 
@@ -17,9 +18,20 @@ ifeq ($(JPEG), 1)
 CCFLAGS += -DUSE_JPEG
 endif
 
-CXXFLAGS += -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings -fpermissive -std=c++11 $(CCFLAGS) -Isrc -Isrc/rapidjson -Isrc/Database -Isrc/VMControllers -Isrc/Sockets -Isrc/guacamole -Isrc/uriparser
+# TODO: Remove -fpermissive, all -Wno- and enable -Wall
+# as well as maybe moving to c++14 or c++17?
+# will need to fix a lot of cosmic-isms
+CXXFLAGS = -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings \
+		-fpermissive -std=c++11 $(CCFLAGS) \
+		-Isrc/rapidjson -Isrc/Database -Isrc/VMControllers \
+		-Isrc/Sockets -Isrc/guacamole -I$(OBJDIR)
 
+# GCC dependency generation
+DEPGEN = -MT $@ -MD -MP -MF $(OBJDIR)/$*.d
 
+.PHONY: all clean hardclean
+
+# All objects
 OBJS = $(OBJDIR)/Config-odb.o                    \
        $(OBJDIR)/VMSettings-odb.o                \
        $(OBJDIR)/Main.o                          \
@@ -70,86 +82,89 @@ OBJS = $(OBJDIR)/Config-odb.o                    \
        $(OBJDIR)/UriParseBase.o                  \
        $(OBJDIR)/UriRecompose.o
 
+# Add supporting code to the objects list
+# for JPEG
 ifeq ($(JPEG), 1)
 OBJS += $(OBJDIR)/cairo_jpg.o
 endif
 
-.PHONY: all dirs
+# Set the VPATH to all of the possible source tree locations.
+# This decomplicates a lot of this file and makes it easier to understand
+VPATH := src/             \
+	$(OBJDIR)         \
+        src/uriparser     \
+        src/Database      \
+        src/Sockets       \
+        src/VMControllers \
+        src/guacamole     \
+        src/guacamole/vnc \ 
 
-all: dirs $(BINDIR)/collab-vm-server
+
+all: $(BINDIR)/ $(OBJDIR)/ $(BINDIR)/collab-vm-server
 
 $(BINDIR)/:
-	@echo "mkdir $@"
 	@mkdir -p $@
 
 $(OBJDIR)/:
-	@echo "mkdir $@"
-	@mkdir -p $@
+	mkdir -p $@
 
 # meta-rules
 
-dirs: $(BINDIR)/ $(OBJDIR)/
-
 clean:
-	@echo "rmdir '$(BINDIR)/'"
-	@$(RM) -r $(BINDIR)/
-	@echo "rmdir '$(OBJDIR)'"
-	@$(RM) -r $(OBJDIR)/
-# clean out generated source files
-	@echo "cleaning ODB source files"
-	@$(RM) -f src/Database/*.cxx src/Database/*.ixx src/Database/*.hxx
+	$(info Cleaning "$(BINDIR)/")
+	$(RM) -r $(BINDIR)
+	$(info Cleaning "$(OBJDIR)/")
+	$(RM) -r $(OBJDIR)/*.o $(OBJDIR)/*.cxx $(OBJDIR)/*.hxx $(OBJDIR)/*.ixx
+
+# WARNING: this will reset dependency files too
+hardclean:
+	$(info Cleaning "$(BINDIR)/")
+	$(RM) -r $(BINDIR)
+	$(info Cleaning "$(OBJDIR)/")
+	$(RM) -r $(OBJDIR)
 
 # Link rules
 
 $(BINDIR)/collab-vm-server: $(OBJS)
-	@echo "Link $@"
-	@$(CXX) $(OBJS) $(LIBS) $(LDFLAGS) -o $@
+	$(info Linking executable $@)
+	$(CXX) $(OBJS) $(LIBS) $(LDFLAGS) -o $@
 
 # Source generation rules
 
-src/Database/Config-odb.cxx: src/Database/Config.h
-	@echo "Generating $@ using ODB"
-	@$(ODB) -d sqlite -o src/Database -s -q $<
+$(OBJDIR)/Config-odb.cxx: src/Database/Config.h
+	$(info Generating ODB source file $@)
+	$(ODB) -d sqlite -o $(OBJDIR) -s -q $<
 
-src/Database/VMSettings-odb.cxx: src/Database/VMSettings.h
-	@echo "Generating $@ using ODB"
-	@$(ODB) -d sqlite -o src/Database -s -q $<
+$(OBJDIR)/VMSettings-odb.cxx: src/Database/VMSettings.h
+	$(info Generating ODB source file $@)
+	$(ODB) -d sqlite -o $(OBJDIR) -s -q $<
 
 # C/C++ compile rules
 
-$(OBJDIR)/%.o: src/%.cpp
-	@echo "Compiling C++ source file $<"
-	@$(CXX) -c $< $(CXXFLAGS) -o $@ 
-	
-$(OBJDIR)/%.o: src/%.c
-	@echo "Compiling C source file $<"
-	@$(CC) -c $< $(CCFLAGS) -o $@
+$(OBJDIR)/%.o: %.cpp
+	$(info Compiling C++ source file $<)
+	$(CXX) -c $< $(CXXFLAGS) -o $@ 
 
-$(OBJDIR)/%.o: src/uriparser/%.c
-	@echo "Compiling C source file $<"
-	@$(CC) -c $< $(CCFLAGS) -o $@
+$(OBJDIR)/%.o: %.cxx
+	$(info Compiling C++ source file $<)
+	$(CXX) -c $< $(CXXFLAGS) -MT $@ -MD -MP -MF $(OBJDIR)/$*.d -o $@
 
-$(OBJDIR)/%.o: src/Database/%.cpp
-	@echo "Compiling C++ source file $<"
-	@$(CXX) -c $< $(CXXFLAGS) -o $@
+$(OBJDIR)/%.o: %.c
+	$(info Compiling C source file $<)
+	$(CC) -c $< $(CCFLAGS) -MT $@ -MD -MP -MF $(OBJDIR)/$*.d -o $@
 
-$(OBJDIR)/%.o: src/Database/%.cxx
-	@echo "Compiling C++ source file $<"
-	@$(CXX) -c $< $(CXXFLAGS) -o $@
 
-$(OBJDIR)/%.o: src/VMControllers/%.cpp
-	@echo "Compiling C++ source file $<"
-	@$(CXX) -c $< $(CXXFLAGS) -o $@
+# Explicit dependencies to help aid make when doing a compile of the source tree with multiple jobs going at once.
+# no matter what order this file ends up, it will be after the dependencies have been generated and compiled
+# meaning make -j17 (example) will now compile properly every single time
 
-$(OBJDIR)/%.o: src/Sockets/%.cpp
-	@echo "Compiling C++ source file $<"
-	@$(CXX) -c $< $(CXXFLAGS) -o $@
+src/Database/Database.cpp: $(OBJDIR)/Config-odb.cxx $(OBJDIR)/VMSettings-odb.cxx
 
-$(OBJDIR)/%.o: src/guacamole/%.cpp
-	@echo "Compiling C++ source file $<"
-	@$(CXX) -c $< $(CXXFLAGS) -Isrc/guacamole -o $@
+# include dependencies
+-include $(wildcard $(OBJDIR)/*.d)
 
-$(OBJDIR)/%.o: src/guacamole/vnc/%.cpp
-	@echo "Compiling C++ source file $<"
-	@$(CXX) -c $< $(CXXFLAGS) -Isrc/guacamole -o $@
-
+# Little fun make trick! This will expand usually to
+# ".SILENT:" which means make rules won't output commands
+# but when VERBOSE is set to anything, it will expand to
+# something meaningless, allowing commands to output.
+$VERBOSE.SILENT:

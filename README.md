@@ -24,7 +24,13 @@ CollabVM Server is confirmed to build and work in the following environments:
 * Raspbian 
 * Android OS (using Termux)
 
-To build the server you will need at least GCC 5 (or greater), or Visual C++ 2012 (11.0) (or greater). 
+To build the server you will need at least GCC 5 (or greater), or Visual C++ 2012 (11.0) (or greater).
+
+Make flags (To enable, set these ala `FLAG=1`):
+
+- JPEG - Controls/enables JPEG support.
+- DEBUG - Enables debug symbols
+- VERBOSE - Displays compile command lines, useful for debugging errors
 
 #### Windows
 On Windows, you have the following options:
@@ -93,9 +99,7 @@ sudo apt install -y build-essential
 sudo yum groupinstall 'Development Tools'
 # Get all of the CollabVM Server dependencies for Linux.
 # If you get a Permission Denied error, go into the scripts directory and type chmod +x *.sh.
-./scripts/grab_deps_linux.sh 
-# cd to the src/Database folder
-odb -d sqlite -s -q Config.h VMSettings.h
+./scripts/grab_deps_linux.sh
 # cd back to the root folder, and finally, build the server 
 make
 ```
