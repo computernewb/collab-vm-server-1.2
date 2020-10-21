@@ -30,56 +30,6 @@ struct IPData
 	uint8_t connections;
 
 	/**
-	 * The last time the username was changed from this IP.
-	 */
-	std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> last_name_chg;
-
-	/**
-	 * The number of times the username was changed within a certain amount of time.
-	 */
-	uint8_t name_chg_count;
-
-	/**
-	 * Whether the user's username is fixed (can't change).
-	 */
-	bool name_fixed;
-
-	/**
-	 * The last x position of the user's mouse
-	 */
-	int last_x_pos;
-
-	/**
-	 * The last y position of the user's mouse
-	 */
-	int last_y_pos;
-
-	/**
-	 * The number of times the mouse's x or y coordinate has moved >200px in a single instruction.
-	 */
-	uint8_t erratic_mouse_count;
-
-	/**
-	 * The last time the mouse's x or y coordinate has moved >200px in a single instruction.
-	 */
-	std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> last_erratic_mouse;
-
-	/**
-	 * Whether the user is a mouse-shaker (turns disabled short-term).
-	 */
-	bool mouse_shaker;
-
-	/**
-	 * Whether the user was a mouse-shaker (will be kitfag next time).
-	 */
-	bool was_mouse_shaker;
-
-	/**
-	 * Whether the user is a kitfag (turns disabled long-term).
-	 */
-	bool kitfag_no_turn;
-
-	/**
 	 * The last time a chat message was sent from this IP.
 	 */
 	std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> last_chat_msg;
@@ -132,14 +82,6 @@ protected:
 	IPData(IPType type, bool one_connection) :
 		type(type),
 		connections(one_connection),
-		name_chg_count(0),
-		name_fixed(false),
-		last_x_pos(0),
-		last_y_pos(0),
-		erratic_mouse_count(0),
-		mouse_shaker(false),
-		was_mouse_shaker(false),
-		kitfag_no_turn(false),
 		chat_msg_count(0),
 		chat_muted(false),
 		//has_voted(false),
