@@ -1928,46 +1928,6 @@ void CollabVMServer::SendOnlineUsersList(CollabVMUser& user)
 
 void CollabVMServer::ChangeUsername(const std::shared_ptr<CollabVMUser>& data, const std::string& new_username, UsernameChangeResult result, bool send_history)
 {
-	// Ratelimit these username changes
-	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
-	if (data->ip_data.name_fixed)
-	{
-		if ((now - data->ip_data.last_name_chg).count() >= database_.Configuration.ChatMuteTime)
-			data->ip_data.name_fixed = false;
-		else
-			return;
-	}
-	if (database_.Configuration.ChatRateCount && database_.Configuration.ChatRateTime)
-	{
-		// Calculate the time since the user's last name change
-		if ((now - data->ip_data.last_name_chg).count() < database_.Configuration.ChatRateTime)
-		{
-			if (++data->ip_data.name_chg_count >= database_.Configuration.ChatRateCount)
-			{
-				std::string mute_time = std::to_string(database_.Configuration.ChatMuteTime);
-				std::cout << "[Change Username] Username script detected. It has been stopped for " << mute_time <<
-					" seconds. IP: " << data->ip_data.GetIP() << " Username: \"" <<
-					*data->username << '"' << std::endl;
-				// Keep the user from changing their name for attempting to go over the
-				// name change limit
-				data->ip_data.last_name_chg = now;
-				data->ip_data.name_fixed = true;
-#define npart1 "Your username cannot be changed for "
-#define npart2 " seconds. Please stop your username script."
-				std::string instr = "4.chat,0.,";
-				instr += std::to_string(mute_time.length() + sizeof(npart1) + sizeof(npart2) - 2);
-				instr += "." npart1;
-				instr += mute_time;
-				instr += npart2 ";";
-				SendWSMessage(*data, instr);
-				return;
-			}
-		}
-		else
-		{
-			data->ip_data.name_chg_count = 0;
-		}
-	}
 	// Send a rename instruction to the client telling them their username
 	std::string instr;
 	instr = "6.rename,1.0,1.";
@@ -2041,9 +2001,7 @@ void CollabVMServer::ChangeUsername(const std::shared_ptr<CollabVMUser>& data, c
 		data->username = std::make_shared<std::string>(new_username);
 		std::cout << "[Username Assigned] IP: " << data->ip_data.GetIP() << " New username: \"" << new_username << '"' << std::endl;
 	}
-	// Count the renames
-	data->ip_data.name_chg_count++;
-	data->ip_data.last_name_chg = now;
+
 	usernames_[new_username] = data;
 }
 
@@ -2100,74 +2058,6 @@ string CollabVMServer::EncodeHTMLString(const char* str, size_t strLen)
 
 void CollabVMServer::OnMouseInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args)
 {
-	// Don't move mouse if user is a kitfag
-	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
-	if (user->ip_data.mouse_shaker)
-	{
-		if ((now - user->ip_data.last_erratic_mouse).count() >= database_.Configuration.ChatMuteTime)
-		{
-			user->ip_data.mouse_shaker = false;
-			user->ip_data.was_mouse_shaker = true;
-		}
-		else
-		{
-			return;
-		}
-	}
-	if (user->ip_data.kitfag_no_turn)
-	{
-		if ((now - user->ip_data.last_erratic_mouse).count() >= 3600)
-			user->ip_data.kitfag_no_turn = false;
-		else
-			return;
-	}
-	if (args.size() < 3)
-		return;
-	// Limit erratic mouse movements
-	if (abs(std::stoi(args[0]) - user->ip_data.last_x_pos) > 200 || abs(std::stoi(args[1]) - user->ip_data.last_y_pos) > 200)
-	{
-		// Calculate the time since the user's last erratic movement
-		if ((now - user->ip_data.last_erratic_mouse).count() < 1)
-		{
-			if (++user->ip_data.erratic_mouse_count >= 25)
-			{
-				// Disable user's turns for being a kitfag
-				user->ip_data.last_erratic_mouse = now;
-				if (user->ip_data.was_mouse_shaker)
-				{
-					user->ip_data.kitfag_no_turn = true;
-					std::cout << "[KIT] Kit detected again. User's turns are disabled for 1 hour. IP: " <<
-						user->ip_data.GetIP() << " Username: \"" <<
-						*user->username << '"' << std::endl;
-				}
-				else
-				{
-					user->ip_data.mouse_shaker = true;
-					std::string mute_time = std::to_string(database_.Configuration.ChatMuteTime);
-					std::cout << "[KIT] Kit detected. User's turns are disabled for " << mute_time <<
-						" seconds. IP: " << user->ip_data.GetIP() << " Username: \"" <<
-						*user->username << '"' << std::endl;
-				}
-				// Uncomment to send a message to kitfags (will need fixing for the 1-hour ban on subsequent attempts)
-				/*
-#define kitpart1 "Kit was detected; your turns have been disabled for "
-#define kitpart2 " seconds. Sorry if this was in error."
-				std::string instr = "4.chat,0.,";
-				instr += std::to_string(mute_time.length() + sizeof(kitpart1) + sizeof(kitpart2) - 2);
-				instr += "." kitpart1;
-				instr += mute_time;
-				instr += kitpart2 ";";
-				SendWSMessage(*user, instr);
-				*/
-				return;
-			}
-		}
-		else
-		{
-			user->ip_data.erratic_mouse_count = 0;
-		}
-		user->ip_data.last_erratic_mouse = now;
-	}
 	// Only allow a user to send mouse instructions if it is their turn,
 	// they are an admin, or they are connected to the admin panel
 	if (user->vm_controller != nullptr &&
@@ -2175,35 +2065,12 @@ void CollabVMServer::OnMouseInstruction(const std::shared_ptr<CollabVMUser>& use
 		user->user_rank == UserRank::kAdmin ||
 		user->admin_connected) && user->guac_user != nullptr && user->guac_user->client_)
 	{
-		user->ip_data.last_x_pos = std::stoi(args[0]);
-		user->ip_data.last_y_pos = std::stoi(args[1]);
 		user->guac_user->client_->HandleMouse(*user->guac_user, args);
 	}
 }
 
 void CollabVMServer::OnKeyInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args)
 {
-	// Don't allow keypresses if user is a kitfag
-	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
-	if (user->ip_data.mouse_shaker)
-	{
-		if ((now - user->ip_data.last_erratic_mouse).count() >= database_.Configuration.ChatMuteTime)
-		{
-			user->ip_data.mouse_shaker = false;
-			user->ip_data.was_mouse_shaker = true;
-		}
-		else
-		{
-			return;
-		}
-	}
-	if (user->ip_data.kitfag_no_turn)
-	{
-		if ((now - user->ip_data.last_erratic_mouse).count() >= 3600)
-			user->ip_data.kitfag_no_turn = false;
-		else
-			return;
-	}
 	// Only allow a user to send keyboard instructions if it is their turn,
 	// they are an admin, or they are connected to the admin panel
 	if (user->vm_controller != nullptr &&
@@ -2654,6 +2521,7 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 				// chat message limit
 				user->ip_data.last_chat_msg = now;
 				user->ip_data.chat_muted = true;
+
 #define part1 "You have been muted for "
 #define part2 " seconds."
 				std::string instr = "4.chat,0.,";
@@ -2727,27 +2595,6 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 
 void CollabVMServer::OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args)
 {
-	// Don't request turn if user is a kitfag
-	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
-	if (user->ip_data.mouse_shaker)
-	{
-		if ((now - user->ip_data.last_erratic_mouse).count() >= database_.Configuration.ChatMuteTime)
-		{
-			user->ip_data.mouse_shaker = false;
-			user->ip_data.was_mouse_shaker = true;
-		}
-		else
-		{
-			return;
-		}
-	}
-	if (user->ip_data.kitfag_no_turn)
-	{
-		if ((now - user->ip_data.last_erratic_mouse).count() >= 3600)
-			user->ip_data.kitfag_no_turn = false;
-		else
-			return;
-	}
 	if (user->vm_controller != nullptr && user->username)
 		user->vm_controller->TurnRequest(user);
 }
