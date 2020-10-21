@@ -1,15 +1,15 @@
 # Makedefs: Common make rules for building the CollabVM Server.
 
-CCFLAGS = -Isrc -Isrc/uriparser
+CCFLAGS += -Isrc -Isrc/uriparser
 
 ifeq ($(DEBUG),1)
 # debug mode
 CCFLAGS += -g -O0 -D_DEBUG -DDEBUG
-LDFLAGS = -g
+LDFLAGS += -g
 else
 # release mode, build with optimizations
 CCFLAGS += -O2 -ffast-math -march=native -mtune=native
-LDFLAGS = -s
+LDFLAGS += -s
 endif
 
 ifeq ($(JPEG), 1) 
@@ -17,7 +17,7 @@ ifeq ($(JPEG), 1)
 CCFLAGS += -DUSE_JPEG
 endif
 
-CXXFLAGS = -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings -fpermissive -std=c++11 $(CCFLAGS) -Isrc -Isrc/rapidjson -Isrc/Database -Isrc/VMControllers -Isrc/Sockets -Isrc/guacamole -Isrc/uriparser
+CXXFLAGS += -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings -fpermissive -std=c++11 $(CCFLAGS) -Isrc -Isrc/rapidjson -Isrc/Database -Isrc/VMControllers -Isrc/Sockets -Isrc/guacamole -Isrc/uriparser
 
 
 OBJS = $(OBJDIR)/Config-odb.o                    \
@@ -109,11 +109,11 @@ $(BINDIR)/collab-vm-server: $(OBJS)
 
 src/Database/Config-odb.cxx: src/Database/Config.h
 	@echo "Generating $@ using ODB"
-	@odb -d sqlite -o src/Database -s -q $<
+	@$(ODB) -d sqlite -o src/Database -s -q $<
 
 src/Database/VMSettings-odb.cxx: src/Database/VMSettings.h
 	@echo "Generating $@ using ODB"
-	@odb -d sqlite -o src/Database -s -q $<
+	@$(ODB) -d sqlite -o src/Database -s -q $<
 
 # C/C++ compile rules
 

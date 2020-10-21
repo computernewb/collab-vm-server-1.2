@@ -4,6 +4,20 @@ ifeq ($(OS), Windows_NT)
 
 # Allow selection of w64 or w32 target
 
+# Is it Cygwin?
+
+ifeq ($(shell uname -s|cut -d _ -f 1), CYGWIN)
+
+$(info Compiling targeting Cygwin)
+MKCONFIG=mk/cygwin.mkc
+BINDIR=bin/
+ARCH=$(shell uname -m)
+CYGWIN=1
+
+else
+
+CYGWIN=0
+
 ifneq ($(WARCH), win32)
 
 $(info Compiling targeting Win64)
@@ -17,6 +31,8 @@ $(info Compiling targeting x86 Windows)
 MKCONFIG=mk/win32.mkc
 BINDIR=bin/win32/
 ARCH=x86
+
+endif
 
 endif
 
@@ -58,7 +74,17 @@ all:
 	-@ if [ -d "$(BINDIR)/http" ]; then rm -rf $(BINDIR)/http; fi;
 	-@mv -f http/ $(BINDIR)
 ifeq ($(OS), Windows_NT)
+
+ifeq ($(CYGWIN), 1)
+
+	@./scripts/copy_dlls_cyg.sh $(ARCH) $(BINDIR)
+
+else
+
 	@./scripts/copy_dlls_mw.sh $(ARCH) $(BINDIR)
+
+endif
+
 endif
 
 clean:

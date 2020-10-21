@@ -2,7 +2,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef __CYGWIN__
 #include <execinfo.h>
+#else
+int backtrace (void **buffer, int size);
+char ** backtrace_symbols (void *const *buffer, int size);
+void backtrace_symbols_fd (void *const *buffer, int size, int fd);
+#endif
 #include <cxxabi.h>
 
 /** Print a demangled stack backtrace of the caller function to FILE* out. */
