@@ -30,7 +30,7 @@ Make flags (To enable, set these ala `FLAG=1`):
 
 - JPEG - Controls/enables JPEG support.
 - DEBUG - Enables debug symbols
-- VERBOSE - Displays compile command lines, useful for debugging errors
+- V - Verbose: Displays compile command lines, useful for debugging errors
 
 #### Windows
 On Windows, you have the following options:

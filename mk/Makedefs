@@ -165,6 +165,6 @@ src/Database/Database.cpp: $(OBJDIR)/Config-odb.cxx $(OBJDIR)/VMSettings-odb.cxx
 
 # Little fun make trick! This will expand usually to
 # ".SILENT:" which means make rules won't output commands
-# but when VERBOSE is set to anything, it will expand to
+# but when V is set to anything, it will expand to
 # something meaningless, allowing commands to output.
-$VERBOSE.SILENT:
+$V.SILENT:
