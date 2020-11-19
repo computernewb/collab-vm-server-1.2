@@ -455,6 +455,7 @@ void CollabVMServer::OnHttp(connection_hdl handle)
 	if (path.find("..") != std::string::npos)
 	{
 		Send404Page(con, path);
+		return;
 	}
 
 	// If the path ends in a slash, remove it
