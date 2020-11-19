@@ -17,12 +17,7 @@ VMController::VMController(CollabVMServer& server, boost::asio::io_service& serv
 	stop_reason_(StopReason::kNormal),
 	thumbnail_str_(nullptr),
 	agent_timer_(service),
-	agent_connected_(false),
-	// Chat history per VM-controller
-	chat_history_(new ChatMessage[server.GetDatabase().Configuration.ChatMsgHistory]),
-	chat_history_begin_(0),
-	chat_history_end_(0),
-	chat_history_count_(0)
+	agent_connected_(false)
 {
 }
 
@@ -418,7 +413,4 @@ bool VMController::IsFileUploadValid(const std::shared_ptr<CollabVMUser>& user, 
 
 VMController::~VMController()
 {
-	// Delete things to avoid memory leaks
-	if(chat_history_)
-		delete chat_history_;
 }

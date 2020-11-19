@@ -35,9 +35,6 @@
 #include <rapidjson/writer.h>
 #include "uriparser/Uri.h"
 
-// Hooray for making a unused file used!
-#include "Chat.h"
-
 #include "VMControllers/VMController.h"
 #include "VMControllers/QEMUController.h"
 #include "Database/VMSettings.h"
@@ -152,46 +149,7 @@ public:
 	void OnVoteInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 	void OnFileInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 
-	inline CollabVM::Database& GetDatabase() {
-		return database_;	
-	}
-
-
 private:
-
-	template<class Funct>
-	inline void IterateUserList(CollabVMUser& user, Funct&& f) {
-		if(!user.vm_controller)
-			return;
-
-		// TODO: Use locking version perhaps
-		user.vm_controller->GetUsersList().ForEachUser(f);
-	}
-
-	inline bool IsUsernameTaken(CollabVMUser& user, const std::string& username) {
-		bool v = false;
-
-		if(!user.vm_controller)
-			return v;
-
-		IterateUserList(user, [&](CollabVMUser& u) {
-			if(*u.username == username && (&u != &user))
-				v = true;
-		});
-
-		return v;
-	}
-
-	inline size_t UserListSize(CollabVMUser& user) {
-		if(!user.vm_controller)
-			return 0;
-
-		size_t count = 0;
-		IterateUserList(user, [&count](CollabVMUser& u) {
-			++count;
-		});
-		return count;
-	}
 
 	struct CollabVMConfig : public websocketpp::config::asio
 	{
@@ -635,6 +593,12 @@ private:
 		}
 	};
 
+	struct ChatMessage
+	{
+		std::shared_ptr<std::string> username;
+		std::string message;
+		std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> timestamp;
+	};
 
 	void OnHttp(websocketpp::connection_hdl handle);
 	void OnHttpPartial(websocketpp::connection_hdl handle, const std::string& res, const char* buf, size_t len);
@@ -743,7 +707,7 @@ private:
 	bool SendUploadCooldownTime(CollabVMUser& user, const VMController& vm_controller);
 	void BroadcastUploadedFileInfo(UploadInfo& upload_info, VMController& vm_controller);
 
-	std::string GenerateUsername(CollabVMUser& ob);
+	std::string GenerateUsername();
 
 	/**
 	 * Escapes HTML characters in a string to prevent XSS.
@@ -797,6 +761,13 @@ private:
 	 * thread then it must aquire the _connectionsLock mutex first.
 	 */
 	std::set<std::shared_ptr<CollabVMUser>, std::owner_less<std::shared_ptr<CollabVMUser>>> connections_;
+
+	/**
+	 * Maps usernames to CollabVMUser objects.
+	 * Modifying and accessing this map should treated the same as
+	 * as _connections map above.
+	 */
+	std::map<std::string, std::shared_ptr<CollabVMUser>, case_insensitive_cmp> usernames_;
 
 	std::set<std::shared_ptr<CollabVMUser>, std::owner_less<std::shared_ptr<CollabVMUser>>> admin_connections_;
 

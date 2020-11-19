@@ -106,7 +106,6 @@ void WorkerThread(F func)
 		}
 		catch (...)
 		{
-			// TODO std::current_exception()
 			std::cout << "An unknown exception occurred\n";
 			throw;
 		}
@@ -130,7 +129,7 @@ void IgnorePipe() {
 	pipe.sa_handler = SIG_IGN;
 	pipe.sa_flags = 0;
 	if(sigaction(SIGPIPE, &pipe, 0) == -1) {
-		std::cout << "Failed to ignore SIGPIPE. Crashes *may* occur if someone somehow makes input occur during a reset\n";
+		std::cout << "Failed to ignore SIGPIPE. Crashies may occur now\n";
 	}
 #endif
 }
@@ -185,9 +184,6 @@ int main(int argc, char* argv[])
 
 		WorkerThread([&] { server_->Run(port, argc > 2 ? argv[2] : "http"); });
 
-		// TODO: Replace this with t.detach()
-		// and have a little busy loop waiting for the processing thread to stop
-		// once it has, the loop will break
 		t.join();
 	}
 	catch (websocketpp::exception const & e)

@@ -9,7 +9,6 @@
 #include <memory>
 
 #include "CollabVMUser.h"
-#include "Chat.h"
 #include "UploadInfo.h"
 #include "GuacClient.h"
 #include "UserList.h"
@@ -190,26 +189,6 @@ public:
 	bool agent_connected_;
 	bool agent_upload_in_progress_;
 	std::deque<std::shared_ptr<UploadInfo>> agent_upload_queue_;
-
-	/**
-	 * Circular buffer used for storing chat history.
-	 */
-	ChatMessage* chat_history_ = nullptr;
-
-	/**
-	 * Begin index for the circular chat history buffer.
-	 */
-	uint8_t chat_history_begin_;
-
-	/**
-	 * End index for the circular chat history buffer.
-	 */
-	uint8_t chat_history_end_;
-
-	/**
-	 * The number of messages in the chat history buffer.
-	 */
-	uint8_t chat_history_count_;
 
 	virtual ~VMController();
 
