@@ -4,11 +4,6 @@
 /**/cvmlib/
 /**/cvmlib32/
 
-# Ignore ODB generated files
-src/Database/*.cxx
-src/Database/*.hxx
-src/Database/*.ixx
-
 # Ignore the http binary dir, sometimes it gets left in the source root
 http/
 

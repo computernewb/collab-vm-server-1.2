@@ -1,33 +1,51 @@
-
 ## collab-vm-server
-This repository contains all the necessary source files to compile the collab-vm-server. The collab-vm-server powers CollabVM, and it is what you use to host it. You can either download already compiled binaries or compile it yourself. Compilation instructions are below. 
+This repository contains all the necessary source files to compile CollabVM Server. The CollabVM Server (obviously) powers CollabVM, and it is what you will use to host it. You can either download already compiled binaries, or compile it yourself. Compilation instructions are provided below. 
 
-CollabVM was coded and written by Cosmic Sans, Dartz, and Geodude.
+CollabVM was coded and written by Cosmic Sans, Dartz, Geodude, and Modeco80.
 
 ### How to use
-To start collab-vm-server make sure it has executable permissions and type ./collab-vm-server (port) (HTTP Directory (optional)). For instance, if you want to start collab-vm-server on port 6004 with the directory for the HTML files in a folder called "collabvm" you'd type ./collab-vm-server 6004 collabvm 
+To start the server, first make sure it has executable permissions and then type ./collab-vm-server (port) (HTTP Directory (optional)). For example, to start CollabVM Server on port 6004 with the directory for the HTML files served from a folder called "collabvm", type ./collab-vm-server 6004 collabvm 
 
-The HTTP Directory is optional, by default, it looks and will use a folder called http.
+The HTTP Directory is optional and by default it looks for a folder called "http".
 
-When you start the server you'll receive a message that a new database was created. The first thing you will want to do is configure the admin panel javascript to make sure it works properly. Go into the http directory, admin, open admin.min.js with a text editor, replace any instance of 127.0.0.1:6004 with your server's IP (or you can keep it localhost if you really want to). Afterwards, go to http://(your localhost):6004/admin/ and login with either the password "collabvm". The first thing we recommend is changing this password immediately because it is highly insecure. Type in the VM name you want to use, link, the startup command, choose your snapshot mode, and make sure auto start is checked if you want it to start with collab-vm-server! 
+When you start the server, you'll get a message that a new database was created. The first thing you'll want to do is go to the admin panel which is located at localhost:(port)/admin/config.html. Type the password "collabvm" (No quotes). The first thing you'll want to do is immediately change the password as it is highly insecure. Then you'll want to create a VM. CollabVM currently only supports QEMU at this time 
+
+For more information on the admin panel, visit https://computernewb.com/wiki/CollabVM Server 1.x/Admin Panel
 
 ### Compilation
-Compilation was only tested on i386, amd64, and armhf machines on Linux and Windows. It is unknown if this will work on any other architecture but theoretically CollabVM Server should be able to run on MIPS or PowerPC.
+Compiling the server is fairly easy. The server is confirmed to work on the i386 (32-bit), amd64 (64-bit), and armhf architectures on both Windows and Linux. It should also work on Aarch64, PowerPC, and MIPS machines, but note that this isn't tested.
+
+CollabVM Server is confirmed to build and work in the following environments:
+
+* Ubuntu, Debian, Arch Linux, CentOS, etc. 
+* Windows XP Professional, Windows 7, and Windows 10, and their server counterparts.
+* FreeBSD and OpenBSD
+* Haiku
+* Raspbian 
+* Android OS (using Termux)
+
+To build the server you will need at least GCC 5 (or greater), or Visual C++ 2012 (11.0) (or greater).
+
+Make flags (To enable, set these ala `FLAG=1`):
+
+- JPEG - Controls/enables JPEG support.
+- DEBUG - Enables debug symbols
+- VERBOSE - Displays compile command lines, useful for debugging errors
 
 #### Windows
-You need MSYS2 with MinGW-w64 to compile the server properly.
+On Windows, you have the following options:
+* MSYS2 with MinGW
+* Cygwin
+* Visual Studio
 
-Visual Studio is currently not supported, but if you have successfully compiled collab-vm-server with Visual Studio, let us know.
+##### MSYS2 with MinGW 
+To build the server with MSYS2 with MinGW, do the following: 
 
-To compile on Microsoft Windows you need the dependencies for Guacamole. You can compile these yourself but it's easier to cross-compile them from Linux or find already compiled libraries for Guacamole on Windows, as these were designed for Linux.
-
-To compile the database files you need ODB, available [here.](http://www.codesynthesis.com/products/odb/download.xhtml)
- - Grab the executable for your platform from the website.
+Download ODB [here.](http://www.codesynthesis.com/products/odb/download.xhtml)
+ - Grab the executable for your platform from the website. Extract wherever, just make sure its in the PATH.
 	 - Go to the src/Database folder and type this command in: `odb -d sqlite -s -q Config.h VMSettings.h`
 
-MSYS2 with MinGW-w64:
-Run the following commands:
-
+Then execute the following commands:
 ```
 pacman -Syu
 # Restart MSYS for the arch you want to compile (e.g on win32 MSYS MinGW 32bit, or on Win64 MSYS MinGW x86_64)
@@ -47,46 +65,68 @@ make
 make WARCH=w32
 ```
 
-#### Linux
+and then everything should be good.
 
-Download ODB from either [the CodeSynthesis website](http://www.codesynthesis.com/products/odb/download.xhtml) or download it from your local repositories. (On Ubuntu, you can type `sudo apt install -y odb`).
+##### Cygwin 
+Cygwin is currently not working correctly as it will build but it cannot start any virtual machines. There is also a bug that prevents it from being connected from IPv4, which is currently being investigated.
+
+Regardless, to build the server with Cygwin, obviously install Cygwin with GCC and then run the following commands:
+
+```
+# Grab the dependencies 
+./scripts/grab_deps_cyg.sh
+# Build the server 
+```
+
+##### Visual Studio 
+Visual Studio is fairly complex to use and is currently unsupported but it is confirmed that the server will build in it. To build the server you will first need to build all the libraries CollabVM Server and Guacamole needs (listed below). When you've built the libraries you will want to link them by going to Properties > Linker > Input > Additional Dependencies, and then link all the .lib files needed. 
+
+Apply it, verify all the required libraries files are present, and then build the solution.
+
+#### Linux 
+On Linux, compiling with both clang and gcc seem to work fine. It is recommended to use gcc. 
+
+First download ODB from either [the CodeSynthesis website](http://www.codesynthesis.com/products/odb/download.xhtml) or download it from your local repositories. (On Ubuntu, you can type `sudo apt install -y odb`).
 
 Then run the following commands:
 
 ```
-# on Arch Linux
+# on Arch Linux:
 sudo pacman -S base-devel
-# on Debian/Ubuntu
+# on Debian/Ubuntu:
 sudo apt install -y build-essential
-# on Fedora/Red Hat/CentOS/Etc
+# on Fedora/Red Hat/CentOS/Etc:
 sudo yum groupinstall 'Development Tools'
 # Get all of the CollabVM Server dependencies for Linux.
 # If you get a Permission Denied error, go into the scripts directory and type chmod +x *.sh.
-./scripts/grab_deps_linux.sh 
-# Finally, build the CollabVM Server (This now includes ODB compile steps).
+./scripts/grab_deps_linux.sh
+# cd back to the root folder, and finally, build the server 
 make
 ```
 
 #### MacOS X
-**NOTE**: This is untested and isn't guaranteed to work.
+**NOTE**: This is untested, and is not guaranteed to work.
+
+On MacOS X, there is a development kit called "XCode". I have no idea at all if it would be compatible with this, so instead, this will use Homebrew to build the server.
 
 - Open a Terminal and a web browser. Go to https://brew.sh.
 - Copy the command from the home page.
 - Enter your password if it asks and start the installation.
-- Once it is finished installing, run the following command: **brew install boost cairo gcc ossp-uuid sqlite3 **
+- Once it is finished installing, run the following command: **brew install boost cairo gcc ossp-uuid sqlite3**
 - Because libvncserver is not available in the Homebrew Forumlas, it will have to be compiled manually. Type **git clone https://github.com/LibVNC/libvncserver**. Make sure you have the dependencies and build it with **cmake -DLIBVNCSERVER_WITH_WEBSOCKETS=OFF**
 - Compile libodb and libodb-sqlite by downloading the files from Code Synthesis's website.
 - Verify all the dependencies have been successfully installed and build the solution.
 
+
 #### BSD
-While the server should build on BSD-based operating systems, I don't have a BSD computer to test this on so I don't know what the build instructions are, but they should be the same as Linux. (If you get it to compile and you can write instructions, that'd be vastly appreciated!)
+CollabVM Server is confirmed to be working on FreeBSD and OpenBSD, but it requires building ODB by yourself, which can be quite a pain. The instructions are the same as Linux for the most part except having to build odb by yourself. The source code is available on the [the CodeSynthesis website](http://www.codesynthesis.com/products/odb/download.xhtml).
 
 ####  Others?
-QEMU is also available for other platforms, like OpenSolaris and OpenIndiana. collab-vm-server is only supported on Windows and Unix-like operating systems. It is unknown if it would run on any other operating systems, but your free to try (let me know if it works). There wouldn't be any point in porting the server to any other platform where QEMU is not supported, however (although in the future, there will be many more emulators/hypervisors supported).
+Its possible that CollabVM Server may run on other operating systems such as GNU/Hurd, OpenIndiana, etc. Its possible it might run on MINIX, but these platforms are unsupported and are NOT tested. Let me know what crazy operating systems you get it to run on, though!
 
 ### All Required Dependencies
-* Boost (I've only tested 1.68, however older versions with a proper chrono::steady_timer constructor that allow a delayed construction should work)
-* GCC 5 (at least)
+* Boost (Any version with a proper chrono::steady_timer constructor that allow a delayed construction should work)
+* GCC 5 (at least), or Visual C++ 2012 (11.0) if building with Visual Studio
 * libvncserver 
 * libpng
 * libturbojpeg
@@ -100,4 +140,3 @@ QEMU is also available for other platforms, like OpenSolaris and OpenIndiana. co
 
 ### License
 CollabVM Server, as well as the Web App and Admin Web App are licensed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
-

@@ -1,15 +1,18 @@
 # CollabVM Server make config for
-# 32-bit Windows (Not XP sadly)
+# 32-bit Windows
+
 CXX = i686-w64-mingw32-g++
 CC = i686-w64-mingw32-gcc
-ODB = odb
 LIBS = -lboost_system-mt -lcairo -lfreetype -lvncclient -lnettle -lgnutls -lgmp -lmswsock -lws2_32 -lp11-kit.dll -lharfbuzz -lgraphite2 -ldwrite -lrpcrt4 -lintl -liconv -lbz2 -lz -luser32 -lgdi32 -lpng -lz -luuid -lturbojpeg -ljpeg -lpixman-1 -ldl -Lcvmlib32/lib -lodb-sqlite -lodb -lsqlite3 -s
-OBJDIR = obj/windows32/
+
+# object and binary dir
+OBJDIR = obj/windows32
 BINDIR = bin/windows32
-.PHONY: all pre clean
-.SUFFIXES: .o .cpp
+
 
 -include mk/Makedefs
+
+# Customizations
 CCFLAGS += -Icvmlib32/include
 CXXFLAGS += -Icvmlib32/include
 CXXGUAC += -Icvmlib32/include
