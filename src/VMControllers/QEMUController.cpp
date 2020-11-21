@@ -757,7 +757,7 @@ void QEMUController::GuacDisconnect()
 	{
 		std::cout << "Gaucamole client failed to connect.";
 		// If we have exceeded the max number of connection attempts
-		if (++retry_count_ >= kMaxConnectTries)
+		if (++retry_count_ >= settings_->MaxAttempts)
 		{
 			std::cout << "Max number attempts has been exceeded. Stopping...";
 
@@ -881,7 +881,7 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state)
 		{
 			std::cout << "QMP failed to connect. ";
 			// If we have exceeded the max number of connection attempts
-			if (++retry_count_ >= kMaxConnectTries)
+			if (++retry_count_ >= settings_->MaxAttempts)
 			{
 				std::cout << "Max number attempts has been exceeded. Stopping..." << std::endl;
 

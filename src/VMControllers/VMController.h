@@ -220,12 +220,6 @@ protected:
 
 	std::shared_ptr<VMSettings> settings_;
 
-	/**
-	 * The maximum amount of attempts to connect to the hypervisor
-	 * with either the Guacamole client or some other client.
-	 */
-	const size_t kMaxConnectTries = 5;
-
 	StopReason stop_reason_;
 
 	UserList users_;

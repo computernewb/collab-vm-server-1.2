@@ -51,6 +51,7 @@ struct VMSettings
 		VoteTime(60),
 		VoteCooldownTime(600),
 		QMPSocketType(kLocal),
+		MaxAttempts(5),
 		//UploadsEnabled(false),
 		//UploadWaitTime(180), // 3 minutes
 		//MaxUploadSize(15728640), // 15 MiB
@@ -92,6 +93,12 @@ struct VMSettings
 	 * The amount of time in between votes (seconds).
 	 */
 	uint16_t VoteCooldownTime;
+
+	/**
+	 * The maximum amount of attempts to connect to the hypervisor
+	 * with either the Guacamole client or some other client.
+	 */
+	uint8_t MaxAttempts;
 
 	bool UploadsEnabled;
 	uint32_t UploadCooldownTime; // Measured in seconds

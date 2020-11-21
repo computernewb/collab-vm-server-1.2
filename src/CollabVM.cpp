@@ -165,6 +165,7 @@ enum VM_SETTINGS
 	kQMPSocketType,
 	kQMPAddress,
 	kQMPPort,
+	kMaxAttempts,
 	kQEMUCmd,
 	kQEMUSnapshotMode,
 	kTurnsEnabled,
@@ -200,6 +201,7 @@ static const std::string vm_settings_[] = {
 	"qmp-socket-type",
 	"qmp-address",
 	"qmp-port",
+	"max-attempts",
 	"qemu-cmd",
 	"qemu-snapshot-mode",
 	"turns-enabled",
@@ -3248,6 +3250,25 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						valid = false;
 					}
 					break;
+				case kMaxAttempts:
+					if (value.IsUint())
+					{
+						if (value.GetUint() < std::numeric_limits<uint8_t>::max())
+						{
+							vm.MaxAttempts = value.GetUint();
+						}
+						else
+						{
+							WriteJSONObject(writer, vm_settings_[kMaxAttempts], "Maximum connection attempts too large");
+							valid = false;
+						}
+					}
+					else
+					{
+						WriteJSONObject(writer, vm_settings_[kMaxAttempts], invalid_object_);
+						valid = false;
+					}
+					break;
 				case kQEMUCmd:
 					if (value.IsString())
 					{
@@ -3790,6 +3811,10 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 			case kQMPPort:
 				writer.String(vm_settings_[kQMPPort].c_str());
 				writer.Uint(vm->QMPPort);
+				break;
+			case kMaxAttempts:
+				writer.String(vm_settings_[kMaxAttempts].c_str());
+				writer.Uint(vm->MaxAttempts);
 				break;
 			case kQEMUCmd:
 				writer.String(vm_settings_[kQEMUCmd].c_str());
