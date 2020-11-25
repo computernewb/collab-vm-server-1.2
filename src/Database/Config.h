@@ -26,7 +26,8 @@ struct Config
 		ChatRateTime(3),
 		ChatMuteTime(30),
 		ChatMsgHistory(10),
-		MaxUploadTime(120)
+		MaxUploadTime(120),
+		BanCommand("")
 	{
 	}
 
@@ -67,6 +68,11 @@ struct Config
 	 * The max amount of time the user has to upload a file in seconds.
 	 */
 	uint16_t MaxUploadTime;
+	
+	/**
+	 * The command used when an admin bans a user.
+	 */
+	std::string BanCommand;
 
 	//FileMode FileUploadMode;
 	//std::string BlackList;

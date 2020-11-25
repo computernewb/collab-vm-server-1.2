@@ -129,7 +129,8 @@ enum admin_opcodes_ {
 	kRestoreVM,		// Restore one or more VMs
 	kRebootVM,		// Reboot one or more VMs
 	kResetVM,		// Reset one or more VMs
-	kRestartVM		// Restart one or more VM hypervisors
+	kRestartVM,		// Restart one or more VM hypervisors
+	kBanUser		// Ban user's IP address
 };
 
 enum SERVER_SETTINGS
@@ -138,7 +139,8 @@ enum SERVER_SETTINGS
 	kChatRateTime,
 	kChatMuteTime,
 	kMaxConnections,
-	kMaxUploadTime
+	kMaxUploadTime,
+	kBanCommand
 };
 
 static const std::string server_settings_[] = {
@@ -146,7 +148,8 @@ static const std::string server_settings_[] = {
 	"chat-rate-time",
 	"chat-mute-time",
 	"max-cons",
-	"max-upload-time"
+	"max-upload-time",
+	"ban-cmd"
 };
 
 enum VM_SETTINGS
@@ -2059,6 +2062,15 @@ string CollabVMServer::EncodeHTMLString(const char* str, size_t strLen)
 	return ss.str();
 }
 
+void CollabVMServer::ExecuteCommandAsync(std::string command) {
+	// system() is used for simplicity but it is actually synchronous,
+	// so it is called in a new thread
+	std::string command_ = command;
+	std::thread([command_] {
+		std::system(command_.c_str());
+	}).detach();
+}
+
 void CollabVMServer::OnMouseInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args)
 {
 	// Only allow a user to send mouse instructions if it is their turn,
@@ -2430,6 +2442,32 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			}
 			// Send success response
 			SendWSMessage(*user, "5.admin,1.1,15.{\"result\":true};");
+		}
+		break;
+	case kBanUser:
+		if (args.size() == 2)
+		{
+			std::string bancmd = database_.Configuration.BanCommand;
+			if (bancmd == "") break;
+			std::string banname = args[1];
+			std::shared_ptr<CollabVMUser> banuser;
+			// The dummy text seems to fix random crashes for some reason...
+			std::string banstr = "dummytextdummytextdummytextdummytextdummytext";
+			for (auto it = connections_.begin(); it != connections_.end(); it++)
+			{
+				banuser = *it;
+				banstr = *banuser->username;
+				if (banstr == banname) break;
+			}
+			if (banstr != banname) break;
+			std::string banip = banuser->ip_data.GetIP();
+			for (size_t it = 0; bancmd.find("$IP",it) != std::string::npos; it = bancmd.find("$IP",it))
+				bancmd.replace(bancmd.find("$IP",it),3,banip);
+			ExecuteCommandAsync(bancmd);
+			unique_lock<std::mutex> lock(process_queue_lock_);
+			process_queue_.push(new UserAction(*banuser, ActionType::kRemoveConnection));
+			lock.unlock();
+			process_wait_.notify_one();
 		}
 		break;
 	}
@@ -3746,6 +3784,9 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 	writer.String(server_settings_[kMaxUploadTime].c_str());
 	writer.Uint(database_.Configuration.MaxUploadTime);
 
+	writer.String(server_settings_[kBanCommand].c_str());
+	writer.String(database_.Configuration.BanCommand.c_str());
+
 	// "vm" is an array of objects containing the settings for each VM
 	writer.String("vm");
 	writer.StartArray();
@@ -4000,6 +4041,15 @@ void CollabVMServer::ParseServerSettings(rapidjson::Value& settings, rapidjson::
 					else
 					{
 						WriteJSONObject(writer, server_settings_[kMaxUploadTime], invalid_object_);
+						valid = false;
+					}
+					break;
+				case kBanCommand:
+					if (value.IsString())
+						config.BanCommand = string(value.GetString(), value.GetStringLength());
+					else
+					{
+						WriteJSONObject(writer, server_settings_[kBanCommand], invalid_object_);
 						valid = false;
 					}
 					break;
