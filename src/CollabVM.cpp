@@ -2445,30 +2445,26 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 		}
 		break;
 	case kBanUser:
-		if (args.size() == 2)
-		{
-			std::string bancmd = database_.Configuration.BanCommand;
-			if (bancmd == "") break;
-			std::string banname = args[1];
-			std::shared_ptr<CollabVMUser> banuser;
-			// The dummy text seems to fix random crashes for some reason...
-			std::string banstr = "dummytextdummytextdummytextdummytextdummytext";
+		if (args.size() == 2 && database_.Configuration.BanCommand != "")
 			for (auto it = connections_.begin(); it != connections_.end(); it++)
 			{
-				banuser = *it;
-				banstr = *banuser->username;
-				if (banstr == banname) break;
+				std::shared_ptr<CollabVMUser> banUser = *it;
+				if (*banUser->username == args[1] && banUser->username)
+				{
+					// Replace $IP in ban command with user's IP
+					std::string banCmd = database_.Configuration.BanCommand;
+					for (size_t it = 0; banCmd.find("$IP",it) != std::string::npos; it = banCmd.find("$IP",it))
+						banCmd.replace(banCmd.find("$IP",it),3,banUser->ip_data.GetIP());
+					// Block user's IP
+					ExecuteCommandAsync(banCmd);
+					// Disconnect user
+					unique_lock<std::mutex> lock(process_queue_lock_);
+					process_queue_.push(new UserAction(*banUser, ActionType::kRemoveConnection));
+					lock.unlock();
+					process_wait_.notify_one();
+					break;
+				}
 			}
-			if (banstr != banname) break;
-			std::string banip = banuser->ip_data.GetIP();
-			for (size_t it = 0; bancmd.find("$IP",it) != std::string::npos; it = bancmd.find("$IP",it))
-				bancmd.replace(bancmd.find("$IP",it),3,banip);
-			ExecuteCommandAsync(bancmd);
-			unique_lock<std::mutex> lock(process_queue_lock_);
-			process_queue_.push(new UserAction(*banuser, ActionType::kRemoveConnection));
-			lock.unlock();
-			process_wait_.notify_one();
-		}
 		break;
 	}
 }
