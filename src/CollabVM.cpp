@@ -2449,7 +2449,8 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			for (auto it = connections_.begin(); it != connections_.end(); it++)
 			{
 				std::shared_ptr<CollabVMUser> banUser = *it;
-				if (*banUser->username == args[1] && banUser->username)
+				if (!banUser->username) continue;
+				if (*banUser->username == args[1])
 				{
 					// Replace $IP in ban command with user's IP
 					std::string banCmd = database_.Configuration.BanCommand;
