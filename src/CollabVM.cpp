@@ -130,7 +130,8 @@ enum admin_opcodes_ {
 	kRebootVM,		// Reboot one or more VMs
 	kResetVM,		// Reset one or more VMs
 	kRestartVM,		// Restart one or more VM hypervisors
-	kBanUser		// Ban user's IP address
+	kBanUser,		// Ban user's IP address
+	kCancelVote		// Cancel a Vote for Reset without resetting
 };
 
 enum SERVER_SETTINGS
@@ -1175,7 +1176,7 @@ void CollabVMServer::ProcessingThread()
 		case ActionType::kVoteEnded:
 		{
 			const std::shared_ptr<VMController>& controller = static_cast<VMAction*>(action)->controller;
-			controller->EndVote();
+			controller->EndVote(false);
 			break;
 		}
 		case ActionType::kAgentConnect:
@@ -2466,6 +2467,10 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 					break;
 				}
 			}
+		break;
+	case kCancelVote:
+		if (args.size() == 1 && user->vm_controller != nullptr)
+			user->vm_controller->EndVote(true);
 		break;
 	}
 }

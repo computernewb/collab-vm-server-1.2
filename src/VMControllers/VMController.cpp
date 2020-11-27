@@ -180,9 +180,10 @@ void VMController::VoteEndedCallback(const boost::system::error_code& ec)
 	server_.OnVMControllerVoteEnded(shared_from_this());
 }
 
-void VMController::EndVote()
+void VMController::EndVote(bool cancelVote)
 {
-	bool vote_succeeded = vote_count_yes_ >= vote_count_no_;
+	if (vote_state_ != VoteState::kVoting) return;
+	bool vote_succeeded = (vote_count_yes_ >= vote_count_no_) && !cancelVote;
 	server_.BroadcastVoteEnded(*this, users_, vote_succeeded);
 	if (settings_->VoteCooldownTime)
 	{

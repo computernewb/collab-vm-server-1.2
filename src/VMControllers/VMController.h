@@ -113,7 +113,7 @@ public:
 
 	void Vote(CollabVMUser& user, bool vote);
 
-	void EndVote();
+	void EndVote(bool cancelVote);
 
 	void TurnRequest(const std::shared_ptr<CollabVMUser>& user);
 
