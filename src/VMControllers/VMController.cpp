@@ -319,6 +319,56 @@ void VMController::OnFileUploadExecFinished(const std::shared_ptr<UploadInfo>& i
 	server_.OnFileUploadExecFinished(shared_from_this(), info, exec_success);
 }
 
+void VMController::EndTurn(const std::shared_ptr<CollabVMUser>& user)
+{
+	bool turn_change = false;
+	// Check if they are in the turn queue and remove them if they are
+	if (user->waiting_turn)
+	{
+		for (auto it = turn_queue_.begin(); it != turn_queue_.end(); it++)
+		{
+			if (*it == user)
+			{
+				turn_change = true;
+				turn_queue_.erase(it);
+				user->waiting_turn = false;
+				// Workaround to remove yellow border on client
+				server_.SendTurnInfo(*user, 0, *user->username, turn_queue_);
+				
+				// The client should not be in the queue more than once
+				break;
+			}
+		}
+	}
+
+	// Check if it is currently their turn
+	if (current_turn_ == user)
+	{
+		// Cancel the pending timer callback
+		boost::system::error_code ec;
+		turn_timer_.cancel(ec);
+
+		if (!turn_queue_.empty())
+		{
+			current_turn_ = turn_queue_.front();
+			current_turn_->waiting_turn = false;
+			turn_queue_.pop_front();
+
+			// Set up the turn timer
+			turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
+			turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
+		}
+		else
+			current_turn_ = nullptr;
+
+		turn_change = true;
+	}
+
+	if (turn_change)
+		server_.BroadcastTurnInfo(*this, users_, turn_queue_, current_turn_.get(),
+			current_turn_ ? std::chrono::duration_cast<millisecs_t>(turn_timer_.expires_from_now()).count() : 0);
+}
+
 void VMController::AddUser(const std::shared_ptr<CollabVMUser>& user)
 {
 	users_.AddUser(*user, [this](CollabVMUser& user) { OnAddUser(user); });
@@ -355,48 +405,7 @@ void VMController::RemoveUser(const std::shared_ptr<CollabVMUser>& user)
 		server_.BroadcastVoteInfo(*this, users_, false, time_remaining, vote_count_yes_, vote_count_no_);
 	}
 
-	bool turn_change = false;
-	// Check if they are in the turn queue and remove them if they are
-	if (user->waiting_turn)
-	{
-		for (auto it = turn_queue_.begin(); it != turn_queue_.end(); it++)
-		{
-			if (*it == user)
-			{
-				turn_change = true;
-				turn_queue_.erase(it);
-				// The client should not be in the queue more than once
-				break;
-			}
-		}
-	}
-
-	// Check if it is currently their turn
-	if (current_turn_ == user)
-	{
-		// Cancel the pending timer callback
-		boost::system::error_code ec;
-		turn_timer_.cancel(ec);
-
-		if (!turn_queue_.empty())
-		{
-			current_turn_ = turn_queue_.front();
-			current_turn_->waiting_turn = false;
-			turn_queue_.pop_front();
-
-			// Set up the turn timer
-			turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
-			turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
-		}
-		else
-			current_turn_ = nullptr;
-
-		turn_change = true;
-	}
-
-	if (turn_change)
-		server_.BroadcastTurnInfo(*this, users_, turn_queue_, current_turn_.get(),
-			current_turn_ ? std::chrono::duration_cast<millisecs_t>(turn_timer_.expires_from_now()).count() : 0);
+	EndTurn(user);
 
 	users_.RemoveUser(*user, [this](CollabVMUser& user) { OnRemoveUser(user); });
 }

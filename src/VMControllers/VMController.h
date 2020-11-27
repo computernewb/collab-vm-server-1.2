@@ -107,6 +107,8 @@ public:
 
 	virtual StopReason GetStopReason() const = 0;
 
+	void EndTurn(const std::shared_ptr<CollabVMUser>& user);
+
 	void AddUser(const std::shared_ptr<CollabVMUser>& user);
 
 	void RemoveUser(const std::shared_ptr<CollabVMUser>& user);

@@ -2660,7 +2660,12 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 void CollabVMServer::OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args)
 {
 	if (user->vm_controller != nullptr && user->username)
-		user->vm_controller->TurnRequest(user);
+	{
+		if (args.size() == 1 && args[0][0] == '0')
+			user->vm_controller->EndTurn(user);
+		else
+			user->vm_controller->TurnRequest(user);
+	}
 }
 
 void CollabVMServer::OnVoteInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args)
