@@ -14,7 +14,7 @@ build(){
 	CVM_VERSION="v1.2.10~6969"
 	if [ -e ./.git/refs/heads/master ]
 	then
-		UGIT_COMMIT_ID=$(git rev-parse head 2>/dev/null || git rev-parse master)
+		UGIT_COMMIT_ID=$(git rev-parse head >/dev/null 2>&1 && git rev-parse head || git rev-parse master)
 		UGIT_FORKNAME=$(git remote get-url origin)
 		UGIT_FORKURL=$UGIT_FORKNAME
 	else
