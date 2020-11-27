@@ -131,7 +131,8 @@ enum admin_opcodes_ {
 	kResetVM,		// Reset one or more VMs
 	kRestartVM,		// Restart one or more VM hypervisors
 	kBanUser,		// Ban user's IP address
-	kCancelVote		// Cancel a Vote for Reset without resetting
+	kCancelVote,	// Cancel a Vote for Reset without resetting
+	kMuteUser		// Mute a user
 };
 
 enum SERVER_SETTINGS
@@ -2063,13 +2064,36 @@ string CollabVMServer::EncodeHTMLString(const char* str, size_t strLen)
 	return ss.str();
 }
 
-void CollabVMServer::ExecuteCommandAsync(std::string command) {
+void CollabVMServer::ExecuteCommandAsync(std::string command)
+{
 	// system() is used for simplicity but it is actually synchronous,
 	// so it is called in a new thread
 	std::string command_ = command;
 	std::thread([command_] {
 		std::system(command_.c_str());
 	}).detach();
+}
+
+void CollabVMServer::MuteUser(const std::shared_ptr<CollabVMUser>& user)
+{
+	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
+	std::string mute_time = std::to_string(database_.Configuration.ChatMuteTime);
+	std::cout << "[Chat] User was muted for " << mute_time <<
+		" seconds. IP: " << user->ip_data.GetIP() << " Username: \"" <<
+		*user->username << '"' << std::endl;
+	// Mute the user
+	user->ip_data.last_chat_msg = now;
+	user->ip_data.chat_muted = true;
+
+#define part1 "You have been muted for "
+#define part2 " seconds."
+	std::string instr = "4.chat,0.,";
+	instr += std::to_string(mute_time.length() + sizeof(part1) + sizeof(part2) - 2);
+	instr += "." part1;
+	instr += mute_time;
+	instr += part2 ";";
+	SendWSMessage(*user, instr);
+	return;
 }
 
 void CollabVMServer::OnMouseInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args)
@@ -2472,6 +2496,19 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 		if (args.size() == 1 && user->vm_controller != nullptr)
 			user->vm_controller->EndVote(true);
 		break;
+	case kMuteUser:
+		if (args.size() == 2)
+			for (auto it = connections_.begin(); it != connections_.end(); it++)
+			{
+				std::shared_ptr<CollabVMUser> mutedUser = *it;
+				if (!mutedUser->username) continue;
+				if (*mutedUser->username == args[1])
+				{
+					MuteUser(mutedUser);
+					break;
+				}
+			}
+		break;
 	}
 }
 
@@ -2556,23 +2593,7 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 		{
 			if (++user->ip_data.chat_msg_count >= database_.Configuration.ChatRateCount)
 			{
-				std::string mute_time = std::to_string(database_.Configuration.ChatMuteTime);
-				std::cout << "[Chat] User was muted for " << mute_time <<
-					" seconds. IP: " << user->ip_data.GetIP() << " Username: \"" <<
-					*user->username << '"' << std::endl;
-				// Mute the user for attempting to go over the
-				// chat message limit
-				user->ip_data.last_chat_msg = now;
-				user->ip_data.chat_muted = true;
-
-#define part1 "You have been muted for "
-#define part2 " seconds."
-				std::string instr = "4.chat,0.,";
-				instr += std::to_string(mute_time.length() + sizeof(part1) + sizeof(part2) - 2);
-				instr += "." part1;
-				instr += mute_time;
-				instr += part2 ";";
-				SendWSMessage(*user, instr);
+				MuteUser(user);
 				return;
 			}
 		}
