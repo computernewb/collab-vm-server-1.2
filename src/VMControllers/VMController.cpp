@@ -332,9 +332,6 @@ void VMController::EndTurn(const std::shared_ptr<CollabVMUser>& user)
 				turn_change = true;
 				turn_queue_.erase(it);
 				user->waiting_turn = false;
-				// Workaround to remove yellow border on client
-				server_.SendTurnInfo(*user, 0, *user->username, turn_queue_);
-				
 				// The client should not be in the queue more than once
 				break;
 			}
