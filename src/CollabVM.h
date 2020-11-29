@@ -137,7 +137,8 @@ public:
 	void SendGuacMessage(const std::weak_ptr<void>& data, const std::string& str);
 
 	void ExecuteCommandAsync(std::string command);
-	void MuteUser(const std::shared_ptr<CollabVMUser>& user);
+	void MuteUser(const std::shared_ptr<CollabVMUser>& user, bool permanent);
+	void UnmuteUser(const std::shared_ptr<CollabVMUser>& user);
 	void OnMouseInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 	void OnKeyInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 

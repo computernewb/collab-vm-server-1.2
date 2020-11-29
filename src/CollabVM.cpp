@@ -997,9 +997,9 @@ bool CollabVMServer::ShouldCleanUpIPData(IPData& ip_data) const
 
 	if (ip_data.chat_muted)
 	{
-		if ((now - ip_data.last_chat_msg).count() >= database_.Configuration.ChatMuteTime)
+		if ((now - ip_data.last_chat_msg).count() >= database_.Configuration.ChatMuteTime && ip_data.chat_muted == kTempMute)
 		{
-			ip_data.chat_muted = false;
+			ip_data.chat_muted = kUnmuted;
 		}
 		else
 		{
@@ -2074,24 +2074,55 @@ void CollabVMServer::ExecuteCommandAsync(std::string command)
 	}).detach();
 }
 
-void CollabVMServer::MuteUser(const std::shared_ptr<CollabVMUser>& user)
+void CollabVMServer::MuteUser(const std::shared_ptr<CollabVMUser>& user, bool permanent)
 {
 	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
+
 	std::string mute_time = std::to_string(database_.Configuration.ChatMuteTime);
-	std::cout << "[Chat] User was muted for " << mute_time <<
-		" seconds. IP: " << user->ip_data.GetIP() << " Username: \"" <<
+	std::cout << "[Chat] User was muted ";
+	if (permanent)
+		std::cout << "indefinitely.";
+	else
+		std::cout << "for " << mute_time << " seconds.";
+	std::cout << " IP: " << user->ip_data.GetIP() << " Username: \"" <<
 		*user->username << '"' << std::endl;
 	// Mute the user
 	user->ip_data.last_chat_msg = now;
-	user->ip_data.chat_muted = true;
+	user->ip_data.chat_muted = permanent ? kPermMute : kTempMute;
 
-#define part1 "You have been muted for "
-#define part2 " seconds."
+#define part1 "You have been muted"
+#define part2 " for "
+#define part3 " seconds."
 	std::string instr = "4.chat,0.,";
-	instr += std::to_string(mute_time.length() + sizeof(part1) + sizeof(part2) - 2);
+	if (permanent)
+		instr += std::to_string(sizeof(part1));
+	else
+		instr += std::to_string(mute_time.length() + sizeof(part1) + sizeof(part2) + sizeof(part3) - 3);
 	instr += "." part1;
-	instr += mute_time;
-	instr += part2 ";";
+	if (permanent)
+		instr += ".";
+	else
+	{
+		instr += part2;
+		instr += mute_time;
+		instr += part3;
+	}
+	instr += ";";
+	SendWSMessage(*user, instr);
+	return;
+}
+
+void CollabVMServer::UnmuteUser(const std::shared_ptr<CollabVMUser>& user)
+{
+	user->ip_data.chat_muted = kUnmuted;
+	std::cout << "[Chat] User was unmuted."
+		" IP: " << user->ip_data.GetIP() << " Username: \"" <<
+		*user->username << '"' << std::endl;
+#define part1u "You have been unmuted."
+	std::string instr = "4.chat,0.,";
+	instr += std::to_string(sizeof(part1u) - 1);
+	instr += "." part1u;
+	instr += ";";
 	SendWSMessage(*user, instr);
 	return;
 }
@@ -2497,14 +2528,17 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			user->vm_controller->EndVote(true);
 		break;
 	case kMuteUser:
-		if (args.size() == 2)
+		if (args.size() == 3)
 			for (auto it = connections_.begin(); it != connections_.end(); it++)
 			{
 				std::shared_ptr<CollabVMUser> mutedUser = *it;
 				if (!mutedUser->username) continue;
 				if (*mutedUser->username == args[1])
 				{
-					MuteUser(mutedUser);
+					if (args[2][0] == '2')
+						UnmuteUser(mutedUser);
+					else
+						MuteUser(mutedUser, args[2][0] == '1');
 					break;
 				}
 			}
@@ -2580,8 +2614,8 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
 	if (user->ip_data.chat_muted)
 	{
-		if ((now - user->ip_data.last_chat_msg).count() >= database_.Configuration.ChatMuteTime)
-			user->ip_data.chat_muted = false;
+		if ((now - user->ip_data.last_chat_msg).count() >= database_.Configuration.ChatMuteTime && user->ip_data.chat_muted == kTempMute)
+			user->ip_data.chat_muted = kUnmuted;
 		else
 			return;
 	}
@@ -2593,7 +2627,7 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 		{
 			if (++user->ip_data.chat_msg_count >= database_.Configuration.ChatRateCount)
 			{
-				MuteUser(user);
+				MuteUser(user, false);
 				return;
 			}
 		}
