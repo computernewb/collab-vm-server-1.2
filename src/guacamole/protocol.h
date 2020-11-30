@@ -41,6 +41,15 @@
 #include <cairo/cairo.h>
 #include <stdarg.h>
 
+#ifdef USE_JPEG
+/**
+ * Sets the JPEG quality used to the specified value.
+ *
+ * @param quality The JPEG quality to use (0-100).
+ */
+void SetJPEGQuality(uint8_t quality);
+#endif
+
 /* CONTROL INSTRUCTIONS */
 
 /**

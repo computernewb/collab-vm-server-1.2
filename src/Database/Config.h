@@ -27,7 +27,12 @@ struct Config
 		ChatMuteTime(30),
 		ChatMsgHistory(10),
 		MaxUploadTime(120),
-		BanCommand("")
+		BanCommand(""),
+#ifdef USE_JPEG
+		JPEGQuality(75)
+#else
+		JPEGQuality(255)
+#endif
 	{
 	}
 
@@ -73,6 +78,11 @@ struct Config
 	 * The command used when an admin bans a user.
 	 */
 	std::string BanCommand;
+	
+	/**
+	 * JPEG compression quality.
+	 */
+	uint8_t JPEGQuality;
 
 	//FileMode FileUploadMode;
 	//std::string BlackList;

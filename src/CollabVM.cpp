@@ -46,6 +46,9 @@ Please email rightowner@gmail.com for any assistance.
 
 #include "guacamole/user-handlers.h"
 #include "guacamole/unicode.h"
+#ifdef USE_JPEG
+#include "guacamole/protocol.h"
+#endif
 #include <ossp/uuid.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/reader.h>
@@ -142,7 +145,8 @@ enum SERVER_SETTINGS
 	kChatMuteTime,
 	kMaxConnections,
 	kMaxUploadTime,
-	kBanCommand
+	kBanCommand,
+	kJPEGQuality
 };
 
 static const std::string server_settings_[] = {
@@ -151,7 +155,8 @@ static const std::string server_settings_[] = {
 	"chat-mute-time",
 	"max-cons",
 	"max-upload-time",
-	"ban-cmd"
+	"ban-cmd",
+	"jpeg-quality"
 };
 
 enum VM_SETTINGS
@@ -344,6 +349,12 @@ void CollabVMServer::Run(uint16_t port, string doc_root)
 	boost::system::error_code asio_ec;
 	vm_preview_timer_.expires_from_now(std::chrono::seconds(kVMPreviewInterval), asio_ec);
 	vm_preview_timer_.async_wait(std::bind(&CollabVMServer::VMPreviewTimerCallback, shared_from_this(), std::placeholders::_1));
+
+#ifdef USE_JPEG
+	// Set the JPEG quality
+	if (database_.Configuration.JPEGQuality <= 100)
+		SetJPEGQuality(database_.Configuration.JPEGQuality);
+#endif
 
 	// Start all of the VMs that should be auto-started
 	for (auto it = vm_controllers_.begin(); it != vm_controllers_.end(); it++)
@@ -3849,6 +3860,9 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 	writer.String(server_settings_[kBanCommand].c_str());
 	writer.String(database_.Configuration.BanCommand.c_str());
 
+	writer.String(server_settings_[kJPEGQuality].c_str());
+	writer.Uint(database_.Configuration.JPEGQuality);
+
 	// "vm" is an array of objects containing the settings for each VM
 	writer.String("vm");
 	writer.StartArray();
@@ -4115,6 +4129,25 @@ void CollabVMServer::ParseServerSettings(rapidjson::Value& settings, rapidjson::
 						valid = false;
 					}
 					break;
+				case kJPEGQuality:
+					if (value.IsUint())
+					{
+						if (value.GetUint() <= 100 || value.GetUint() == 255)
+						{
+							config.JPEGQuality = value.GetUint();
+						}
+						else
+						{
+							WriteJSONObject(writer, server_settings_[kJPEGQuality], "Value too big");
+							valid = false;
+						}
+					}
+					else
+					{
+						WriteJSONObject(writer, server_settings_[kJPEGQuality], invalid_object_);
+						valid = false;
+					}
+					break;
 				}
 				break;
 			}
@@ -4124,6 +4157,10 @@ void CollabVMServer::ParseServerSettings(rapidjson::Value& settings, rapidjson::
 	// Only save the configuration if all settings valid
 	if (valid)
 	{
+#ifdef USE_JPEG
+		if (config.JPEGQuality <= 100)
+			SetJPEGQuality(config.JPEGQuality);
+#endif
 		database_.Save(config);
 
 		// Set the value of the "result" property to true to indicate success
