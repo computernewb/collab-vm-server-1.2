@@ -2371,8 +2371,26 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 	switch (opcode)
 	{
 	case kStop:
-		user->admin_connected = false;
+		// Logged out
+		SendWSMessage(*user, "5.admin,1.0,1.4;");
 		user->user_rank = UserRank::kUnregistered;
+		if(user->vm_controller != nullptr)
+		{
+			// Send new rank to users
+			std::string adminUser = "7.adduser,1.1,";
+			std::string adminStr = *user->username;
+			adminUser += std::to_string(adminStr.length());
+			adminUser += ".";
+			adminUser += adminStr;
+			adminUser += ",1.0;";
+			user->vm_controller->GetUsersList().ForEachUser([&](CollabVMUser& data)
+			{
+				if (*data.username != *user->username)
+					SendWSMessage(data, adminUser);
+			});
+			SendOnlineUsersList(*user); // send userlist
+		}
+		user->admin_connected = false;
 		admin_connections_.erase(user);
 		break;
 	case kSeshID:
