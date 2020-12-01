@@ -104,6 +104,7 @@ enum CONFIG_FUNCTIONS
 {
 	kSettings,		// Update server settings
 	kPassword,		// Change master password
+	kModPassword,	// Change moderator password
 	kAddVM,			// Add a new VM
 	kUpdateVM,		// Update a VM's settings
 	kDeleteVM		// Delete a VM
@@ -115,6 +116,7 @@ enum CONFIG_FUNCTIONS
 static const std::string config_functions_[] = {
 	"settings",
 	"password",
+	"mod-pw",
 	"add-vm",
 	"update-vm",
 	"del-vm"
@@ -146,7 +148,9 @@ enum SERVER_SETTINGS
 	kMaxConnections,
 	kMaxUploadTime,
 	kBanCommand,
-	kJPEGQuality
+	kJPEGQuality,
+	kModEnabled,
+	kModPerms
 };
 
 static const std::string server_settings_[] = {
@@ -156,7 +160,9 @@ static const std::string server_settings_[] = {
 	"max-cons",
 	"max-upload-time",
 	"ban-cmd",
-	"jpeg-quality"
+	"jpeg-quality",
+	"mod-enabled",
+	"mod-perms"
 };
 
 enum VM_SETTINGS
@@ -2348,8 +2354,19 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 		return;
 	}
 
-	if (!user->admin_connected && opcode != kSeshID && opcode != kMasterPwd)
+	if (!user->admin_connected && opcode != kSeshID && opcode != kMasterPwd && (user->user_rank != UserRank::kModerator || !database_.Configuration.ModEnabled))
 		return;
+	
+	if (user->user_rank == UserRank::kModerator
+		&& opcode != kStop
+		&& opcode != kSeshID
+		&& opcode != kMasterPwd
+		&& (opcode != kRestoreVM || !(database_.Configuration.ModPerms & 1))
+		&& (opcode != kResetVM || !(database_.Configuration.ModPerms & 2))
+		&& (opcode != kBanUser || !(database_.Configuration.ModPerms & 4))
+		&& (opcode != kCancelVote || !(database_.Configuration.ModPerms & 8))
+		&& (opcode != kMuteUser || !(database_.Configuration.ModPerms & 16))
+		) return;
 
 	switch (opcode)
 	{
@@ -2377,7 +2394,21 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 				SendWSMessage(*user, "5.admin,1.0,1.1;");
 
 				if(user->vm_controller != nullptr)
-					SendOnlineUsersList(*user); // send userlist if connected to a VM
+				{
+					// Send new rank to users
+					std::string adminUser = "7.adduser,1.1,";
+					std::string adminStr = *user->username;
+					adminUser += std::to_string(adminStr.length());
+					adminUser += ".";
+					adminUser += adminStr;
+					adminUser += ",1.2;";
+					user->vm_controller->GetUsersList().ForEachUser([&](CollabVMUser& data)
+					{
+						if (*data.username != *user->username)
+							SendWSMessage(data, adminUser);
+					});
+					SendOnlineUsersList(*user); // send userlist
+				}
 			}
 			else
 			{
@@ -2396,8 +2427,52 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			// Send login success response
 			SendWSMessage(*user, "5.admin,1.0,1.1;");
 
+				if(user->vm_controller != nullptr)
+				{
+					// Send new rank to users
+					std::string adminUser = "7.adduser,1.1,";
+					std::string adminStr = *user->username;
+					adminUser += std::to_string(adminStr.length());
+					adminUser += ".";
+					adminUser += adminStr;
+					adminUser += ",1.2;";
+					user->vm_controller->GetUsersList().ForEachUser([&](CollabVMUser& data)
+					{
+						if (*data.username != *user->username)
+							SendWSMessage(data, adminUser);
+					});
+					SendOnlineUsersList(*user); // send userlist
+				}
+		}
+		else if(args.size() == 2 && args[1] == database_.Configuration.ModPassword && database_.Configuration.ModEnabled)
+		{
+			user->user_rank = UserRank::kModerator;
+
+			// Send moderator login success response
+			std::string modLogin = "5.admin,1.0,1.3,";
+			std::string modPermStr = std::to_string(database_.Configuration.ModPerms);
+			modLogin += std::to_string(modPermStr.length());
+			modLogin += ".";
+			modLogin += modPermStr;
+			modLogin += ";";
+			SendWSMessage(*user, modLogin);
+
 			if(user->vm_controller != nullptr)
-				SendOnlineUsersList(*user); // send userlist if connected to a VM
+			{
+				// Send new rank to users
+				std::string adminUser = "7.adduser,1.1,";
+				std::string adminStr = *user->username;
+				adminUser += std::to_string(adminStr.length());
+				adminUser += ".";
+				adminUser += adminStr;
+				adminUser += ",1.3;";
+				user->vm_controller->GetUsersList().ForEachUser([&](CollabVMUser& data)
+				{
+					if (*data.username != *user->username)
+						SendWSMessage(data, adminUser);
+				});
+				SendOnlineUsersList(*user); // send userlist
+			}
 		}
 		else
 		{
@@ -3690,6 +3765,18 @@ std::string CollabVMServer::PerformConfigFunction(const std::string& json)
 						WriteJSONObject(writer, config_functions_[kPassword], invalid_object_);
 					}
 					break;
+				case kModPassword:
+					if (value.IsString())
+					{
+						database_.Configuration.ModPassword = std::string(value.GetString(), value.GetStringLength());
+						database_.Save(database_.Configuration);
+						writer.Bool(true);
+					}
+					else
+					{
+						WriteJSONObject(writer, config_functions_[kModPassword], invalid_object_);
+					}
+					break;
 				case kAddVM:
 				{
 					if (!value.IsObject())
@@ -3862,6 +3949,12 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 
 	writer.String(server_settings_[kJPEGQuality].c_str());
 	writer.Uint(database_.Configuration.JPEGQuality);
+
+	writer.String(server_settings_[kModEnabled].c_str());
+	writer.Bool(database_.Configuration.ModEnabled);
+
+	writer.String(server_settings_[kModPerms].c_str());
+	writer.Uint(database_.Configuration.ModPerms);
 
 	// "vm" is an array of objects containing the settings for each VM
 	writer.String("vm");
@@ -4145,6 +4238,36 @@ void CollabVMServer::ParseServerSettings(rapidjson::Value& settings, rapidjson::
 					else
 					{
 						WriteJSONObject(writer, server_settings_[kJPEGQuality], invalid_object_);
+						valid = false;
+					}
+					break;
+				case kModEnabled:
+					if (value.IsBool())
+					{
+						config.ModEnabled = value.GetBool();
+					}
+					else
+					{
+						WriteJSONObject(writer, server_settings_[kModEnabled], invalid_object_);
+						valid = false;
+					}
+					break;
+				case kModPerms:
+					if (value.IsUint())
+					{
+						if (value.GetUint() <= std::numeric_limits<uint8_t>::max())
+						{
+							config.ModPerms = value.GetUint();
+						}
+						else
+						{
+							WriteJSONObject(writer, server_settings_[kModPerms], "Value too big");
+							valid = false;
+						}
+					}
+					else
+					{
+						WriteJSONObject(writer, server_settings_[kModPerms], invalid_object_);
 						valid = false;
 					}
 					break;

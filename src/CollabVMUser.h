@@ -15,7 +15,8 @@ enum UserRank : uint8_t
 {
 	kUnregistered,	// Guest
 	kRegistered,	// Registered account
-	kAdmin			// Administrator
+	kAdmin,			// Administrator
+	kModerator		// Moderator
 };
 
 enum UserMuted : uint8_t

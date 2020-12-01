@@ -21,6 +21,7 @@ struct Config
 	Config() :
 		ID(0),
 		MasterPassword("collabvm"), // You're gonna wanna change this because any password we put here is gonna be insecure by default.
+		ModPassword("cvmmod"), // Change this one too if you enable the Moderator rank
 		MaxConnections(5), 
 		ChatRateCount(4), 
 		ChatRateTime(3),
@@ -29,10 +30,12 @@ struct Config
 		MaxUploadTime(120),
 		BanCommand(""),
 #ifdef USE_JPEG
-		JPEGQuality(75)
+		JPEGQuality(75),
 #else
-		JPEGQuality(255)
+		JPEGQuality(255),
 #endif
+		ModEnabled(false),
+		ModPerms(0)
 	{
 	}
 
@@ -43,6 +46,11 @@ struct Config
 	 * Admin panel password.
 	 */
 	std::string MasterPassword;
+
+	/**
+	 * Moderator password.
+	 */
+	std::string ModPassword;
 
 	//unsigned char FrameRate; // Measured in frames per second
 
@@ -83,6 +91,16 @@ struct Config
 	 * JPEG compression quality.
 	 */
 	uint8_t JPEGQuality;
+
+	/**
+	 * Moderator rank enabled?
+	 */
+	bool ModEnabled;
+
+	/**
+	 * Moderator permissions.
+	 */
+	uint8_t ModPerms;
 
 	//FileMode FileUploadMode;
 	//std::string BlackList;
