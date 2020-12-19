@@ -11,6 +11,7 @@ CHOCOLATEMAN
 Colonel Seizureton/Colonel Munchkin
 CtrlAltDel
 FluffyVulpix
+sorry/unk0rrupt
 modeco80
 hannah
 LoveEevee
