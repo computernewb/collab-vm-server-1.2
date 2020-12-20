@@ -7,6 +7,7 @@ Geodude
 
 Special Thanks:
 
+6969
 CHOCOLATEMAN
 Colonel Seizureton/Colonel Munchkin
 CtrlAltDel
@@ -14,6 +15,7 @@ FluffyVulpix
 sorry/unk0rrupt
 modeco80
 hannah
+DarkOK
 LoveEevee
 Matthew
 Vanilla
