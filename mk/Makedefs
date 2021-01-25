@@ -2,14 +2,20 @@
 # Common makefile for building the CollabVM Server.
 
 CCFLAGS = -Isrc -Isrc/uriparser
-
+ifeq ($(STATIC),1)
+LIBS += -static -static-libgcc -Lcvmlib/lib
+CCFLAGS += -Icvmlib/include
+endif
 ifeq ($(DEBUG),1)
 # debug mode
 CCFLAGS += -g -O0 -D_DEBUG -DDEBUG
 LDFLAGS = -g
 else
 # release mode, build with optimizations
-CCFLAGS += -O3 -ffast-math -march=native -mtune=native
+CCFLAGS += -O3 -ffast-math
+ifneq ($(NO_NATIVE),1)
+CCFLAGS += -march=native -mtune=native
+endif
 LDFLAGS = -s
 endif
 
@@ -127,7 +133,7 @@ hardclean:
 
 $(BINDIR)/collab-vm-server: $(OBJS)
 	$(info Linking executable $@)
-	$(CXX) $(OBJS) $(LIBS) $(LDFLAGS) -o $@
+	$(CXX) $(OBJS) $(LIBS) $(LDFLAGS) $(LDINSERTS) -o $@
 
 # Source generation rules
 

@@ -34,8 +34,7 @@ configure_build_uuid(){
 
 main(){
 	log "Dependency grab started on $(date +"%x %I:%M %p").";
-        if [[ ! -f "$CVM_HOME/setup.exe" ]];then log "Please copy the Cygwin setup file to $CVM_HOME/setup.exe before running this script.";else
-	$CVM_HOME/setup.exe -X -q -W -P libvncserver-devel,libcairo-devel,libboost-devel,libsqlite3-devel,libsasl2-devel,libturbojpeg-devel,libjpeg-devel,wget,git,make,unzip,gcc-core,gcc-g++
+    pkg install -y git boost libsqlite wget clang make autoconf automake libtool pkg-config libjpeg-turbo libpng libcairo
 	# Install other deps
 	[[ ! -d "cvmlib_src/" ]] && mkdir cvmlib_src;
 	[[ ! -d "cvmlib/" ]] && mkdir cvmlib;
@@ -53,13 +52,19 @@ main(){
 	log "Compiling local copy of ossp uuid..";
 	git clone https://github.com/sean-/ossp-uuid.git
 	cd ossp-uuid
+	wget "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess" -O config.guess
+	wget "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub" -O config.sub
 	configure_build_uuid;
-	log "All source dependencies built."
-	log "Downloading ODB compiler.."
-	cd ../../cvmlib
-	wget https://www.codesynthesis.com/download/odb/2.4/odb-2.4.0-i686-windows.zip
-	unzip -qq -u odb-2.4.0-i686-windows.zip
-	cd ..;
+	cd ..
+	log "Compiling local copy of LibVNCServer..";
+	git clone https://github.com/LibVNC/libvncserver
+	cd libvncserver
+	git checkout 8415ff4
+	sed -i 's/ __THROW//g' common/md5.h
+	sed -i -e 's/KEY_SOFT1, KEY_SOFT2, //g' -e '/KEY_CENTER/d' -e '/KEY_SHARP/d' -e '/KEY_STAR/d' examples/android/jni/fbvncserver.c
+	autoreconf -fi
+	configure_build;
+	log "All source dependencies built.";
 	log "Dependency grab finished.";
-        fi
+	log "Be sure to copy the ODB-compiled files (*-odb.*xx) to $CVM_HOME/obj.";
 };main;

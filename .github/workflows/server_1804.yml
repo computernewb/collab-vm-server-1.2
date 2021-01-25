@@ -1,0 +1,89 @@
+name: "[collab-vm-server] GCC 7.3 - Ubuntu 18.04"
+
+on:
+    push:
+        branches: [ master, unstable ]
+    pull_request:
+        branches: [ master ]
+
+jobs:
+  check_skip:
+    runs-on: ubuntu-18.04
+    outputs:
+      skip: ${{ steps.result_step.outputs.result }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: mstachniuk/ci-skip@master
+        with:
+          commit-filter: '[skip ci];[ci skip];[no ci]'
+          commit-filter-separator: ';'
+      - run: echo "::set-output name=result::${CI_SKIP}"
+        id: result_step
+
+  build_png:
+    needs: check_skip
+    if: ${{ needs.check_skip.outputs.skip == 'false' }}
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        ./scripts/grab_deps_linux.sh 
+    - name: Downgrade GCC to 7.3 # blame odb
+      run: |
+        sudo apt remove php*
+        sudo apt install --allow-downgrades gcc-7-base=7.3.0-16ubuntu3 cpp-7=7.3.0-16ubuntu3 gcc-7=7.3.0-16ubuntu3 libgcc-7-dev=7.3.0-16ubuntu3 libasan4=7.3.0-16ubuntu3 libubsan0=7.3.0-16ubuntu3 libcilkrts5=7.3.0-16ubuntu3
+        sudo apt install --allow-downgrades g++-7=7.3.0-16ubuntu3 libstdc++-7-dev=7.3.0-16ubuntu3 --allow-downgrades -y
+        sudo ln -s /usr/bin/g++-7 /usr/bin/g++  
+        sudo ln -s /usr/bin/gcc-7 /usr/bin/gcc  
+        sudo ln -s /usr/bin/gcc /usr/bin/cc
+    - name: Make PNG build      
+      run: |
+        make -j$(nproc) NO_NATIVE=1
+    - name: Upload Artifact - PNG
+      uses: 'actions/upload-artifact@v2'
+      with:
+        name: Server Binary - PNG
+        path: './bin/**/*'
+
+  build_jpeg:
+    needs: check_skip
+    if: ${{ needs.check_skip.outputs.skip == 'false' }}
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        ./scripts/grab_deps_linux.sh 
+    - name: Downgrade GCC to 7.3 # blame odb
+      run: |
+        sudo apt remove php*
+        sudo apt install --allow-downgrades gcc-7-base=7.3.0-16ubuntu3 cpp-7=7.3.0-16ubuntu3 gcc-7=7.3.0-16ubuntu3 libgcc-7-dev=7.3.0-16ubuntu3 libasan4=7.3.0-16ubuntu3 libubsan0=7.3.0-16ubuntu3 libcilkrts5=7.3.0-16ubuntu3  
+        sudo apt install --allow-downgrades g++-7=7.3.0-16ubuntu3 libstdc++-7-dev=7.3.0-16ubuntu3  
+        sudo ln -s /usr/bin/g++-7 /usr/bin/g++  
+        sudo ln -s /usr/bin/gcc-7 /usr/bin/gcc  
+        sudo ln -s /usr/bin/gcc /usr/bin/cc
+    - name: Make JPEG build
+      run: |
+        make -j$(nproc) JPEG=1 NO_NATIVE=1
+    - name: Upload Artifact - JPEG
+      uses: 'actions/upload-artifact@v2'
+      with:
+        name: Server Binary - JPEG
+        path: './bin/**/*'
+    - name: "Bonus: compile odb .cxx files"
+      run: |
+          mkdir odbout
+          odb -d sqlite -o odbout -s -q src/Database/VMSettings.h -DUSE_JPEG
+          odb -d sqlite -o odbout -s -q src/Database/Config.h -DUSE_JPEG
+    - name: Upload Artifact - ODB files
+      uses: 'actions/upload-artifact@v2'
+      with:
+        name: ODB files for building locally (JPEG Only)
+        path: './odbout/*'

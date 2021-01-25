@@ -17,7 +17,11 @@ VMController::VMController(CollabVMServer& server, boost::asio::io_service& serv
 	stop_reason_(StopReason::kNormal),
 	thumbnail_str_(nullptr),
 	agent_timer_(service),
-	agent_connected_(false)
+	agent_connected_(false),
+	chat_history_(new ChatMessage[server_.GetChatLength()]),
+	chat_history_begin_(0),
+	chat_history_end_(0),
+	chat_history_count_(0)
 {
 }
 
@@ -99,6 +103,7 @@ void VMController::Vote(CollabVMUser& user, bool vote)
 		case VoteState::kCoolingdown:
 		{
 			int32_t time_remaining = std::chrono::duration_cast<std::chrono::duration<int32_t>>(vote_timer_.expires_from_now()).count();
+			// Earlier I was attempting to get staff to bypass this but this will need more work, come back to it later
 			if (time_remaining > 0)
 			{
 				server_.VoteCoolingDown(user, time_remaining);
@@ -130,8 +135,7 @@ void VMController::Vote(CollabVMUser& user, bool vote)
 			{
 				IPData::VoteDecision prev_vote = user.ip_data.votes[this];
 				bool changed = false;
-				if(user.voted_limit == false) {
-
+				if (user.voted_limit == false) {
 					if(user.voted_amount >= 5) {
 						user.voted_limit = true;
 						goto _vote_limit_die;
@@ -180,9 +184,10 @@ void VMController::VoteEndedCallback(const boost::system::error_code& ec)
 	server_.OnVMControllerVoteEnded(shared_from_this());
 }
 
-void VMController::EndVote()
+void VMController::EndVote(bool cancelVote)
 {
-	bool vote_succeeded = vote_count_yes_ >= vote_count_no_;
+	if (vote_state_ != VoteState::kVoting) return;
+	bool vote_succeeded = (vote_count_yes_ >= vote_count_no_) && !cancelVote;
 	server_.BroadcastVoteEnded(*this, users_, vote_succeeded);
 	if (settings_->VoteCooldownTime)
 	{
@@ -205,34 +210,53 @@ void VMController::EndVote()
 		RestoreVMSnapshot();
 }
 
-void VMController::TurnRequest(const std::shared_ptr<CollabVMUser>& user)
+void VMController::TurnRequest(const std::shared_ptr<CollabVMUser>& user, bool turnJack, bool isStaff)
 {
 	// If the user is already in the queue or they are already
 	// in control don't allow them to make another turn request
-	if (!settings_->TurnsEnabled || GetState() != ControllerState::kRunning ||
-		current_turn_ == user || user->waiting_turn)
+	if (GetState() != ControllerState::kRunning || (!settings_->TurnsEnabled && !isStaff) ||
+		(user->waiting_turn && !turnJack) || current_turn_ == user)
 		return;
 
-	if (!current_turn_)
-	{
+	if (user->waiting_turn) {
+		for (auto it = turn_queue_.begin(); it != turn_queue_.end(); it++) {
+			if (*it == user) {
+				turn_queue_.erase(it);
+				user->waiting_turn = false;
+				break;
+			}
+		}
+	};
+
+	if (!current_turn_) {
 		// If no one currently has a turn then give the requesting user control
 		current_turn_ = user;
 		// Start the turn timer
 		boost::system::error_code ec;
 		turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
 		turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
-	}
-	else
-	{
-		// Otherwise add them to the queue
-		turn_queue_.push_back(user);
-		user->waiting_turn = true;
-	}
+	} else {
+		if (!turnJack) {
+			// Otherwise add them to the queue
+			turn_queue_.push_back(user);
+			user->waiting_turn = true;
+		} else {
+			// Turn-jack
+			turn_queue_.push_front(current_turn_);
+			current_turn_->waiting_turn = true;
+			current_turn_ = user;
 
+			boost::system::error_code ec;
+			turn_timer_.cancel(ec);
+			turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
+			turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
+		}
+	};
+	
 	server_.BroadcastTurnInfo(*this, users_, turn_queue_, current_turn_.get(),
 		std::chrono::duration_cast<millisecs_t>(turn_timer_.expires_from_now()).count());
 }
-
+ 
 void VMController::NextTurn()
 {
 	int32_t time_remaining;
@@ -318,9 +342,59 @@ void VMController::OnFileUploadExecFinished(const std::shared_ptr<UploadInfo>& i
 	server_.OnFileUploadExecFinished(shared_from_this(), info, exec_success);
 }
 
+void VMController::EndTurn(const std::shared_ptr<CollabVMUser>& user)
+{
+	bool turn_change = false;
+	// Check if they are in the turn queue and remove them if they are
+	if (user->waiting_turn)
+	{
+		for (auto it = turn_queue_.begin(); it != turn_queue_.end(); it++)
+		{
+			if (*it == user)
+			{
+				turn_change = true;
+				turn_queue_.erase(it);
+				user->waiting_turn = false;
+				// The client should not be in the queue more than once
+				break;
+			}
+		}
+	}
+
+	// Check if it is currently their turn
+	if (current_turn_ == user)
+	{
+		// Cancel the pending timer callback
+		boost::system::error_code ec;
+		turn_timer_.cancel(ec);
+
+		if (!turn_queue_.empty())
+		{
+			current_turn_ = turn_queue_.front();
+			current_turn_->waiting_turn = false;
+			turn_queue_.pop_front();
+
+			// Set up the turn timer
+			turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
+			turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
+		}
+		else
+			current_turn_ = nullptr;
+
+		turn_change = true;
+	}
+
+	if (turn_change)
+		server_.BroadcastTurnInfo(*this, users_, turn_queue_, current_turn_.get(),
+			current_turn_ ? std::chrono::duration_cast<millisecs_t>(turn_timer_.expires_from_now()).count() : 0);
+}
+
 void VMController::AddUser(const std::shared_ptr<CollabVMUser>& user)
 {
 	users_.AddUser(*user, [this](CollabVMUser& user) { OnAddUser(user); });
+
+	SendOnlineUsersList(*user);
+	SendChatHistory(*user);
 
 	int32_t time_remaining;
 	if (current_turn_)
@@ -354,50 +428,107 @@ void VMController::RemoveUser(const std::shared_ptr<CollabVMUser>& user)
 		server_.BroadcastVoteInfo(*this, users_, false, time_remaining, vote_count_yes_, vote_count_no_);
 	}
 
-	bool turn_change = false;
-	// Check if they are in the turn queue and remove them if they are
-	if (user->waiting_turn)
-	{
-		for (auto it = turn_queue_.begin(); it != turn_queue_.end(); it++)
-		{
-			if (*it == user)
-			{
-				turn_change = true;
-				turn_queue_.erase(it);
-				// The client should not be in the queue more than once
-				break;
-			}
-		}
-	}
-
-	// Check if it is currently their turn
-	if (current_turn_ == user)
-	{
-		// Cancel the pending timer callback
-		boost::system::error_code ec;
-		turn_timer_.cancel(ec);
-
-		if (!turn_queue_.empty())
-		{
-			current_turn_ = turn_queue_.front();
-			current_turn_->waiting_turn = false;
-			turn_queue_.pop_front();
-
-			// Set up the turn timer
-			turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
-			turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
-		}
-		else
-			current_turn_ = nullptr;
-
-		turn_change = true;
-	}
-
-	if (turn_change)
-		server_.BroadcastTurnInfo(*this, users_, turn_queue_, current_turn_.get(),
-			current_turn_ ? std::chrono::duration_cast<millisecs_t>(turn_timer_.expires_from_now()).count() : 0);
+	EndTurn(user);
 
 	users_.RemoveUser(*user, [this](CollabVMUser& user) { OnRemoveUser(user); });
+}
+
+inline void VMController::AppendChatMessage(std::ostringstream& ss, ChatMessage* chat_msg)
+{
+	ss << ',' << chat_msg->username->length() << '.' << *chat_msg->username <<
+		',' << chat_msg->message.length() << '.' << chat_msg->message;
+}
+
+void VMController::SendChatHistory(CollabVMUser& user)
+{
+	if (chat_history_count_)
+	{
+		std::ostringstream ss("4.chat", std::ios_base::in | std::ios_base::out | std::ios_base::ate);
+		unsigned char len = server_.GetChatLength();
+
+		// Iterate through each of the messages in the circular buffer
+		if (chat_history_end_ > chat_history_begin_)
+		{
+			for (unsigned char i = chat_history_begin_; i < chat_history_end_; i++)
+				AppendChatMessage(ss, &chat_history_[i]);
+		}
+		else
+		{
+			for (unsigned char i = chat_history_begin_; i < len; i++)
+				AppendChatMessage(ss, &chat_history_[i]);
+
+			for (unsigned char i = 0; i < chat_history_end_; i++)
+				AppendChatMessage(ss, &chat_history_[i]);
+		}
+		ss << ';';
+		server_.SendWSMessage(user, ss.str());
+	}
+}
+
+void VMController::SendChatMsg(const std::shared_ptr<CollabVMUser>& user, std::string msg)
+{
+	auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now());
+
+	if (server_.GetChatLength())
+	{
+		// Add the message to the chat history
+		ChatMessage* chat_message = &chat_history_[chat_history_end_];
+		chat_message->timestamp = now;
+		chat_message->username = user->username;
+		chat_message->message = msg;
+
+		uint8_t last_index = server_.GetChatLength() - 1;
+
+		if (chat_history_end_ == chat_history_begin_ && chat_history_count_)
+		{
+			// Increment the begin index
+			if (chat_history_begin_ == last_index)
+				chat_history_begin_ = 0;
+			else
+				chat_history_begin_++;
+		}
+		else
+		{
+			chat_history_count_++;
+		}
+
+		// Increment the end index
+		if (chat_history_end_ == last_index)
+			chat_history_end_ = 0;
+		else
+			chat_history_end_++;
+	}
+
+
+	std::string instr = "4.chat,";
+	instr += std::to_string(user->username->length());
+	instr += '.';
+	instr += *user->username;
+	instr += ',';
+	instr += std::to_string(msg.length());
+	instr += '.';
+	instr += msg;
+	instr += ';';
+
+	users_.ForEachUser([&](CollabVMUser& user)
+	{
+		server_.SendWSMessage(user, instr);
+	});
+}
+
+void VMController::SendOnlineUsersList(CollabVMUser& user)
+{
+	std::ostringstream ss("7.adduser,", std::ios_base::in | std::ios_base::out | std::ios_base::ate);
+	std::string num = std::to_string(users_.GetUserCount());
+	ss << num.size() << '.' << num;
+	users_.ForEachUser([&](CollabVMUser& data)
+	{
+		// Append the user to the online users list
+		num = std::to_string(data.user_rank);
+		ss << ',' << data.username->length() << '.' << *data.username << ',' << num.size() << '.' << num;
+	});
+	ss << ';';
+	server_.SendWSMessage(user, ss.str());
 }
 
 void VMController::NewThumbnail(std::string* str)
@@ -413,4 +544,5 @@ bool VMController::IsFileUploadValid(const std::shared_ptr<CollabVMUser>& user, 
 
 VMController::~VMController()
 {
+	delete[] chat_history_;
 }

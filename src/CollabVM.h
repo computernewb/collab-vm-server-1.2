@@ -136,6 +136,9 @@ public:
 	 */
 	void SendGuacMessage(const std::weak_ptr<void>& data, const std::string& str);
 
+	void ExecuteCommandAsync(std::string command);
+	void MuteUser(const std::shared_ptr<CollabVMUser>& user, bool permanent);
+	void UnmuteUser(const std::shared_ptr<CollabVMUser>& user);
 	void OnMouseInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 	void OnKeyInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 
@@ -148,6 +151,13 @@ public:
 	void OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 	void OnVoteInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 	void OnFileInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
+
+	inline uint8_t GetChatLength()
+	{
+		return database_.Configuration.ChatMsgHistory;
+	}
+
+	void SendWSMessage(CollabVMUser& user, const std::string& str);
 
 private:
 
@@ -593,13 +603,6 @@ private:
 		}
 	};
 
-	struct ChatMessage
-	{
-		std::shared_ptr<std::string> username;
-		std::string message;
-		std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> timestamp;
-	};
-
 	void OnHttp(websocketpp::connection_hdl handle);
 	void OnHttpPartial(websocketpp::connection_hdl handle, const std::string& res, const char* buf, size_t len);
 	HttpContentType GetBodyContentType(const std::string& contentType);
@@ -630,18 +633,10 @@ private:
 	std::string GenerateUuid();
 
 	void OnMessageFromWS(websocketpp::connection_hdl handle, Server::message_ptr msg);
-	void SendWSMessage(CollabVMUser& user, const std::string& str);
 	void ProcessingThread();
 
 	void Send404Page(Server::connection_ptr& con, std::string& path);
 	void SendHTTPFile(Server::connection_ptr& con, std::string& path, std::string& full_path);
-
-	void AppendChatMessage(std::ostringstream& ss, ChatMessage* chat_msg);
-
-	/**
-	 * Sends the remembered chat history to the specified user.
-	 */
-	void SendChatHistory(CollabVMUser& user);
 
 	/**
 	 * Checks whether or not a username is valid.
@@ -655,7 +650,8 @@ private:
 	{
 		kSuccess = '0',			// The username was successfully changed
 		kUsernameTaken = '1',	// Someone already has the username or it is registered to an account
-		kInvalid = '2'			// The requested username had invalid characters
+		kInvalid = '2',			// The requested username had invalid characters
+		kBlacklisted = '3'
 	};
 
 	/**
@@ -671,11 +667,6 @@ private:
 	 * if the user did not previously have a username.
 	 */
 	void ChangeUsername(const std::shared_ptr<CollabVMUser>& data, const std::string& new_username, UsernameChangeResult result, bool send_history);
-
-	/**
-	 * The the list of all online users to the specified client.
-	 */
-	void SendOnlineUsersList(CollabVMUser& user);
 
 	/**
 	 * Sends an action instruction to all users currently connected to the VMController.
@@ -848,26 +839,6 @@ private:
 	 */
 	std::uniform_int_distribution<uint32_t> guest_rng_;
 	std::default_random_engine rng_;
-
-	/**
-	 * Circular buffer used for storing chat history.
-	 */
-	ChatMessage* chat_history_;
-
-	/**
-	 * Begin index for the circular chat history buffer.
-	 */
-	uint8_t chat_history_begin_;
-
-	/**
-	 * End index for the circular chat history buffer.
-	 */
-	uint8_t chat_history_end_;
-
-	/**
-	 * The number of messages in the chat history buffer.
-	 */
-	uint8_t chat_history_count_;
 
 	const size_t kMaxChatMsgLen = 100;
 

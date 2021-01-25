@@ -1,0 +1,22 @@
+# CollabVM Server mkconfig for Termux
+
+CXX = g++
+CC = gcc
+
+# You're on your own here, make sure the .*xx files (which can come from any ODB compiler-supported platform) end up in obj/
+# Otherwise, if you get the ODB compiler working on this, set it below and tell me how you did it
+ODB = true
+
+NO_NATIVE=1
+
+LIBS = -pthread -latomic -lturbojpeg -ljpeg -lboost_system -lpng -lz -lcairo -lpixman-1 -ldl -lsqlite3 -landroid-glob -Lcvmlib/lib -lodb-sqlite -lodb -luuid -lvncclient
+
+OBJDIR = obj
+BINDIR = bin
+
+.PHONY: all pre clean
+.SUFFIXES: .o .cpp
+
+-include mk/Makedefs
+
+CCFLAGS += -DNO_EXECINFO -DNO_WORDEXP -Icvmlib/include

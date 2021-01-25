@@ -74,6 +74,14 @@ public:
 		ForEachUser(func);
 	}
 
+	/**
+	 * Get the number of connected users.
+	 */
+	inline size_t GetUserCount()
+	{
+		return connected_users_;
+	}
+
 private:
 	/**
 	* The first user within the list of all connected users, or NULL if no

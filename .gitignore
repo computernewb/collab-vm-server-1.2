@@ -3,7 +3,14 @@
 /**/obj/
 /**/cvmlib/
 /**/cvmlib32/
+/**/cvmlib_src/
+/**/cvmlib_src32/
 
 # Ignore the http binary dir, sometimes it gets left in the source root
 http/
 
+init
+cleanup.sh
+*.patch
+/**/*.orig
+/**/*.rej

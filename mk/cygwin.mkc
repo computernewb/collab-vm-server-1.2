@@ -15,5 +15,5 @@ BINDIR = bin
 
 -include mk/Makedefs
 
-CXXFLAGS += -DHAVE_CLOCK_GETTIME -D_GNU_SOURCE -I$(CVM_HOME)/cvmlib/include
+CXXFLAGS += -DHAVE_CLOCK_GETTIME -D_GNU_SOURCE -DNO_EXECINFO -I$(CVM_HOME)/cvmlib/include
 

@@ -1,0 +1,131 @@
+name: "[collab-vm-server] GCC 9 - Ubuntu 20.04"
+
+on:
+    push:
+        branches: [ master, unstable ]
+    pull_request:
+        branches: [ master ]
+
+jobs:
+  check_skip:
+    runs-on: ubuntu-20.04
+    outputs:
+      skip: ${{ steps.result_step.outputs.result }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: mstachniuk/ci-skip@master
+        with:
+          commit-filter: '[skip ci];[ci skip];[no ci]'
+          commit-filter-separator: ';'
+      - run: echo "::set-output name=result::${CI_SKIP}"
+        id: result_step
+
+  # libvnc:
+      # needs: check_skip
+      # if: ${{ needs.check_skip.outputs.skip == 'false' }}
+      # runs-on: ubuntu-20.04
+      # steps:
+          # - uses: actions/checkout@v2
+            # with:
+                # repository: LibVNC/libvncserver
+                # submodules: recursive
+          # - name: Install CMake, turbojpeg, libpng and liblzo2
+            # run: |
+              # sudo apt update
+              # sudo apt install cmake libturbojpeg0-dev libpng-dev liblzo2-dev
+          # - name: Compile Static LibVNC Binaries
+            # run: |
+              # mkdir build
+              # cd build
+              # cmake .. -DBUILD_SHARED_LIBS:BOOL="0" -DWITH_FFMPEG:BOOL="0" -DWITH_GTK:BOOL="0" -DWITH_SDL:BOOL="0" -DWITH_PNG:BOOL="1" -DWITH_JPEG:BOOL="1" -DWITH_LZO:BOOL="1" -DLIBVNCSERVER_WITH_WEBSOCKETS:BOOL="0"
+              # cmake --build . -- -j$(nproc) 
+          # - name: Prepare and create output directory
+            # run: |
+                # cd build
+                # mkdir output
+                # mkdir ./output/include
+                # mkdir ./output/lib
+                # cp ./rfb ./output/include -r
+                # cp libvncclient.a ./output/lib/
+                # cp libvncserver.a ./output/lib/
+                # mkdir ./output/lib/pkgconfig
+                # cp libvncclient.pc ./output/lib/pkgconfig/
+                # cp libvncserver.pc ./output/lib/pkgconfig/
+          # - name: Include other headers in ./include/rfb
+            # run: |
+                # cp ./rfb/keysym.h ./build/output/include/rfb
+                # cp ./rfb/rfb.h ./build/output/include/rfb
+                # cp ./rfb/rfbclient.h ./build/output/include/rfb
+                # cp ./rfb/rfbproto.h ./build/output/include/rfb
+                # cp ./rfb/rfbregion.h ./build/output/include/rfb
+                # cp ./rfb/threading.h ./build/output/include/rfb
+          # - name: Upload Artifact - LibVNC
+            # uses: 'actions/upload-artifact@v2'
+            # with:
+                # name: LibVNC_static
+                # path: './build/output/*'
+  build_png:
+#    needs: [check_skip, libvnc]
+    needs: check_skip
+    if: ${{ needs.check_skip.outputs.skip == 'false' }}
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        ./scripts/grab_deps_linux.sh 
+#        mkdir cvmlib
+#    - name: Getting LibVNC...
+#      uses: actions/download-artifact@v2
+#      with:
+#          name: LibVNC_static
+#          path: ./cvmlib
+    - name: Make PNG build      
+      run: |
+        make -j$(nproc) NO_NATIVE=1
+    - name: Upload Artifact - PNG
+      uses: 'actions/upload-artifact@v2'
+      with:
+        name: Server Binary - PNG
+        path: './bin/**/*'
+  
+  build_jpeg:
+#    needs: [check_skip, libvnc]
+    needs: check_skip
+    if: ${{ needs.check_skip.outputs.skip == 'false' }}
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        ./scripts/grab_deps_linux.sh 
+#        mkdir cvmlib
+#    - name: Getting LibVNC...
+#      uses: actions/download-artifact@v2
+#      with:
+#          name: LibVNC_static
+#          path: ./cvmlib
+    - name: Make JPEG build
+      run: |
+        make -j$(nproc) JPEG=1 NO_NATIVE=1
+    - name: Upload Artifact - JPEG
+      uses: 'actions/upload-artifact@v2'
+      with:
+        name: Server Binary - JPEG
+        path: './bin/**/*'
+    - name: "Bonus: compile odb .cxx files"
+      run: |
+          mkdir odbout
+          odb -d sqlite -o odbout -s -q src/Database/VMSettings.h -DUSE_JPEG
+          odb -d sqlite -o odbout -s -q src/Database/Config.h -DUSE_JPEG
+    - name: Upload Artifact - ODB files
+      uses: 'actions/upload-artifact@v2'
+      with:
+        name: ODB files for building locally (JPEG Only)
+        path: './odbout/*'

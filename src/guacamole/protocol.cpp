@@ -70,7 +70,16 @@ extern "C" {
  *
  * The range of this value is from 0 - 100. Other values above this will cause errors during runtime.
  */
-constexpr int JPEG_COMPRESSION_QUALITY = 75;
+uint8_t JPEG_COMPRESSION_QUALITY = 75;
+
+void SetJPEGQuality(uint8_t quality)
+{
+	if (quality > 100)
+		JPEG_COMPRESSION_QUALITY = 75;
+	else
+		JPEG_COMPRESSION_QUALITY = quality;
+	return;
+}
 #endif
 
 /* Output formatting functions */

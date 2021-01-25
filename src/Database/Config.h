@@ -21,12 +21,21 @@ struct Config
 	Config() :
 		ID(0),
 		MasterPassword("collabvm"), // You're gonna wanna change this because any password we put here is gonna be insecure by default.
+		ModPassword("cvmmod"), // Change this one too if you enable the Moderator rank
 		MaxConnections(5), 
 		ChatRateCount(4), 
 		ChatRateTime(3),
 		ChatMuteTime(30),
 		ChatMsgHistory(10),
-		MaxUploadTime(120)
+		MaxUploadTime(120),
+		BanCommand(""),
+#ifdef USE_JPEG
+		JPEGQuality(75),
+#else
+		JPEGQuality(255),
+#endif
+		ModEnabled(false),
+		ModPerms(0)
 	{
 	}
 
@@ -37,6 +46,11 @@ struct Config
 	 * Admin panel password.
 	 */
 	std::string MasterPassword;
+
+	/**
+	 * Moderator password.
+	 */
+	std::string ModPassword;
 
 	//unsigned char FrameRate; // Measured in frames per second
 
@@ -67,9 +81,29 @@ struct Config
 	 * The max amount of time the user has to upload a file in seconds.
 	 */
 	uint16_t MaxUploadTime;
+	
+	/**
+	 * The command used when an admin bans a user.
+	 */
+	std::string BanCommand;
+	
+	/**
+	 * JPEG compression quality.
+	 */
+	uint8_t JPEGQuality;
+
+	/**
+	 * Moderator rank enabled?
+	 */
+	bool ModEnabled;
+
+	/**
+	 * Moderator permissions.
+	 */
+	uint16_t ModPerms;
 
 	//FileMode FileUploadMode;
 	//std::string BlackList;
 	//std::string WhiteList;
-
+	std::string BlacklistedNames;
 };

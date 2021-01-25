@@ -38,21 +38,41 @@ endif
 
 else
 
+# Is it Termux?
+$(shell command -v termux-setup-storage >/dev/null)
+
+ifeq ($(.SHELLSTATUS),0)
+
+TERMUX=1
+$(info Compiling targeting Android (Termux))
+MKCONFIG=mk/termux.mkc
+
+else
+
+TERMUX=0
+
 # Assume Linux or other *nix-likes
 $(info Compiling targeting *nix)
 MKCONFIG=mk/linux.mkc
+
+endif
+
 BINDIR=bin/
 ARCH=$(shell uname -m)
 
 endif
 
-# Set defaults for DEBUG and JPEG builds
+# Set defaults for DEBUG, JPEG and STATIC builds
 
 ifeq ($(DEBUG),)
 DEBUG = 0
 endif
 
 ifeq ($(JPEG),)
+JPEG = 0
+endif
+
+ifeq ($(STATIC),)
 JPEG = 0
 endif
 
@@ -64,6 +84,10 @@ endif
 
 ifeq ($(JPEG),1)
 $(info Building JPEG support)
+endif
+
+ifeq ($(STATIC),1)
+$(info Building as a static binary)
 endif
 
 .PHONY: all clean help
@@ -85,6 +109,14 @@ else
 
 endif
 
+else
+
+ifeq ($(TERMUX), 1)
+
+	@./scripts/copy_dlls_tmux.sh $(ARCH) $(BINDIR)
+
+endif
+
 endif
 
 clean:
@@ -95,3 +127,4 @@ help:
 	@echo "make - Build release"
 	@echo "make DEBUG=1 - Build a debug build (Adds extra trace information and debug symbols)"
 	@echo "make JPEG=1 - Build with JPEG support (Useful for slower internet connections)"
+	@echo "make STATIC=1 - Build a static binary for those that need such"

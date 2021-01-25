@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef __CYGWIN__
+#ifndef NO_EXECINFO
 #include <execinfo.h>
 #else
 int backtrace (void **buffer, int size);

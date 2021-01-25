@@ -11,6 +11,29 @@ build(){
 	DATE=$(date +"%x %I:%M %p")
 	UNAME_ARCH=$1
 	UNAME_KERN=$(uname -srv)
+	CVM_VERSION="v1.2.10"
+	OFFICIAL=0
+	if [ -e ./.git/refs/heads/master ]
+	then
+		UGIT_CHECKTAINTED=$(git status --porcelain --untracked-files=no | wc -l)
+		UGIT_COMMIT_ID=$(git rev-parse head >/dev/null 2>&1 && git rev-parse head || git rev-parse master)
+		UGIT_FORKNAME=$(git remote get-url origin)
+		UGIT_BRANCH=", in branch <kbd>$(git branch --show-current)</kbd>"
+		UGIT_FORKURL=$UGIT_FORKNAME
+		if [ $UGIT_CHECKTAINTED -gt 0 ];
+		then UGIT_TAINTED=" (Tainted)";
+		else UGIT_TAINTED="";
+		fi;
+		if [ $OFFICIAL -eq 0 ]; then
+			CVM_VERSION+="~$(echo "$UGIT_FORKURL"|cut -d/ -f4)"
+			fi
+	else
+		UGIT_TAINTED=""
+		UGIT_COMMIT_ID="Unknown or Unmanaged"
+		UGIT_FORKNAME="Unknown"
+		UGIT_FORKURL="https://github.com/computernewb/collab-vm-server"
+		UGIT_BRANCH=""
+	fi
 	if [[ "$(uname -s)" == *"MINGW64_NT"* || "$(uname -s)" == *"MINGW32_NT"* || "$(uname -s)" == *"CYGWIN_NT"* ]]; then
 		# Extract the Windows version from the uname -s result of MINGW64_NT-<WINDOWS_VER>
 		# (means we can't get any details (e.g Service Packs),
@@ -30,22 +53,34 @@ build(){
 		UNAME_KERN=$(printf "Windows %s" $WIN_VER)
 		log "Building on $UNAME_KERN $(uname -m).";
 	else
-		# LSB defines /etc/os-release (Some distros also use lsb-release, however os-release is ACTUALLY the one LSB defines as standard, and thus will be pressent in more
-		# than a couple distros)
-		UNAME_KERN=$(cat /etc/os-release | grep "PRETTY_NAME" | sed 's/PRETTY_NAME=//g' | sed 's/\"//g');
-		log "Building on $UNAME_KERN.";
+		if [[ "$(uname -o)" == "Android" ]]; then
+			AND_VER=$(getprop|grep "\[ro.build.version.release\]"|cut -d[ -f3|cut -d] -f1)
+			UNAME_KERN=$(printf "Android %s" $AND_VER)
+			log "Building on $UNAME_KERN $(uname -m)"
+		else
+			# LSB defines /etc/os-release (Some distros also use lsb-release, however os-release is ACTUALLY the one LSB defines as standard, and thus will be pressent in more
+			# than a couple distros)
+			UNAME_KERN=$(cat /etc/os-release | grep "PRETTY_NAME" | sed 's/PRETTY_NAME=//g' | sed 's/\"//g');
+			log "Building on $UNAME_KERN.";
+		fi
 	fi
 
 	log "Copying sources."
 	[[ ! -d "http/" ]] && mkdir http
 	cp -r http_src/* http/
 	log "Preprocessing..."
-
+	
 	# Actually preprocess
 	INSRC=$(cat http/index.html.in)
 	INSRC=${INSRC//"[HOST_DATE]"/$DATE}
 	INSRC=${INSRC//"[HOST_UNAME_ARCH]"/$UNAME_ARCH}
 	INSRC=${INSRC//"[HOST_UNAME_OS]"/$UNAME_KERN}
+	INSRC=${INSRC//"[GIT_ID]"/$UGIT_COMMIT_ID}
+	INSRC=${INSRC//"[GIT_IS_TAINTED]"/$UGIT_TAINTED}
+	INSRC=${INSRC//"[GIT_FORK_NAME]"/$UGIT_FORKNAME}
+	INSRC=${INSRC//"[GIT_FORK_URL]"/$UGIT_FORKURL}
+	INSRC=${INSRC//"[CVM_VERSION]"/$CVM_VERSION}
+	INSRC=${INSRC//"[GIT_BRANCH]"/$UGIT_BRANCH}
 
 	log "Writing preprocessed page(s)..."
 	echo $INSRC > http/index.html.in

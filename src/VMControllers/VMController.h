@@ -16,6 +16,12 @@
 
 class CollabVMServer;
 struct VMSettings;
+struct ChatMessage
+{
+	std::shared_ptr<std::string> username;
+	std::string message;
+	std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> timestamp;
+};
 
 /**
  * A base class that is responsible for starting the hypervisor, running the VM,
@@ -107,15 +113,31 @@ public:
 
 	virtual StopReason GetStopReason() const = 0;
 
+	void EndTurn(const std::shared_ptr<CollabVMUser>& user);
+
 	void AddUser(const std::shared_ptr<CollabVMUser>& user);
 
 	void RemoveUser(const std::shared_ptr<CollabVMUser>& user);
 
 	void Vote(CollabVMUser& user, bool vote);
 
-	void EndVote();
+	void EndVote(bool cancelVote);
 
-	void TurnRequest(const std::shared_ptr<CollabVMUser>& user);
+	void TurnRequest(const std::shared_ptr<CollabVMUser>& user, bool turnJack, bool isStaff);
+
+	void AppendChatMessage(std::ostringstream& ss, ChatMessage* chat_msg);
+
+	/**
+	 * Sends the remembered chat history to the specified user.
+	 */
+	void SendChatHistory(CollabVMUser& user);
+
+	void SendChatMsg(const std::shared_ptr<CollabVMUser>& user, std::string msg);
+
+	/**
+	 * The the list of all online users to the specified client.
+	 */
+	void SendOnlineUsersList(CollabVMUser& user);
 
 	/**
 	 * After a turn has ended, this function will update the turn
@@ -220,12 +242,6 @@ protected:
 
 	std::shared_ptr<VMSettings> settings_;
 
-	/**
-	 * The maximum amount of attempts to connect to the hypervisor
-	 * with either the Guacamole client or some other client.
-	 */
-	const size_t kMaxConnectTries = 5;
-
 	StopReason stop_reason_;
 
 	UserList users_;
@@ -277,5 +293,25 @@ private:
 	//std::string turn_list_cache_;
 
 	const uint32_t kMaxFilenameLen = 100;
+
+	/**
+	 * Circular buffer used for storing chat history.
+	 */
+	ChatMessage* chat_history_;
+
+	/**
+	 * Begin index for the circular chat history buffer.
+	 */
+	uint8_t chat_history_begin_;
+
+	/**
+	 * End index for the circular chat history buffer.
+	 */
+	uint8_t chat_history_end_;
+
+	/**
+	 * The number of messages in the chat history buffer.
+	 */
+	uint8_t chat_history_count_;
 
 };

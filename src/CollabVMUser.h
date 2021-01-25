@@ -15,7 +15,15 @@ enum UserRank : uint8_t
 {
 	kUnregistered,	// Guest
 	kRegistered,	// Registered account
-	kAdmin			// Administrator
+	kAdmin,			// Administrator
+	kModerator		// Moderator
+};
+
+enum UserMuted : uint8_t
+{
+	kUnmuted,		// Not muted
+	kTempMute,		// Muted for time in Admin Panel
+	kPermMute		// Indefinite mute
 };
 
 /**
@@ -42,7 +50,7 @@ struct IPData
 	/**
 	 * Whether the user is muted from the chat.
 	 */
-	bool chat_muted;
+	UserMuted chat_muted;
 
 	enum class VoteDecision : uint_fast8_t
 	{
@@ -83,7 +91,7 @@ protected:
 		type(type),
 		connections(one_connection),
 		chat_msg_count(0),
-		chat_muted(false),
+		chat_muted(kUnmuted),
 		//has_voted(false),
 		upload_in_progress(false),
 		failed_logins(0)
