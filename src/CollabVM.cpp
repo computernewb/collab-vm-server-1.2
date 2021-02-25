@@ -273,8 +273,7 @@ CollabVMServer::CollabVMServer(net::io_service& service)
 	  chat_history_count_(0),
 	  upload_count_(0) {
 	// Create VMControllers for all VMs that will be auto-started
-	for(auto it = database_.VirtualMachines.begin(); it != database_.VirtualMachines.end(); it++) {
-		std::shared_ptr<VMSettings>& vm = it->second;
+	for(auto [id, vm] : database_.VirtualMachines) {
 		if(vm->AutoStart) {
 			CreateVMController(vm);
 		}
@@ -392,19 +391,17 @@ void CollabVMServer::Run(uint16_t port, string doc_root) {
 #endif
 
 	// Start all of the VMs that should be auto-started
-	for(auto it = vm_controllers_.begin(); it != vm_controllers_.end(); it++) {
-		it->second->Start();
+	for(auto [id, vm] : vm_controllers_) {
+		vm->Start();
 	}
 
 	// Start message processing thread
 	process_thread_running_ = true;
 	process_thread_ = std::thread(bind(&CollabVMServer::ProcessingThread, shared_from_this()));
 
-	// This is not needed for mthread, as
+	// Once this function returns,
 	// io_service::run() is called in main()
-
-	// Start the ASIO io_service run loop
-	//server_.run();
+	// so we do not bother here.
 }
 
 bool CollabVMServer::FindIPv4Data(const boost::asio::ip::address_v4& addr, IPData*& ip_data) {
@@ -774,9 +771,10 @@ void CollabVMServer::RemoveConnection(std::shared_ptr<CollabVMUser>& user) {
 		ostringstream ss("7.remuser,1.1,", ostringstream::in | ostringstream::out | ostringstream::ate);
 		ss << user->username->length() << '.' << *user->username << ';';
 		string instr = ss.str();
-		for(auto it = connections_.begin(); it != connections_.end(); it++) {
-			std::shared_ptr<CollabVMUser> user = *it;
-			SendWSMessage(*user, instr);
+
+		for(const auto& user_ : connections_) {
+			//std::shared_ptr<CollabVMUser> user = *it;
+			SendWSMessage(*user_, instr);
 		}
 
 		user->username.reset();
@@ -805,9 +803,10 @@ void CollabVMServer::UpdateVMStatus(const std::string& vm_name, VMController::Co
 	ostringstream ss("5.admin,1.3,", ostringstream::in | ostringstream::out | ostringstream::ate);
 	ss << vm_name.length() << '.' << vm_name << ',' << state_str.length() << '.' << state_str << ';';
 	string instr = ss.str();
-	for(auto it = admin_connections_.begin(); it != admin_connections_.end(); it++) {
-		assert((*it)->admin_connected);
-		SendWSMessage(**it, instr);
+
+	for(const auto& admin_connection : admin_connections_) {
+		assert(admin_connection->admin_connected);
+		SendWSMessage(*admin_connection, instr);
 	}
 }
 
@@ -1035,8 +1034,8 @@ void CollabVMServer::ProcessingThread() {
 				}
 				break;
 			case ActionType::kUpdateThumbnails:
-				for(auto it = vm_controllers_.begin(); it != vm_controllers_.end(); it++) {
-					it->second->UpdateThumbnail();
+				for(auto& vm_controller : vm_controllers_) {
+					vm_controller.second->UpdateThumbnail();
 				}
 				break;
 			case ActionType::kVMThumbnail: {
@@ -1089,8 +1088,8 @@ void CollabVMServer::ProcessingThread() {
 			case ActionType::kShutdown:
 
 				// Disconnect all active clients
-				for(auto it = connections_.begin(); it != connections_.end(); it++) {
-					(*it)->handle->close();
+				for(const auto& connection : connections_) {
+					connection->handle->close();
 				}
 
 				// If there are no VM controllers running, exit the processing thread
@@ -1174,11 +1173,10 @@ void CollabVMServer::BroadcastTurnInfo(VMController& controller, UserList& users
 		users_list += *current_turn->username;
 
 		// Append the names of the users waiting in the queue
-		for(auto it = turn_queue.begin(); it != turn_queue.end(); it++) {
+		for(const auto& user : turn_queue) {
 			users_list += ',';
 
-			std::shared_ptr<CollabVMUser> user = *it;
-			users_list += std::to_string(user->username->length());
+				users_list += std::to_string(user->username->length());
 			users_list += '.';
 			users_list += *user->username;
 		}
@@ -1257,11 +1255,10 @@ void CollabVMServer::SendTurnInfo(CollabVMUser& user, uint32_t time_remaining, c
 	instr += '.';
 	instr += current_turn;
 	// Users waiting in the queue
-	for(auto it = turn_queue.begin(); it != turn_queue.end(); it++) {
+	for(const auto& user : turn_queue) {
 		instr += ',';
 
-		std::shared_ptr<CollabVMUser> user = *it;
-		instr += std::to_string(user->username->length());
+			instr += std::to_string(user->username->length());
 		instr += '.';
 		instr += *user->username;
 	}
@@ -1554,8 +1551,9 @@ void CollabVMServer::SendOnlineUsersList(CollabVMUser& user) {
 	std::ostringstream ss("7.adduser,", std::ios_base::in | std::ios_base::out | std::ios_base::ate);
 	std::string num = std::to_string(usernames_.size());
 	ss << num.size() << '.' << num;
-	for(auto it = usernames_.begin(); it != usernames_.end(); it++) {
-		std::shared_ptr<CollabVMUser> data = it->second;
+
+	for(auto & username : usernames_) {
+		std::shared_ptr<CollabVMUser> data = username.second;
 		// Append the user to the online users list
 		num = std::to_string(data->user_rank);
 		ss << ',' << data->username->length() << '.' << *data->username << ',' << num.size() << '.' << num;
@@ -1755,7 +1753,7 @@ void CollabVMServer::MuteUser(const std::shared_ptr<CollabVMUser>& user, bool pe
 	}
 	instr += ";";
 	SendWSMessage(*user, instr);
-	return;
+	//return;
 }
 
 void CollabVMServer::UnmuteUser(const std::shared_ptr<CollabVMUser>& user) {
@@ -1769,7 +1767,7 @@ void CollabVMServer::UnmuteUser(const std::shared_ptr<CollabVMUser>& user) {
 	instr += "." part1u;
 	instr += ";";
 	SendWSMessage(*user, instr);
-	return;
+	//return;
 }
 
 void CollabVMServer::OnMouseInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
@@ -1808,7 +1806,7 @@ void CollabVMServer::OnRenameInstruction(const std::shared_ptr<CollabVMUser>& us
 	std::string username = args[0];
 
 	// Check if the requested username and current usernames are the same
-	if(user->username && *user->username.get() == username)
+	if(user->username && *user->username == username)
 		return;
 
 	// Whether a new username should be generated for the user
@@ -1844,7 +1842,7 @@ void CollabVMServer::OnRenameInstruction(const std::shared_ptr<CollabVMUser>& us
 		return;
 	}
 
-	ChangeUsername(user, gen_username ? GenerateUsername() : *user->username.get(), result, args.size() > 1);
+	ChangeUsername(user, gen_username ? GenerateUsername() : *user->username, result, args.size() > 1);
 }
 
 /**
@@ -1920,8 +1918,6 @@ void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& u
 
 	user->guac_user = new GuacUser(this, user->handle);
 	controller.AddUser(user);
-
-
 }
 
 void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
@@ -2429,7 +2425,6 @@ void CollabVMServer::OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user
 		else
 			return;
 	}
-
 
 	//        if (database_.Configuration.ChatRateCount && database_.Configuration.ChatRateTime)
 	//        {

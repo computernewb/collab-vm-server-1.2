@@ -4,7 +4,7 @@
 #include "Database/Database.h"
 
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <memory>
 #include <chrono>
 #include <array>
@@ -12,17 +12,13 @@
 #include <mutex>
 #include <atomic>
 #include <queue>
-#include <stdint.h>
+#include <cstdint>
 #include <condition_variable>
 #include <deque>
 #include <list>
 #include <random>
 
-// server.h is the only needed file
-// actualyl
-// just fwd.h
 #include <websocketmm/fwd.h>
-//#include <websocketmm/websocket_user.h>
 
 #include <boost/asio/steady_timer.hpp>
 
@@ -133,20 +129,37 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	void ExecuteCommandAsync(std::string command);
 	void MuteUser(const std::shared_ptr<CollabVMUser>& user, bool permanent);
 	void UnmuteUser(const std::shared_ptr<CollabVMUser>& user);
-	void OnMouseInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
-	void OnKeyInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 
-	void OnRenameInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
-	void OnConnectInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
-	void OnAdminInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
-	void OnListInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
-	void OnNopInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
-	void OnChatInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
-	void OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
-	void OnVoteInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
-	void OnFileInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
+	// Shared definition of guacamole instruction garbage
+#define GuacamoleInstruction(name) \
+		void On##name##Instruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
+
+	GuacamoleInstruction(Mouse)
+	GuacamoleInstruction(Key)
+
+
+	GuacamoleInstruction(Rename)
+	GuacamoleInstruction(Connect)
+	GuacamoleInstruction(Admin)
+	GuacamoleInstruction(List)
+	GuacamoleInstruction(Nop)
+	GuacamoleInstruction(Chat)
+	GuacamoleInstruction(Turn)
+	GuacamoleInstruction(Vote)
+	GuacamoleInstruction(File)
+
+#undef GuacamoleInstruction
+
+	/**
+	 * Function pointer to a Guacamole instruction handler.
+	 */
+	typedef void (CollabVMServer::*GuacamoleInstruction)(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 
    private:
+
+	/**
+	 * Backwards-compatibility typedef. Oops!
+	 */
 	typedef websocketmm::server Server;
 
 	enum class ActionType {
@@ -502,7 +515,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 * Prevents the io_service from exiting before all the VM controllers
 	 * are stopped.
 	 */
-	std::unique_ptr<boost::asio::io_service::work> asio_work_;
+	//std::unique_ptr<boost::asio::io_service::work> asio_work_;
 
 	/**
 	 * The RNG used for generating guest usernames.

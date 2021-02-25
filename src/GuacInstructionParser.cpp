@@ -6,11 +6,9 @@
 #include <string>
 
 namespace GuacInstructionParser {
-	typedef void (CollabVMServer::*InstructionHandler)(const std::shared_ptr<CollabVMUser>&, std::vector<char*>&);
-
 	struct Instruction {
 		const char* opcode;
-		InstructionHandler handler;
+		CollabVMServer::GuacamoleInstruction handler;
 	};
 
 	constexpr static Instruction instructions[] = {
@@ -43,10 +41,10 @@ namespace GuacInstructionParser {
 	constexpr std::uint64_t MAX_GUAC_FRAME_LENGTH = 6144;
 
 	/**
-	  * Decode an instruction from a string.
-	  * \param[in] input input guacamole string to decode
-	  */
-	std::vector<std::string> Decode(const std::string& input) {
+	 * Decode an instruction from a string.
+	 * \param[in] input input guacamole string to decode
+	 */
+	static std::vector<std::string> DecodeInstruction(const std::string& input) {
 		std::vector<std::string> output;
 		if(input.back() != ';')
 			return output;
@@ -98,7 +96,7 @@ namespace GuacInstructionParser {
 	}
 
 	void ParseInstruction(CollabVMServer& server, const std::shared_ptr<CollabVMUser>& user, const std::string& instruction) {
-		std::vector<std::string> decoded = Decode(instruction);
+		std::vector<std::string> decoded = DecodeInstruction(instruction);
 		if(decoded.empty())
 			return;
 

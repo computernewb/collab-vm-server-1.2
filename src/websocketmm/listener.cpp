@@ -8,8 +8,9 @@
 
 namespace websocketmm {
 
-	// this should be in a seperate file but its fine for right now
-	//
+	// TODO: Move this to a seperate file, and make it work with POSTs
+	// (so we can get the agent to work???) and serve files statically
+
 	struct session : public std::enable_shared_from_this<session> {
 		beast::tcp_stream stream_;
 		beast::flat_buffer buffer_;
@@ -51,13 +52,13 @@ namespace websocketmm {
 				return do_close();
 
 			// Spawn a websocket connection,
-			//or close
-			if(websocket::is_upgrade(req_))
-				std::make_shared<websocket_user>(
-				server_, std::move(stream_.release_socket()))
-				->run(req_);
-			else
+			// or close
+			if(websocket::is_upgrade(req_)) {
+				std::make_shared<websocket_user>(server_, std::move(stream_.release_socket()))->run(req_);
+			} else {
+				// TODO: process request in this case.
 				return do_close();
+			}
 
 			//if(ec)
 			//   return fail(ec, "read");
@@ -128,11 +129,7 @@ namespace websocketmm {
 		if(ec) {
 			return;
 		}
-		acceptor_.async_accept(
-		net::make_strand(ioc_),
-		beast::bind_front_handler(
-		&listener::on_accept,
-		shared_from_this()));
+		acceptor_.async_accept(net::make_strand(ioc_), beast::bind_front_handler(&listener::on_accept, shared_from_this()));
 	}
 
 	void listener::stop() {
@@ -147,11 +144,8 @@ namespace websocketmm {
 		std::make_shared<session>(std::move(socket), server_)->run();
 
 		// Do another connection
-		acceptor_.async_accept(
-		net::make_strand(ioc_),
-		beast::bind_front_handler(
-		&listener::on_accept,
-		shared_from_this()));
+		acceptor_.async_accept(net::make_strand(ioc_),
+							   beast::bind_front_handler(&listener::on_accept, shared_from_this()));
 	}
 
 } // namespace websocketmm
