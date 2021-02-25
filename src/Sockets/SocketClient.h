@@ -7,15 +7,13 @@
  * the OnDisconnect callback from being called multiple times
  * when there are multiple async callbacks that fail on the socket.
  */
-struct SocketCtx
-{
+struct SocketCtx {
 	/**
 	 * Indicates if the socket has been disconnected.
 	 * This should be checked by the socket implementations
 	 * before performing any read or write operations on the socket.
 	 */
-	bool IsStopped() const
-	{
+	bool IsStopped() const {
 		return stopped_;
 	}
 
@@ -49,39 +47,31 @@ struct SocketCtx
  *
  */
 template<typename Base, typename SocketType>
-class SocketClient : public Base
-{
-public:
+class SocketClient : public Base {
+   public:
 	/**
 	 * @param service An ASIO service object that must be associated with only one thread.
 	 */
-	SocketClient(boost::asio::io_service& service) :
-		Base(service),
-		service_(service),
-		socket_(service)
-	{
+	SocketClient(boost::asio::io_service& service)
+		: Base(service),
+		  service_(service),
+		  socket_(service) {
 	}
 
-	void ConnectSocket() override
-	{
+	void ConnectSocket() override {
 		auto self = std::static_pointer_cast<SocketClient>(Base::shared_from_this());
-		service_.dispatch([this, self]()
-		{
-			if (!socket_ctx_)
-			{
+		service_.dispatch([this, self]() {
+			if(!socket_ctx_) {
 				socket_ctx_ = std::make_shared<SocketCtx>();
 				ConnectSocket(socket_ctx_);
 			}
 		});
 	}
 
-	void DisconnectSocket() override
-	{
+	void DisconnectSocket() override {
 		auto self = std::static_pointer_cast<SocketClient>(Base::shared_from_this());
-		service_.dispatch([self, this]()
-		{
-			if (socket_ctx_)
-			{
+		service_.dispatch([self, this]() {
+			if(socket_ctx_) {
 				socket_ctx_->stopped_ = true;
 				socket_ctx_.reset();
 				Disconnect();
@@ -90,26 +80,23 @@ public:
 		});
 	}
 
-	boost::asio::io_service& GetService() override
-	{
+	boost::asio::io_service& GetService() override {
 		return service_;
 	}
 
-	SocketType& GetSocket()
-	{
+	SocketType& GetSocket() {
 		return socket_;
 	}
 
-	std::shared_ptr<SocketCtx>& GetSocketContext() override
-	{
+	std::shared_ptr<SocketCtx>& GetSocketContext() override {
 		return socket_ctx_;
 	}
 
-protected:
+   protected:
 	virtual void ConnectSocket(std::shared_ptr<SocketCtx>& ctx) = 0;
 	virtual void Disconnect() = 0;
 
-private:
+   private:
 	boost::asio::io_service& service_;
 	/**
 	 * For thread safety, the socket and socket context should only

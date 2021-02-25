@@ -1,14 +1,15 @@
 # Makedefs: 
-# Common makefile for building the CollabVM Server.
+# Common makefile stuff for building the CollabVM Server.
+# Allows easy porting!
 
 CCFLAGS = -Isrc -Isrc/uriparser
 
 ifeq ($(DEBUG),1)
-# debug mode
+# debug mode, disable optimizationss and note debugging
 CCFLAGS += -g -O0 -D_DEBUG -DDEBUG
 LDFLAGS = -g
 else
-# release mode, build with optimizations
+# release mode, build with optimizations and strip binaries
 CCFLAGS += -O3 -ffast-math -march=native -mtune=native
 LDFLAGS = -s
 endif
@@ -19,12 +20,10 @@ CCFLAGS += -DUSE_JPEG
 endif
 
 # TODO: Remove -fpermissive, all -Wno- and enable -Wall
-# as well as maybe moving to c++14 or c++17?
-# will need to fix a lot of cosmic-isms
-CXXFLAGS = -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings \
-		-fpermissive -std=c++11 $(CCFLAGS) \
+CXXFLAGS = $(CCFLAGS)  -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings \
+		-fpermissive -std=c++17 \
 		-Isrc/rapidjson -Isrc/Database -Isrc/VMControllers \
-		-Isrc/Sockets -Isrc/guacamole -I$(OBJDIR)
+		-Isrc/Sockets -Isrc/guacamole -Isrc/cpr -I$(OBJDIR) -DRAPIDJSON_HAS_CXX11_RVALUE_REFS
 
 # GCC dependency generation
 DEPGEN = -MT $@ -MD -MP -MF $(OBJDIR)/$*.d
@@ -80,7 +79,28 @@ OBJS = $(OBJDIR)/Config-odb.o                    \
        $(OBJDIR)/UriEscape.o                     \
        $(OBJDIR)/UriIp4.o                        \
        $(OBJDIR)/UriParseBase.o                  \
-       $(OBJDIR)/UriRecompose.o
+       $(OBJDIR)/UriRecompose.o			 \
+       $(OBJDIR)/response.o			 \
+       $(OBJDIR)/bearer.o			 \
+       $(OBJDIR)/parameters.o			 \
+       $(OBJDIR)/unix_socket.o			 \
+       $(OBJDIR)/cprtypes.o			 \
+       $(OBJDIR)/timeout.o			 \
+       $(OBJDIR)/payload.o			 \
+       $(OBJDIR)/proxies.o			 \
+       $(OBJDIR)/util.o				 \
+       $(OBJDIR)/curlholder.o			 \
+       $(OBJDIR)/cookies.o			 \
+       $(OBJDIR)/cpr_auth.o				 \
+       $(OBJDIR)/multipart.o			 \
+       $(OBJDIR)/cpr_error.o			 \
+       $(OBJDIR)/session.o			 \
+       $(OBJDIR)/curl_container.o \
+       $(OBJDIR)/server.o \
+       $(OBJDIR)/websocket_user.o \
+       $(OBJDIR)/listener.o
+
+# websocketmm
 
 # Add supporting code to the objects list
 # for JPEG
@@ -97,7 +117,9 @@ VPATH := src/             \
         src/Sockets       \
         src/VMControllers \
         src/guacamole     \
-        src/guacamole/vnc \ 
+        src/guacamole/vnc \
+	    src/cpr           \
+	    src/websocketmm
 
 
 all: $(BINDIR)/ $(OBJDIR)/ $(BINDIR)/collab-vm-server
@@ -143,20 +165,21 @@ $(OBJDIR)/VMSettings-odb.cxx: src/Database/VMSettings.h
 
 $(OBJDIR)/%.o: %.cpp
 	$(info Compiling C++ source file $<)
-	$(CXX) -c $< $(CXXFLAGS) -o $@ 
+	$(CXX) -c $< $(CXXFLAGS) $(DEPGEN) -o $@ 
 
 $(OBJDIR)/%.o: %.cxx
 	$(info Compiling C++ source file $<)
-	$(CXX) -c $< $(CXXFLAGS) -MT $@ -MD -MP -MF $(OBJDIR)/$*.d -o $@
+	$(CXX) -c $< $(CXXFLAGS) $(DEPGEN) -o $@
 
 $(OBJDIR)/%.o: %.c
 	$(info Compiling C source file $<)
-	$(CC) -c $< $(CCFLAGS) -MT $@ -MD -MP -MF $(OBJDIR)/$*.d -o $@
+	$(CC) -c $< $(CCFLAGS) $(DEPGEN) -o $@
 
 
 # Explicit dependencies to help aid make when doing a compile of the source tree with multiple jobs going at once.
-# no matter what order this file ends up, it will be after the dependencies have been generated and compiled
-# meaning make -j17 (example) will now compile properly every single time
+# No matter what order this file ends up, it will be after the dependencies have been generated and compiled
+# meaning make -j17 (example) will now compile properly every single time.
+# 2x build perf boost
 
 src/Database/Database.cpp: $(OBJDIR)/Config-odb.cxx $(OBJDIR)/VMSettings-odb.cxx
 
@@ -165,6 +188,6 @@ src/Database/Database.cpp: $(OBJDIR)/Config-odb.cxx $(OBJDIR)/VMSettings-odb.cxx
 
 # Little fun make trick! This will expand usually to
 # ".SILENT:" which means make rules won't output commands
-# but when VERBOSE is set to anything, it will expand to
+# but when V is set to anything, it will expand to
 # something meaningless, allowing commands to output.
-$VERBOSE.SILENT:
+$V.SILENT:

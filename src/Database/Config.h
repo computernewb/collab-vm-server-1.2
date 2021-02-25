@@ -26,6 +26,12 @@ struct Config
 		ChatRateCount(4), 
 		ChatRateTime(3),
 		ChatMuteTime(30),
+		TurnRateCount(80),
+		TurnRateTime(3),
+		TurnMuteTime(5),
+		NameRateCount(20),
+		NameRateTime(3),
+		NameMuteTime(10),
 		ChatMsgHistory(10),
 		MaxUploadTime(120),
 		BanCommand(""),
@@ -78,6 +84,24 @@ struct Config
 	uint8_t ChatMsgHistory;
 
 	/**
+	 * Maximum number of turns that can be sent in the 
+	 * specified amount of time.
+	 */
+	uint8_t TurnRateCount;
+	uint8_t TurnRateTime;
+
+	/**
+         * The amount of time a user will be turn limited for if the attempt
+         * to exceed the chat rate.
+         */
+	uint8_t TurnMuteTime;
+
+	/* name shit */
+	uint8_t NameRateCount;
+	uint8_t NameRateTime;
+	uint8_t NameMuteTime;
+
+	/**
 	 * The max amount of time the user has to upload a file in seconds.
 	 */
 	uint16_t MaxUploadTime;
@@ -101,6 +125,7 @@ struct Config
 	 * Moderator permissions.
 	 */
 	uint8_t ModPerms;
+
 
 	//FileMode FileUploadMode;
 	//std::string BlackList;

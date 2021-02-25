@@ -2,34 +2,31 @@
 #include "GuacClient.h"
 #include "guacamole/user-constants.h"
 
-GuacUser::GuacUser(CollabVMServer* server, std::weak_ptr<void> handle) :
-	socket_(server, handle),
-	client_(nullptr),
-	last_received_timestamp(guac_timestamp_current()),
-	last_frame_duration(0),
-	processing_lag(0)
+GuacUser::GuacUser(CollabVMServer* server, websocketmm::websocket_user* handle)
+	: socket_(server, handle),
+	  client_(nullptr),
+	  last_received_timestamp(guac_timestamp_current()),
+	  last_frame_duration(0),
+	  processing_lag(0) {
 	//active(false)
-{
 	/* Allocate stream pool */
 	__stream_pool = guac_pool_alloc(0);
 	/* Initialze streams */
 	__input_streams = new guac_stream[GUAC_USER_MAX_STREAMS];
 	__output_streams = new guac_stream[GUAC_USER_MAX_STREAMS];
 
-	for (int i = 0; i < GUAC_USER_MAX_STREAMS; i++)
-	{
+	for(int i = 0; i < GUAC_USER_MAX_STREAMS; i++) {
 		__input_streams[i].index = GUAC_USER_CLOSED_STREAM_INDEX;
 		__output_streams[i].index = GUAC_USER_CLOSED_STREAM_INDEX;
 	}
 }
 
-guac_stream* GuacUser::AllocStream()
-{
+guac_stream* GuacUser::AllocStream() {
 	guac_stream* allocd_stream;
 	int stream_index;
 
 	/* Refuse to allocate beyond maximum */
-	if (__stream_pool->active == GUAC_USER_MAX_STREAMS)
+	if(__stream_pool->active == GUAC_USER_MAX_STREAMS)
 		return NULL;
 
 	/* Allocate stream */
@@ -46,8 +43,7 @@ guac_stream* GuacUser::AllocStream()
 	return allocd_stream;
 }
 
-void GuacUser::FreeStream(guac_stream* stream) 
-{
+void GuacUser::FreeStream(guac_stream* stream) {
 	/* Release index to pool */
 	guac_pool_free_int(__stream_pool, stream->index);
 
@@ -60,18 +56,13 @@ void GuacUser::FreeStream(guac_stream* stream)
 //	active = false;
 //}
 
-void GuacUser::Abort(guac_protocol_status status, const char* format, ...)
-{
-
+void GuacUser::Abort(guac_protocol_status status, const char* format, ...) {
 }
 
-void GuacUser::Log(guac_client_log_level level, const char* format, ...)
-{
-
+void GuacUser::Log(guac_client_log_level level, const char* format, ...) {
 }
 
-GuacUser::~GuacUser()
-{
+GuacUser::~GuacUser() {
 	delete __input_streams;
 	delete __output_streams;
 

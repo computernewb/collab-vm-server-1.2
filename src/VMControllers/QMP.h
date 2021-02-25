@@ -15,29 +15,26 @@ class QMPCallback;
  * Controls QEMU using the QEMU Machine Protocol (QMP). QMP uses JSON
  * and it allows the controller to be notified of events when they occur.
  */
-class QMP : public std::enable_shared_from_this<QMP>
-{
-public:
-	enum Events
-	{
+class QMP : public std::enable_shared_from_this<QMP> {
+   public:
+	enum Events {
 		BLOCK_IO_ERROR,
-		RESET,				// Emitted when the Virtual Machine is reset.
-		RESUME,				// Emitted when the Virtual Machine resumes execution.
+		RESET,	// Emitted when the Virtual Machine is reset.
+		RESUME, // Emitted when the Virtual Machine resumes execution.
 		RTC_CHANGE,
-		SHUTDOWN,			// Emitted when the Virtual Machine is powered down.
-		STOP,				// Emitted when the Virtual Machine is stopped.
+		SHUTDOWN, // Emitted when the Virtual Machine is powered down.
+		STOP,	  // Emitted when the Virtual Machine is stopped.
 		VNC_CONNECTED,
 		VNC_DISCONNECTED,
 		VNC_INITIALIZED,
 		WATCHDOG
 	};
 
-	enum States
-	{
-		kConnected,			// Connected to QEMU
-		kConnectFailure,	// Failed to connect to QEMU
-		kProtocolError,		// A protocol error occurred
-		kDisconnected		// Disconnected from QEMU
+	enum States {
+		kConnected,		 // Connected to QEMU
+		kConnectFailure, // Failed to connect to QEMU
+		kProtocolError,	 // A protocol error occurred
+		kDisconnected	 // Disconnected from QEMU
 	};
 
 	typedef std::function<void(rapidjson::Document&)> EventCallback;
@@ -50,7 +47,7 @@ public:
 	 * Attempts to connect to QEMU.
 	 */
 	void Connect(std::weak_ptr<QMPCallback> controller);
-	
+
 	/**
 	 * Disconnects from QEMU.
 	 */
@@ -102,28 +99,25 @@ public:
 	/**
 	 * Whether the client is connected and the handshake is complete.
 	 */
-	bool IsConnected() const
-	{
+	bool IsConnected() const {
 		return state_ == ConnectionState::kFinished;
 	}
 
 	/**
 	 * The host of the QEMU server to connect to.
 	 */
-	const std::string& Host() const
-	{
+	const std::string& Host() const {
 		return host_;
 	}
 
 	/**
 	 * The port of the QEMU server to connect to.
 	 */
-	const std::string& Port() const
-	{
+	const std::string& Port() const {
 		return port_;
 	}
 
-private:
+   private:
 #ifdef USE_SYSTEM_CLOCK
 	typedef std::chrono::system_clock time_clock;
 #else
@@ -140,12 +134,11 @@ private:
 	void ReadLine();
 	void WriteData(const char data[], size_t len);
 
-	enum ConnectionState
-	{
-		kConnecting,	// Handshake not started
-		kCapabilities,	// Waiting for "QMP" command for capability negotiation
-		kResponse,		// Waiting for "result" command to confirm negotiation
-		kFinished		// Done negotiating
+	enum ConnectionState {
+		kConnecting,   // Handshake not started
+		kCapabilities, // Waiting for "QMP" command for capability negotiation
+		kResponse,	   // Waiting for "result" command to confirm negotiation
+		kFinished	   // Done negotiating
 	};
 
 	/**
@@ -192,9 +185,7 @@ private:
 	uint16_t _resultId;
 };
 
-
-class QMPCallback
-{
-public:
+class QMPCallback {
+   public:
 	virtual void OnQMPStateChange(QMP::States state) = 0;
 };

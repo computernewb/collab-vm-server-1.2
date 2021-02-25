@@ -8,16 +8,14 @@ class CollabVMServer;
  * A socket used for broadcasting an instruction to all of the users
  * connected to a GuacClient.
  */
-class GuacBroadcastSocket : public GuacSocket
-{
-public:
+class GuacBroadcastSocket : public GuacSocket {
+   public:
 	GuacBroadcastSocket(CollabVMServer& server, UserList& users);
 
 	void InstructionBegin() override;
 	void InstructionEnd() override;
 
-private:
-
+   private:
 	CollabVMServer& server_;
 	UserList& users_;
 };

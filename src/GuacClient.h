@@ -24,26 +24,24 @@ class GuacUser;
  * and connects to an endpoint using a protocol that is defined in derived
  * classes.
  */
-class GuacClient
-{
+class GuacClient {
 	friend GuacBroadcastSocket;
-public:
-	enum ClientState
-	{
-		kStopped,		// VNC thread stopped
-		kStarting,		// VNC thread is starting
-		kIdle,			// Waiting for VNC server to start
-		kConnecting,	// Attempting to connect to the VNC server
-		kConnected,		// Connected to the VNC server
-		kDisconnecting	// Disconnecting
+
+   public:
+	enum ClientState {
+		kStopped,	   // VNC thread stopped
+		kStarting,	   // VNC thread is starting
+		kIdle,		   // Waiting for VNC server to start
+		kConnecting,   // Attempting to connect to the VNC server
+		kConnected,	   // Connected to the VNC server
+		kDisconnecting // Disconnecting
 	};
 
-	enum DisconnectReason
-	{
-		kFailed,		// Failed to connect
-		kClient,		// Client disconnected
-		kServer,		// Server disconnected
-		kProtocolError	// Protocol error
+	enum DisconnectReason {
+		kFailed,	   // Failed to connect
+		kClient,	   // Client disconnected
+		kServer,	   // Server disconnected
+		kProtocolError // Protocol error
 	};
 
 	GuacClient(CollabVMServer& server, VMController& controller, UserList& users, const std::string& hostname, uint16_t port, uint16_t frame_duration);
@@ -92,18 +90,15 @@ public:
 	 */
 	bool Connected() const;
 
-	inline ClientState GetState() const
-	{
+	inline ClientState GetState() const {
 		return client_state_;
 	}
 
-	inline void SetFrameDuration(uint16_t duration)
-	{
+	inline void SetFrameDuration(uint16_t duration) {
 		frame_duration_ = std::chrono::duration<uint16_t, std::milli>(duration);
 	}
 
-	inline DisconnectReason GetDisconnectReason()
-	{
+	inline DisconnectReason GetDisconnectReason() {
 		return disconnect_reason_;
 	}
 
@@ -130,8 +125,7 @@ public:
 
 	void Log(guac_client_log_level level, const char* format, ...);
 
-	void UpdateThumbnail()
-	{
+	void UpdateThumbnail() {
 		update_thumbnail_ = true;
 	}
 
@@ -147,7 +141,7 @@ public:
 
 	static guac_layer* GUAC_DEFAULT_LAYER;
 
-protected:
+   protected:
 	/**
 	* Callback in derived classes for when a user first connects
 	* to the Guacamole client.
@@ -217,7 +211,7 @@ protected:
 	 */
 	bool update_thumbnail_;
 
-private:
+   private:
 	/**
 	 * The number of currently-connected users. This value may include inactive
 	 * users if cleanup of those users has not yet finished.
@@ -237,6 +231,4 @@ private:
 	* be adjusted.
 	*/
 	guac_pool* __layer_pool;
-
 };
-

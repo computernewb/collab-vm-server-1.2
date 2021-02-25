@@ -4,8 +4,7 @@
 #include <chrono>
 #include "CollabVMUser.h"
 
-struct ChatMessage
-{
+struct ChatMessage {
 	//ChatMessage(CollabVMUser& user, std::string message) :
 	//	username(user.username),
 	//	message(message)

@@ -13,13 +13,10 @@ using rapidjson::Writer;
 using rapidjson::Document;
 using rapidjson::Value;
 
-void QMPClient::Connect(std::weak_ptr<QMPCallback> controller)
-{
+void QMPClient::Connect(std::weak_ptr<QMPCallback> controller) {
 	auto self = shared_from_this();
-	GetService().dispatch([this, self, controller]()
-	{
-		if (state_ == ConnectionState::kDisconnected)
-		{
+	GetService().dispatch([this, self, controller]() {
+		if(state_ == ConnectionState::kDisconnected) {
 			state_ = ConnectionState::kConnecting;
 			controller_ = controller;
 			ConnectSocket();
@@ -27,108 +24,89 @@ void QMPClient::Connect(std::weak_ptr<QMPCallback> controller)
 	});
 }
 
-void QMPClient::OnConnect(std::shared_ptr<SocketCtx>& ctx)
-{
-	if (state_ == ConnectionState::kConnecting)
-	{
+void QMPClient::OnConnect(std::shared_ptr<SocketCtx>& ctx) {
+	if(state_ == ConnectionState::kConnecting) {
 		state_ = ConnectionState::kCapabilities;
 		StartTimeoutTimer();
 		DoReadLine(ctx);
 	}
 }
 
-void QMPClient::OnDisconnect()
-{
-	if (state_ != ConnectionState::kDisconnected)
-	{
+void QMPClient::OnDisconnect() {
+	if(state_ != ConnectionState::kDisconnected) {
 		state_ = ConnectionState::kDisconnected;
 
 		boost::system::error_code error;
 		timer_.cancel(error);
 
-		if (auto ptr = controller_.lock())
+		if(auto ptr = controller_.lock())
 			ptr->OnQMPStateChange(QMPState::kDisconnected);
 	}
 }
 
-void QMPClient::Disconnect()
-{
+void QMPClient::Disconnect() {
 	auto self = shared_from_this();
-	GetService().dispatch([this, self]()
-	{
-		if (state_ != ConnectionState::kDisconnected)
+	GetService().dispatch([this, self]() {
+		if(state_ != ConnectionState::kDisconnected)
 			DisconnectSocket();
 	});
 }
 
-void QMPClient::StartTimeoutTimer()
-{
+void QMPClient::StartTimeoutTimer() {
 	boost::system::error_code error;
 	timer_.expires_from_now(kReadTimeout, error);
 	auto self = shared_from_this();
-	timer_.async_wait([this, self](const boost::system::error_code& ec)
-	{
-		if (!ec)
+	timer_.async_wait([this, self](const boost::system::error_code& ec) {
+		if(!ec)
 			Disconnect();
 	});
 }
 
-void QMPClient::RegisterEventCallback(Events event, EventCallback callback)
-{
+void QMPClient::RegisterEventCallback(Events event, EventCallback callback) {
 	auto self = shared_from_this();
-	GetService().dispatch([this, self, event, callback]()
-	{
+	GetService().dispatch([this, self, event, callback]() {
 		event_callbacks_[static_cast<size_t>(event)] = callback;
 	});
 }
 
-void QMPClient::SendString(const std::string& str)
-{
+void QMPClient::SendString(const std::string& str) {
 	auto self = shared_from_this();
-	GetService().dispatch([this, self, str]()
-	{
-		if (state_ != ConnectionState::kConnected)
+	GetService().dispatch([this, self, str]() {
+		if(state_ != ConnectionState::kConnected)
 			return;
 
 		DoWriteData(str.c_str(), str.length(), GetSocketContext());
 	});
 }
 
-void QMPClient::SystemPowerDown()
-{
+void QMPClient::SystemPowerDown() {
 	SendString("{\"execute\":\"system_powerdown\"}\r\n");
 }
 
-void QMPClient::SystemReset()
-{
+void QMPClient::SystemReset() {
 	SendString("{\"execute\":\"system_reset\"}\r\n");
 }
 
-void QMPClient::SystemStop()
-{
+void QMPClient::SystemStop() {
 	SendString("{\"execute\":\"stop\"}\r\n");
 }
 
-void QMPClient::SystemResume()
-{
+void QMPClient::SystemResume() {
 	SendString("{\"execute\":\"cont\"}\r\n");
 }
 
-void QMPClient::QEMUQuit()
-{
+void QMPClient::QEMUQuit() {
 	SendString("{\"execute\":\"quit\"}\r\n");
 }
 
-void QMPClient::SendMonitorCommand(const std::string& cmd, ResultCallback result_cb)
-{
+void QMPClient::SendMonitorCommand(const std::string& cmd, ResultCallback result_cb) {
 	auto self = shared_from_this();
-	GetService().dispatch([this, self, cmd, result_cb]()
-	{
-		if (state_ != ConnectionState::kConnected)
+	GetService().dispatch([this, self, cmd, result_cb]() {
+		if(state_ != ConnectionState::kConnected)
 			return;
-		// Use macro to provide the string length to
-		// the function so it doesn't need to use strlen
-#define STRING(str) writer.String(str, sizeof(str)-1)
+			// Use macro to provide the string length to
+			// the function so it doesn't need to use strlen
+#define STRING(str) writer.String(str, sizeof(str) - 1)
 
 		StringBuffer s;
 		Writer<StringBuffer> writer(s);
@@ -141,8 +119,7 @@ void QMPClient::SendMonitorCommand(const std::string& cmd, ResultCallback result
 		writer.String_bs(cmd);
 		writer.EndObject();
 		// If a callback was provided, assign an ID to the command
-		if (result_cb)
-		{
+		if(result_cb) {
 			STRING("id");
 			writer.Uint(result_id_);
 			writer.EndObject();
@@ -152,9 +129,7 @@ void QMPClient::SendMonitorCommand(const std::string& cmd, ResultCallback result
 			// Overflowing should be fine as long as there are
 			// no more than 2^16 callbacks already in the map
 			result_id_++;
-		}
-		else
-		{
+		} else {
 			writer.EndObject();
 		}
 
@@ -162,26 +137,22 @@ void QMPClient::SendMonitorCommand(const std::string& cmd, ResultCallback result
 	});
 }
 
-void QMPClient::LoadSnapshot(const std::string& snapshot, ResultCallback result_cb)
-{
+void QMPClient::LoadSnapshot(const std::string& snapshot, ResultCallback result_cb) {
 	SendMonitorCommand("loadvm " + snapshot, result_cb);
 }
 
-void QMPClient::OnReadLine(const boost::system::error_code& ec, size_t size, std::shared_ptr<SocketCtx>& ctx)
-{
-	if (ctx->IsStopped())
+void QMPClient::OnReadLine(const boost::system::error_code& ec, size_t size, std::shared_ptr<SocketCtx>& ctx) {
+	if(ctx->IsStopped())
 		return;
 
-	if (ec)
-	{
+	if(ec) {
 		std::cout << "QMP read error: " << ec.message() << std::endl;
 		DisconnectSocket();
 		return;
 	}
 
 	// Copy the data from the streambuf into a string
-	if (size > 2)
-	{
+	if(size > 2) {
 		// Copy the data to a writable buffer
 		char* buf = new char[size - 1];
 		// Subtract two from the length to exclude the "\r\n"
@@ -192,124 +163,102 @@ void QMPClient::OnReadLine(const boost::system::error_code& ec, size_t size, std
 		Document d;
 		d.ParseInsitu(buf);
 		Value::MemberIterator e;
-		switch (state_)
-		{
-		case ConnectionState::kCapabilities:
-		{
-			boost::system::error_code error;
-			timer_.cancel(error);
+		switch(state_) {
+			case ConnectionState::kCapabilities: {
+				boost::system::error_code error;
+				timer_.cancel(error);
 
-			// Read command:
-			// {"QMP":
-			//		{"version":
-			//			{"qemu": {"micro": 0, "minor": 2, "major": 2},
-			//			 "package": " (Debian 1:2.2+dfsg-5expubuntu9.2)"},
-			//			  "capabilities": []
-			//		}
-			// }
-			e = d.FindMember("QMP");
-			if (e != d.MemberEnd() && e->value.IsObject())
-			{
-				state_ = ConnectionState::kResponse;
-				buf_.consume(size);
+				// Read command:
+				// {"QMP":
+				//		{"version":
+				//			{"qemu": {"micro": 0, "minor": 2, "major": 2},
+				//			 "package": " (Debian 1:2.2+dfsg-5expubuntu9.2)"},
+				//			  "capabilities": []
+				//		}
+				// }
+				e = d.FindMember("QMP");
+				if(e != d.MemberEnd() && e->value.IsObject()) {
+					state_ = ConnectionState::kResponse;
+					buf_.consume(size);
 
-				//Value::MemberIterator ver = e->value.FindMember("version");
-				//if (ver != e->value.MemberEnd() && ver->value.IsObject())
-				//{
-				//	//cout << "QEMU version: " << ver->value.GetString() << endl;
-				//}
-				// Respond with qmp_capabilities command
-				// An ID could be included with this command but it's unnecessary
-				// because no other commands will be received until after the
-				// handshake so the next one must be the result
-				const char cmd[] = "{\"execute\":\"qmp_capabilities\"}\r\n";
-				DoWriteData(cmd, sizeof(cmd) - 1, ctx);
+					//Value::MemberIterator ver = e->value.FindMember("version");
+					//if (ver != e->value.MemberEnd() && ver->value.IsObject())
+					//{
+					//	//cout << "QEMU version: " << ver->value.GetString() << endl;
+					//}
+					// Respond with qmp_capabilities command
+					// An ID could be included with this command but it's unnecessary
+					// because no other commands will be received until after the
+					// handshake so the next one must be the result
+					const char cmd[] = "{\"execute\":\"qmp_capabilities\"}\r\n";
+					DoWriteData(cmd, sizeof(cmd) - 1, ctx);
+				} else {
+					// Unexpected first command
+					std::cout << "QMP invalid capabilities command: " << std::string(boost::asio::buffer_cast<const char*>(buf_.data()), size - 2) << std::endl;
+					DisconnectSocket();
+				}
+				break;
 			}
-			else
-			{
-				// Unexpected first command
-				std::cout << "QMP invalid capabilities command: " <<
-					std::string(boost::asio::buffer_cast<const char*>(buf_.data()), size - 2) << std::endl;
-				DisconnectSocket();
+			case ConnectionState::kResponse: {
+				boost::system::error_code error;
+				timer_.cancel(error);
+
+				// Read command:
+				// { "return": {} }
+				e = d.FindMember("return");
+				if(e != d.MemberEnd() && e->value.IsObject()) {
+					state_ = ConnectionState::kConnected;
+					std::cout << "Connected to QEMU" << std::endl;
+
+					if(auto ptr = controller_.lock())
+						ptr->OnQMPStateChange(QMPState::kConnected);
+
+					buf_.consume(size);
+					DoReadLine(ctx);
+				} else {
+					// Unexpected response
+					std::cout << "QMP invalid handshake response: " << std::string(boost::asio::buffer_cast<const char*>(buf_.data()), size - 2) << std::endl;
+					DisconnectSocket();
+				}
+				break;
 			}
-			break;
-		}
-		case ConnectionState::kResponse:
-		{
-			boost::system::error_code error;
-			timer_.cancel(error);
-
-			// Read command:
-			// { "return": {} }
-			e = d.FindMember("return");
-			if (e != d.MemberEnd() && e->value.IsObject())
-			{
-				state_ = ConnectionState::kConnected;
-				std::cout << "Connected to QEMU" << std::endl;
-
-				if (auto ptr = controller_.lock())
-					ptr->OnQMPStateChange(QMPState::kConnected);
-
+			case ConnectionState::kConnected:
+				e = d.FindMember("event");
+				if(e != d.MemberEnd() && e->value.IsString()) {
+					Value& v = e->value;
+					for(int i = 0; i < sizeof(events_) / sizeof(std::string); i++) {
+						if(!events_[i].compare(0, std::string::npos, v.GetString(), v.GetStringLength())) {
+							if(event_callbacks_[i])
+								event_callbacks_[i](d);
+							break;
+						}
+					}
+				} else if((e = d.FindMember("return")) != d.MemberEnd()) {
+					Value::MemberIterator v = d.FindMember("id");
+					if(v != d.MemberEnd() && v->value.IsUint()) {
+						auto it = result_callbacks_.find(v->value.GetUint());
+						if(it != result_callbacks_.end()) {
+							it->second(d);
+							result_callbacks_.erase(it);
+						}
+					}
+				}
 				buf_.consume(size);
 				DoReadLine(ctx);
-			}
-			else
-			{
-				// Unexpected response
-				std::cout << "QMP invalid handshake response: " <<
-					std::string(boost::asio::buffer_cast<const char*>(buf_.data()), size - 2) << std::endl;
-				DisconnectSocket();
-			}
-			break;
-		}
-		case ConnectionState::kConnected:
-			e = d.FindMember("event");
-			if (e != d.MemberEnd() && e->value.IsString())
-			{
-				Value& v = e->value;
-				for (int i = 0; i < sizeof(events_)/sizeof(std::string); i++)
-				{
-					if (!events_[i].compare(0, std::string::npos, v.GetString(), v.GetStringLength()))
-					{
-						if (event_callbacks_[i])
-							event_callbacks_[i](d);
-						break;
-					}
-				}
-			}
-			else if ((e = d.FindMember("return")) != d.MemberEnd())
-			{
-				Value::MemberIterator v = d.FindMember("id");
-				if (v != d.MemberEnd() && v->value.IsUint())
-				{
-					auto it = result_callbacks_.find(v->value.GetUint());
-					if (it != result_callbacks_.end())
-					{
-						it->second(d);
-						result_callbacks_.erase(it);
-					}
-				}
-			}
-			buf_.consume(size);
-			DoReadLine(ctx);
-			break;
+				break;
 		}
 		delete[] buf;
 	}
 }
 
-void QMPClient::OnWrite(const boost::system::error_code& ec, size_t size, std::shared_ptr<SocketCtx> ctx)
-{
-	if (ctx->IsStopped())
+void QMPClient::OnWrite(const boost::system::error_code& ec, size_t size, std::shared_ptr<SocketCtx> ctx) {
+	if(ctx->IsStopped())
 		return;
 
-	if (ec)
-	{
+	if(ec) {
 		std::cout << "QMP write error: " << ec.message() << std::endl;
 		DisconnectSocket();
-	}
-	else if (state_ == ConnectionState::kResponse)
-	{
+	} else if(state_ == ConnectionState::kResponse) {
 		DoReadLine(ctx);
 	}
 }

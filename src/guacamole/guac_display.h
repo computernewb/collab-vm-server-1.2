@@ -59,6 +59,7 @@ typedef struct guac_common_display_layer {
  */
 typedef struct guac_common_display {
 
+    // TODO: clang warns here
 	guac_common_display(GuacClient& client, int width, int height) :
 		client(client),
 		cursor(guac_common_cursor_alloc(client)), // Allocate shared cursor

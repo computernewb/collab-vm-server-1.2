@@ -2,8 +2,7 @@
 #include <string>
 #include "CollabVMUser.h"
 
-namespace GuacInstructionParser
-{
+namespace GuacInstructionParser {
 	/**
 	 * Parses the instruction from a Guacamole webclient and calls the
 	 * handler for it.
@@ -12,5 +11,4 @@ namespace GuacInstructionParser
 	 * @param instruction The instruction to parse.
 	 */
 	void ParseInstruction(CollabVMServer& server, const std::shared_ptr<CollabVMUser>& user, const std::string& instruction);
-}
-
+} // namespace GuacInstructionParser

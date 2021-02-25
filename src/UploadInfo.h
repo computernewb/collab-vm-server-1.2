@@ -9,38 +9,35 @@
 
 class VMController;
 
-struct UploadInfo
-{
+struct UploadInfo {
 	UploadInfo(const std::shared_ptr<CollabVMUser>& user, const std::shared_ptr<VMController>& vm_controller,
-				const std::string& filename, size_t file_size, bool run_file, uint32_t cooldown_time) :
-		user(user),
-		vm_controller(vm_controller),
-		username(user->username),
-		filename(filename),
-		file_size(file_size),
-		run_file(run_file),
-		ip_data(user->ip_data),
-		http_state(HttpUploadState::kNotStarted),
-		canceled(false),
-		timeout_timer(nullptr)
-	{
+			   const std::string& filename, size_t file_size, bool run_file, uint32_t cooldown_time)
+		: user(user),
+		  vm_controller(vm_controller),
+		  username(user->username),
+		  filename(filename),
+		  file_size(file_size),
+		  run_file(run_file),
+		  ip_data(user->ip_data),
+		  http_state(HttpUploadState::kNotStarted),
+		  canceled(false),
+		  timeout_timer(nullptr) {
 	}
 
 #ifdef _DEBUG
 	UploadInfo(/*const std::shared_ptr<CollabVMUser>& user, const std::shared_ptr<std::string>& username, */
-		IPData& ip_data,
-		const std::string& filename, size_t file_size, bool run_file, uint32_t cooldown_time) :
-		//user(user),
-		//vm_controller(user->vm_controller),
-		//username(username),
-		filename(filename),
-		file_size(file_size),
-		run_file(run_file),
-		ip_data(ip_data),
-		http_state(HttpUploadState::kNotStarted),
-		canceled(false),
-		timeout_timer(nullptr)
-	{
+			   IPData& ip_data,
+			   const std::string& filename, size_t file_size, bool run_file, uint32_t cooldown_time)
+		: //user(user),
+		  //vm_controller(user->vm_controller),
+		  //username(username),
+		  filename(filename),
+		  file_size(file_size),
+		  run_file(run_file),
+		  ip_data(ip_data),
+		  http_state(HttpUploadState::kNotStarted),
+		  canceled(false),
+		  timeout_timer(nullptr) {
 	}
 #endif
 
@@ -70,10 +67,9 @@ struct UploadInfo
 	std::weak_ptr<CollabVMUser> user;
 	IPData& ip_data;
 
-	std::map<std::string, std::shared_ptr<UploadInfo>/*, CollabVMServer::case_insensitive_cmp*/>::iterator upload_it;
+	std::map<std::string, std::shared_ptr<UploadInfo> /*, CollabVMServer::case_insensitive_cmp*/>::iterator upload_it;
 
-	enum class HttpUploadState : uint8_t
-	{
+	enum class HttpUploadState : uint8_t {
 		kNotStarted,
 		kNotWriting,
 		kWriting,

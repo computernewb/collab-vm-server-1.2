@@ -1,134 +1,24 @@
-#include <boost/asio.hpp>
 #include <iostream>
-#include <memory>
-#include <map>
-#include <thread>
 #include "CollabVM.h"
-#ifndef _WIN32
-#include "StackTrace.hpp"
-#define STACKTRACE PrintStackTrace();
-#ifdef __CYGWIN__
-int backtrace (void **buffer, int size) { return 0;}
-char ** backtrace_symbols (void *const *buffer, int size) { return 0;}
-void backtrace_symbols_fd (void *const *buffer, int size, int fd) {}
+
+#if !defined(_WIN32)
+#ifndef __CYGWIN__
+	#include "StackTrace.hpp"
 #endif
 #else
-#include <windows.h>
+	//#include <windows.h>
 #endif
 
-std::shared_ptr<CollabVMServer> server_;
-boost::asio::io_service service_;
-std::unique_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(service_));
-
-bool stopping = false;
-
-void SignalHandler()
-{
-	if (stopping)
-		return;
-	stopping = true;
-
-	try
-	{
-		try
-		{
-			std::cout << "\nShutting down..." << std::endl;
-			work.reset();
-			server_->Stop();
-		}
-		catch (const websocketpp::exception& ex)
-		{
-			std::cout << "A websocketpp exception was thrown: " << ex.what() << std::endl;
-			throw;
-		}
-		catch (const std::exception& ex)
-		{
-			std::cout << "An exception was thrown: " << ex.what() << std::endl;
-			throw;
-		}
-		catch (...)
-		{
-			std::cout << "An unknown exception occurred\n";
-			throw;
-		}
-	}
-	catch (...)
-	{
-		server_->Stop();
-#ifndef _WIN32
-		PrintStackTrace();
-#endif
-	}
-}
-
-#ifdef _WIN32
-BOOL CtrlHandler(DWORD fdwCtrlType)
-{
-	switch (fdwCtrlType)
-	{
-	case CTRL_C_EVENT:
-	case CTRL_BREAK_EVENT:
-	case CTRL_CLOSE_EVENT:
-		SignalHandler();
-		return TRUE;
-	}
-	return FALSE;
-}
-#endif
-
-static void SegFaultHandler(int signum)
-{
-	std::cout << "A segmentation fault occured\n";
-#ifndef _WIN32
-	PrintStackTrace();
-#endif
-	exit(-1);
-}
-
-template<typename F>
-void WorkerThread(F func)
-{
-	try
-	{
-		try
-		{
-			func();
-		}
-		catch (const websocketpp::exception& ex)
-		{
-			std::cout << "A websocketpp exception was thrown: " << ex.what() << std::endl;
-			throw;
-		}
-		catch (const std::exception& ex)
-		{
-			std::cout << "An exception was thrown: " << ex.what() << std::endl;
-			throw;
-		}
-		catch (...)
-		{
-			std::cout << "An unknown exception occurred\n";
-			throw;
-		}
-	}
-	catch (...)
-	{
-#ifndef _WIN32
-		PrintStackTrace();
-#endif
-	}
-
-	server_->Stop();
-	work.reset();
-}
-
+// Enable this to allow Asio multi threading
+#define ENABLE_ASIO_MULTITHREADING
 
 void IgnorePipe() {
-	// Ignore SIGPIPE to prevent LibVNCClient from crashing
+	// Ignores SIGPIPE to prevent LibVNCClient from crashing on Linux
 #ifndef _WIN32
-	struct sigaction pipe;
+	struct sigaction pipe{};
 	pipe.sa_handler = SIG_IGN;
 	pipe.sa_flags = 0;
-	if(sigaction(SIGPIPE, &pipe, 0) == -1) {
+	if(sigaction(SIGPIPE, &pipe, nullptr) == -1) {
 		std::cout << "Failed to ignore SIGPIPE. Crashies may occur now\n";
 	}
 #endif
@@ -152,7 +42,11 @@ int main(int argc, char* argv[])
 		std::string s(argv[1]);
 		size_t i;
 		int port = stoi(s, &i);
-		if (i != s.length() || !(port > 0 && port <= UINT16_MAX))
+		if (i != s.length() || !(port > 0 && port <= UINT16_MAX)
+#ifndef _WIN32
+		//|| (port > 1024 && geteuid() != 0)
+#endif
+		)
 		{
 			std::cout << "Invalid port for WebSocket server." << std::endl;
 			return -1;
@@ -160,48 +54,56 @@ int main(int argc, char* argv[])
 
 		std::cout << "Collab VM Server started" << std::endl;
 
+        boost::asio::io_service service_;
+        std::shared_ptr<CollabVMServer> server_;
+
 		// Set up Ctrl+C handler
-#ifdef _WIN32
-		if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE))
-			std::cout << "Error setting console control handler." <<
-			std::endl << "Ctrl+C will not exit cleanly." << std::endl;
-#else
-		struct sigaction sa;
-		sa.sa_handler = &SegFaultHandler;
-		sigemptyset(&sa.sa_mask);
-		sa.sa_flags = SA_RESTART;
-		if (sigaction(SIGSEGV, &sa, NULL) == -1)
-			std::cout << "Failed to set segmentation violation signal handler" << std::endl;
-
 		boost::asio::signal_set interruptSignal(service_, SIGINT, SIGTERM);
-		interruptSignal.async_wait(std::bind(&SignalHandler));
+		interruptSignal.async_wait([&](boost::system::error_code ec, int sig) {
+            std::cout << "\nShutting down..." << std::endl;
+            //work.reset();
+            server_->Stop();
+            service_.stop();
+		});
+
 		IgnorePipe();
+
+        server_ = std::make_shared<CollabVMServer>(service_);
+		server_->Run(port, argc > 2 ? argv[2] : "http");
+
+		// If the server has multithreading enabled, then
+		// spawn the threads now.
+#ifdef ENABLE_ASIO_MULTITHREADING
+		std::vector<std::thread> threads;
+
+		const auto N = (std::thread::hardware_concurrency() / 2) - 1;
+		threads.reserve(N);
+
+		// Notify user how many threads the server will spawn to run completion handlers
+		std::cout << "Running server ASIO completion handlers on " << N << " worker threads\n";
+		std::cout << "Your system will actually run " << N + 1 << " worker threads including main thread\n";
+
+		for(int j = 0; j < N; ++j) {
+			threads.emplace_back([&service_]() {
+				service_.run();
+			});
+		}
 #endif
+		// Run the io_service on the main thread.
+		service_.run();
 
-		server_ = std::make_shared<CollabVMServer>(service_);
-
-		std::thread t([] { WorkerThread([] { service_.run(); }); });
-
-		WorkerThread([&] { server_->Run(port, argc > 2 ? argv[2] : "http"); });
-
-		t.join();
+#ifdef ENABLE_ASIO_MULTITHREADING
+		// Join ASIO completion handler threads when the server is stopping.
+		for(auto& thread : threads)
+			thread.join();
+#endif
 	}
-	catch (websocketpp::exception const & e)
+	catch (std::exception const & e)
 	{
 		std::cout << "An exception was thrown:" << std::endl;
 		std::cout << e.what() << std::endl;
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__CYGWIN__)
 		PrintStackTrace();
-#endif
-#ifdef _DEBUG
-		throw;
-#endif
-		return -1;
-	}
-	catch (...)
-	{
-#ifdef _DEBUG
-		throw;
 #endif
 		return -1;
 	}

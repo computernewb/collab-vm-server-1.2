@@ -1,12 +1,5 @@
 #pragma once
 
-#ifdef _MSC_VER
-#define _WEBSOCKETPP_CPP11_FUNCTIONAL_
-#define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
-#define _WEBSOCKETPP_CPP11_RANDOM_DEVICE_
-#define _WEBSOCKETPP_CPP11_MEMORY_
-#define _CRT_SECURE_NO_WARNINGS
-#endif
 #undef access
 #include "Database/Database.h"
 
@@ -25,13 +18,14 @@
 #include <list>
 #include <random>
 
-#include <boost/asio.hpp>
+// server.h is the only needed file
+// actualyl
+// just fwd.h
+#include <websocketmm/fwd.h>
+//#include <websocketmm/websocket_user.h>
+
 #include <boost/asio/steady_timer.hpp>
-#include <websocketpp/common/connection_hdl.hpp>
-#include <websocketpp/config/asio_no_tls.hpp>
-#include <websocketpp/server.hpp>
-#include <websocketpp/common/thread.hpp>
-#include <websocketpp/utilities.hpp>
+
 #include <rapidjson/writer.h>
 #include "uriparser/Uri.h"
 
@@ -42,19 +36,20 @@
 #include "CollabVMUser.h"
 #include "UploadInfo.h"
 
+#include "Chat.h"
+
 #ifdef _WIN32
-#define strncasecmp _strnicmp
-#define strcasecmp _stricmp
+	#define strncasecmp _strnicmp
+	#define strcasecmp _stricmp
 #else
-#include "StackTrace.hpp"
+	#include "StackTrace.hpp"
 #endif
 
 class GuacClient;
 class GuacUser;
 
-class CollabVMServer : public std::enable_shared_from_this<CollabVMServer>
-{
-public:
+class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
+   public:
 	CollabVMServer(boost::asio::io_service& service);
 
 	~CollabVMServer();
@@ -87,13 +82,13 @@ public:
 	 * Calls the VMController::NextTurn function inside of the processing thread.
 	 */
 	void OnVMControllerTurnChange(const std::shared_ptr<VMController>& controller);
-	
+
 	void OnAgentConnect(const std::shared_ptr<VMController>& controller,
 						const std::string& os_name, const std::string& service_pack,
 						const std::string& pc_name, const std::string& username, uint32_t max_filename);
 	void OnAgentDisconnect(const std::shared_ptr<VMController>& controller);
 	//void OnAgentHeartbeatTimeout(const std::shared_ptr<VMController>& controller);
-	void OnFileUploadFailed(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info/*, Reason*/);
+	void OnFileUploadFailed(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info /*, Reason*/);
 	void OnFileUploadFinished(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info);
 	void OnFileUploadExecFinished(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info, bool exec_success);
 
@@ -126,15 +121,14 @@ public:
 
 	void VoteCoolingDown(CollabVMUser& user, uint32_t time_remaining);
 
-	void ActionsChanged(VMController& controller, const VMSettings& settings)
-	{
+	void ActionsChanged(VMController& controller, const VMSettings& settings) {
 		SendActionInstructions(controller, settings);
 	}
 
 	/**
 	 * Sends a message from a Guacamole client to WebSocket connection.
 	 */
-	void SendGuacMessage(const std::weak_ptr<void>& data, const std::string& str);
+	//void SendGuacMessage(websocdata, const std::string& str);
 
 	void ExecuteCommandAsync(std::string command);
 	void MuteUser(const std::shared_ptr<CollabVMUser>& user, bool permanent);
@@ -152,403 +146,88 @@ public:
 	void OnVoteInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 	void OnFileInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 
-private:
+   private:
+	typedef websocketmm::server Server;
 
-	struct CollabVMConfig : public websocketpp::config::asio
-	{
-		// Use default settings from core config
-		typedef websocketpp::config::asio core;
-
-		typedef core::concurrency_type concurrency_type;
-		typedef core::request_type request_type;
-		typedef core::response_type response_type;
-		typedef core::message_type message_type;
-		typedef core::con_msg_manager_type con_msg_manager_type;
-		typedef core::endpoint_msg_manager_type endpoint_msg_manager_type;
-		typedef core::alog_type alog_type;
-		typedef core::elog_type elog_type;
-		typedef core::rng_type rng_type;
-		typedef core::transport_type transport_type;
-		typedef core::endpoint_base endpoint_base;
-
-		// Set a custom connection_base class to store the user's
-		// data with the WebSocket's connection data
-		typedef struct
-		{
-			std::shared_ptr<CollabVMUser> user;
-		} connection_base;
-	};
-
-	typedef websocketpp::server<CollabVMConfig> Server;
-
-	enum class HttpContentType
-	{
-		kNone,
-		//kMultipart,
-		kUrlEncoded,
-		kOctetStream
-	};
-
-	class HttpBodyData
-	{
-	public:
-		virtual void Receive(websocketpp::connection_hdl handle, const char* buf, size_t len) = 0;
-		virtual void DoResponse(Server::connection_ptr& con) = 0;
-
-	protected:
-		HttpBodyData(size_t body_len) :
-			body_len_()
-		{
-		}
-
-		size_t body_len_;
-	};
-
-	template<typename T>
-	class UrlEncodedHttpBody : public HttpBodyData, public T
-	{
-	public:
-		UrlEncodedHttpBody(size_t body_len) :
-			HttpBodyData(body_len)
-		{
-		}
-
-		void Receive(websocketpp::connection_hdl handle, const char* buf, size_t len) override
-		{
-			if (buffer.length() + len > kMaxLength)
-				throw websocketpp::http::exception("Request body is too big",
-					websocketpp::http::status_code::bad_request);
-
-			buffer.append(buf, len);
-			if (buffer.length() >= body_len_)
-				T::ValidateCallback(handle, buffer);
-		}
-
-		void DoResponse(Server::connection_ptr& con) override
-		{
-			T::ResponseCallback(con);
-		}
-
-	private:
-		std::string buffer;
-		const size_t kMaxLength = 8192;
-	};
-
-	class OctetStreamHttpBody : public HttpBodyData
-	{
-	public:
-		OctetStreamHttpBody(const std::shared_ptr<CollabVMServer>& server, size_t body_len,
-							const std::shared_ptr<UploadInfo>& upload_info) :
-			HttpBodyData(body_len),
-			server_(server),
-			upload_info_(upload_info),
-			stop_(false)
-		{
-		}
-
-		void Receive(websocketpp::connection_hdl handle, const char* buf, size_t len) override
-		{
-			if (stop_)
-				return;
-
-			UploadInfo::HttpUploadState expected = UploadInfo::HttpUploadState::kNotWriting;
-			if (!upload_info_->http_state.compare_exchange_strong(expected, UploadInfo::HttpUploadState::kWriting))
-			{
-				stop_ = true;
-				return;
-			}
-			std::fstream& file_stream = upload_info_->file_stream;
-			if (static_cast<size_t>(file_stream.tellg()) + len <= upload_info_->file_size)
-			{
-				file_stream.write(buf, len);
-				expected = UploadInfo::HttpUploadState::kWriting;
-				if (upload_info_->http_state.compare_exchange_strong(expected, UploadInfo::HttpUploadState::kNotWriting))
-					return;
-				// If the http_state was changed it means we need to stop the upload
-			}
-			
-			stop_ = true;
-
-			websocketpp::lib::error_code ec;
-			server_->server_.get_con_from_hdl(handle, ec)->terminate(ec);
-
-			std::unique_lock<std::mutex> lock(server_->process_queue_lock_);
-			server_->process_queue_.push(new HttpAction(ActionType::kHttpUploadFailed, upload_info_));
-			lock.unlock();
-			server_->process_wait_.notify_one();
-		}
-
-		void DoResponse(Server::connection_ptr& con) override
-		{
-			if (stop_)
-			{
-				con->append_header("Access-Control-Allow-Origin", "*");
-				con->set_body("0");
-				con->set_status(websocketpp::http::status_code::ok);
-				return;
-			}
-			stop_ = true;
-
-			std::unique_lock<std::mutex> lock(server_->process_queue_lock_);
-			server_->process_queue_.push(new HttpAction(ActionType::kHttpUploadFinished, upload_info_));
-			lock.unlock();
-			server_->process_wait_.notify_one();
-
-			con->append_header("Access-Control-Allow-Origin", "*");
-			con->set_body("1");
-			con->set_status(websocketpp::http::status_code::ok);
-		}
-
-	private:
-		std::shared_ptr<CollabVMServer> server_;
-		std::shared_ptr<UploadInfo> upload_info_;
-		bool stop_;
-
-	};
-
-	class HttpBodyDataCallback
-	{
-	protected:
-		virtual void ChunkCallback(const char* buf, size_t len)
-		{
-		}
-		virtual void ValidateCallback(websocketpp::connection_hdl handle, const std::string& buf) = 0;
-		virtual void ResponseCallback(Server::connection_ptr& con) = 0;
-	};
-
-	class HttpFileUpload : HttpBodyDataCallback
-	{
-	public:
-		HttpFileUpload()
-		{
-		}
-
-		void Init(const std::shared_ptr<CollabVMServer>& server)
-		{
-			server_ = server;
-		}
-
-		void ChunkCallback(const char* buf, size_t len) override
-		{
-
-		}
-
-	private:
-		std::shared_ptr<CollabVMServer> server_;
-	};
-
-	class HttpLogin : HttpBodyDataCallback
-	{
-	public:
-		HttpLogin() :
-			login_success_(false)
-		{
-		}
-
-		void Init(const std::shared_ptr<CollabVMServer>& server)
-		{
-			server_ = server;
-		}
-
-	protected:
-		void ValidateCallback(websocketpp::connection_hdl handle, const std::string& buf) override
-		{
-			websocketpp::lib::error_code ec;
-			Server::connection_ptr con = server_->server_.get_con_from_hdl(handle, ec);
-			if (ec)
-				return;
-
-			boost::system::error_code asio_ec;
-			const boost::asio::ip::tcp::endpoint& ep = con->get_raw_socket().remote_endpoint(asio_ec);
-			if (asio_ec)
-				return;
-			const boost::asio::ip::address& addr = ep.address();
-
-			std::unique_lock<std::mutex> ip_lock(server_->ip_lock_);
-			IPData* ip_data;
-			if (server_->FindIPData(addr, ip_data))
-			{
-				if (ip_data->failed_logins >= CollabVMServer::kMaxLoginTries)
-				{
-					if ((std::chrono::time_point_cast<std::chrono::minutes>(std::chrono::steady_clock::now()) -
-						ip_data->failed_login_time).count() > CollabVMServer::kLoginIPBlockTime)
-					{
-						// Reset login attempts after block time has elapsed
-						ip_data->failed_logins = 0;
-					}
-					else
-					{
-						// Block IP
-						throw websocketpp::http::exception("Invalid request body",
-							websocketpp::http::status_code::bad_request);
-					}
-				}
-			}
-			else
-			{
-				ip_data = nullptr;
-			}
-
-			// Parse the request body as a query string
-			UriQueryListA * queryList;
-			int itemCount;
-			if (uriDissectQueryMallocA(&queryList, &itemCount, buf.c_str(),
-				&buf.c_str()[buf.length()]) == URI_SUCCESS)
-			{
-				if (!strcmp(queryList->key, "password") &&
-					!server_->database_.Configuration.MasterPassword.compare(queryList->value))
-				{
-					login_success_ = true;
-					if (server_->admin_session_id_.empty())
-						server_->admin_session_id_ = server_->GenerateUuid();
-				}
-				else
-				{
-					if (!ip_data)
-					{
-						// Create a new IPData object to keep track of any more failed login attempts
-						ip_data = server_->CreateIPData(addr, false);
-					}
-
-					if (!ip_data->failed_logins)
-						ip_data->failed_login_time = std::chrono::time_point_cast<std::chrono::minutes>(std::chrono::steady_clock::now());
-					ip_data->failed_logins++;
-
-					std::cout << "[Admin Panel] Failed login attempt from: " << ip_data->GetIP() << std::endl;
-
-					if (!server_->ip_data_timer_running_)
-					{
-						// Start the IP data clean up timer if it's not already running
-						server_->ip_data_timer_running_ = true;
-						boost::system::error_code ec;
-						server_->ip_data_timer.expires_from_now(std::chrono::minutes(CollabVMServer::kIPDataTimerInterval), ec);
-						server_->ip_data_timer.async_wait(std::bind(&CollabVMServer::IPDataTimerCallback, server_, std::placeholders::_1));
-					}
-				}
-				uriFreeQueryListA(queryList);
-			}
-
-			ip_lock.unlock();
-		}
-
-		void ResponseCallback(Server::connection_ptr& con) override
-		{
-			if (login_success_)
-			{
-				con->append_header("Set-Cookie", "sessionID=" + server_->admin_session_id_);
-				con->append_header("Location", "config.html");
-				con->set_status(websocketpp::http::status_code::see_other);
-			}
-			else
-			{
-				con->set_body("<!DOCTYPE html><html><head>"
-					"<title>Login Failed</title></head><body>"
-					"<h1>Invalid Login</h1>"
-					"</body></html>");
-				con->set_status(websocketpp::http::status_code::ok);
-			}
-		}
-
-	private:
-		bool login_success_;
-		std::shared_ptr<CollabVMServer> server_;
-	};
-
-	enum class ActionType
-	{
-		kMessage,			// Process message
-		kAddConnection,		// Add connection to map
-		kRemoveConnection,	// Remove connection from map
-		kTurnChange,		// Next turn
-		kVoteEnded,			// Vote ended
-		kAgentConnect,		// Agent connected
-		kAgentDisconnect,	// Agent disconnected
-		kHttpUploadFinished,
-		kHttpUploadFailed,
-		kHttpUploadTimedout,
-		kUploadEnded,		// Agent upload ended
+	enum class ActionType {
+		kMessage,		   // Process message
+		kAddConnection,	   // Add connection to map
+		kRemoveConnection, // Remove connection from map
+		kTurnChange,	   // Next turn
+		kVoteEnded,		   // Vote ended
+		kAgentConnect,	   // Agent connected
+		kAgentDisconnect,  // Agent disconnected
+		//kHttpUploadFinished,
+		//kHttpUploadFailed,
+		//kHttpUploadTimedout,
+		kUploadEnded, // Agent upload ended
 		//kHeartbeatTimedout,	// Heartbeat timed out
-		kKeepAlive,			// Broadcast keep-alive message
-		kVMStateChange,		// VM controller state changed
-		kVMCleanUp,			// Free a VM controller's resources
-		kVMThumbnail,		// Update a VM's thumbnail
-		kUpdateThumbnails,	// Update all VM thumbnails
+		kKeepAlive,		   // Broadcast keep-alive message
+		kVMStateChange,	   // VM controller state changed
+		kVMCleanUp,		   // Free a VM controller's resources
+		kVMThumbnail,	   // Update a VM's thumbnail
+		kUpdateThumbnails, // Update all VM thumbnails
 		//kQEMU,			// kQEMU montior command result received
-		kShutdown			// Stop processing thread
+		kShutdown // Stop processing thread
 	};
 
-	struct Action
-	{
+	struct Action {
 		ActionType action;
-		Action(ActionType action) :
-			action(action)
-		{
+		Action(ActionType action)
+			: action(action) {
 		}
 	};
 
-	struct UserAction : public Action
-	{
+	struct UserAction : public Action {
 		std::shared_ptr<CollabVMUser> user;
-		UserAction(CollabVMUser& user, ActionType action) :
-			Action(action),
-			user(user.shared_from_this())
-		{
+		UserAction(CollabVMUser& user, ActionType action)
+			: Action(action),
+			  user(user.shared_from_this()) {
 		}
 	};
 
-	struct MessageAction : public UserAction
-	{
-		Server::message_ptr message;
-		MessageAction(Server::message_ptr msg, CollabVMUser& user, ActionType action) :
-			UserAction(user, action),
-			message(msg)
-		{
+	struct MessageAction : public UserAction {
+		std::shared_ptr<const websocketmm::websocket_message> message;
+		MessageAction(std::shared_ptr<const websocketmm::websocket_message> msg, CollabVMUser& user, ActionType action)
+			: UserAction(user, action),
+			  message(msg) {
 		}
 	};
 
-	struct VMAction : public Action
-	{
+	struct VMAction : public Action {
 		std::shared_ptr<VMController> controller;
-		VMAction(const std::shared_ptr<VMController>& controller, ActionType action) :
-			Action(action),
-			controller(controller)
-		{
+		VMAction(const std::shared_ptr<VMController>& controller, ActionType action)
+			: Action(action),
+			  controller(controller) {
 		}
 	};
 
-	struct VMStateChange : public VMAction
-	{
+	struct VMStateChange : public VMAction {
 		VMController::ControllerState state;
-		VMStateChange(const std::shared_ptr<VMController>& controller, VMController::ControllerState state) :
-			VMAction(controller, ActionType::kVMStateChange),
-			state(state)
-		{
+		VMStateChange(const std::shared_ptr<VMController>& controller, VMController::ControllerState state)
+			: VMAction(controller, ActionType::kVMStateChange),
+			  state(state) {
 		}
 	};
 
-	struct VMThumbnailUpdate : public VMAction
-	{
+	struct VMThumbnailUpdate : public VMAction {
 		std::string* thumbnail;
-		VMThumbnailUpdate(const std::shared_ptr<VMController>& controller, std::string* thumbnail) :
-			VMAction(controller, ActionType::kVMThumbnail),
-			thumbnail(thumbnail)
-		{
+		VMThumbnailUpdate(const std::shared_ptr<VMController>& controller, std::string* thumbnail)
+			: VMAction(controller, ActionType::kVMThumbnail),
+			  thumbnail(thumbnail) {
 		}
 	};
 
-	struct FileUploadAction : public Action
-	{
+	struct FileUploadAction : public Action {
 		enum class UploadResult;
 
-		FileUploadAction(const std::shared_ptr<UploadInfo>& upload_info, UploadResult result) :
-			Action(ActionType::kUploadEnded),
-			upload_result(result),
-			upload_info(upload_info)
-		{
+		FileUploadAction(const std::shared_ptr<UploadInfo>& upload_info, UploadResult result)
+			: Action(ActionType::kUploadEnded),
+			  upload_result(result),
+			  upload_info(upload_info) {
 		}
 
-		enum class UploadResult
-		{
+		enum class UploadResult {
 			kFailed,
 			kSuccess,
 			kSuccessNoExec
@@ -557,19 +236,16 @@ private:
 		std::shared_ptr<UploadInfo> upload_info;
 	};
 
-	struct HttpAction : public Action
-	{
-		HttpAction(ActionType action, const std::shared_ptr<UploadInfo>& info) :
-			Action(action),
-			upload_info(info)
-		{
+	struct HttpAction : public Action {
+		HttpAction(ActionType action, const std::shared_ptr<UploadInfo>& info)
+			: Action(action),
+			  upload_info(info) {
 		}
 
 		std::shared_ptr<UploadInfo> upload_info;
 	};
 
-	struct AgentConnectAction : public VMAction
-	{
+	struct AgentConnectAction : public VMAction {
 		std::string os_name;
 		std::string service_pack;
 		std::string pc_name;
@@ -577,41 +253,28 @@ private:
 		uint32_t max_filename;
 		AgentConnectAction(const std::shared_ptr<VMController>& controller,
 						   const std::string& os_name, const std::string& service_pack,
-						   const std::string& pc_name, const std::string& username, uint32_t max_filename) :
-			VMAction(controller, ActionType::kAgentConnect),
-			os_name(os_name),
-			service_pack(service_pack),
-			pc_name(pc_name),
-			username(username),
-			max_filename(max_filename)
-		{
+						   const std::string& pc_name, const std::string& username, uint32_t max_filename)
+			: VMAction(controller, ActionType::kAgentConnect),
+			  os_name(os_name),
+			  service_pack(service_pack),
+			  pc_name(pc_name),
+			  username(username),
+			  max_filename(max_filename) {
 		}
 	};
 
-	struct case_insensitive_cmp
-	{
-		bool operator() (const std::string& str1, const std::string& str2) const
-		{
+	struct case_insensitive_cmp {
+		bool operator()(const std::string& str1, const std::string& str2) const {
 			return strcasecmp(str1.c_str(), str2.c_str()) < 0;
 		}
 	};
 
-	struct ChatMessage
-	{
-		std::shared_ptr<std::string> username;
-		std::string message;
-		std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> timestamp;
-	};
+	//bool ValidateSessionId(const std::string& cookies);
 
-	void OnHttp(websocketpp::connection_hdl handle);
-	void OnHttpPartial(websocketpp::connection_hdl handle, const std::string& res, const char* buf, size_t len);
-	HttpContentType GetBodyContentType(const std::string& contentType);
-	void BodyHeaderCallback(std::map<std::string, std::string> disposition);
-	void BodyDataCallback(const char* buf, size_t len);
-	bool ValidateSessionId(const std::string& cookies);
-	bool OnValidate(websocketpp::connection_hdl handle);
-	void OnOpen(websocketpp::connection_hdl handle);
-	void OnClose(websocketpp::connection_hdl handle);
+	bool OnValidate(websocketmm::websocket_user* handle);
+	void OnOpen(websocketmm::websocket_user* handle);
+	void OnClose(websocketmm::websocket_user* handle);
+
 	void TimerCallback(const boost::system::error_code& ec, ActionType action);
 	void VMPreviewTimerCallback(const boost::system::error_code ec);
 	void IPDataTimerCallback(const boost::system::error_code& ec);
@@ -630,14 +293,14 @@ private:
 	 */
 	void OnQEMUResponse(std::weak_ptr<CollabVMUser> data, rapidjson::Document& d);
 
-	std::string GenerateUuid();
+	//std::string GenerateUuid();
 
-	void OnMessageFromWS(websocketpp::connection_hdl handle, Server::message_ptr msg);
+	void OnMessageFromWS(websocketmm::websocket_user* handle, std::shared_ptr<const websocketmm::websocket_message> msg);
 	void SendWSMessage(CollabVMUser& user, const std::string& str);
 	void ProcessingThread();
 
-	void Send404Page(Server::connection_ptr& con, std::string& path);
-	void SendHTTPFile(Server::connection_ptr& con, std::string& path, std::string& full_path);
+	//void Send404Page(Server::connection_ptr& con, std::string& path);
+	//void SendHTTPFile(Server::connection_ptr& con, std::string& path, std::string& full_path);
 
 	void AppendChatMessage(std::ostringstream& ss, ChatMessage* chat_msg);
 
@@ -654,11 +317,10 @@ private:
 	 */
 	bool ValidateUsername(const std::string& username);
 
-	enum UsernameChangeResult : char
-	{
-		kSuccess = '0',			// The username was successfully changed
-		kUsernameTaken = '1',	// Someone already has the username or it is registered to an account
-		kInvalid = '2'			// The requested username had invalid characters
+	enum UsernameChangeResult : char {
+		kSuccess = '0',		  // The username was successfully changed
+		kUsernameTaken = '1', // Someone already has the username or it is registered to an account
+		kInvalid = '2'		  // The requested username had invalid characters
 	};
 
 	/**
@@ -690,8 +352,7 @@ private:
 	void StartFileUpload(CollabVMUser& user);
 	void SendUploadResultToIP(IPData& ip_data, const CollabVMUser& user, const std::string& instr);
 
-	enum class FileUploadResult
-	{
+	enum class FileUploadResult {
 		kUserDisconnected,
 		kHttpUploadTimedOut,
 		kHttpUploadFailed,
@@ -750,7 +411,7 @@ private:
 	void DeleteIPData(IPData& ip_data);
 
 	boost::asio::io_service& service_;
-	Server server_;
+	std::shared_ptr<Server> server_;
 
 	CollabVM::Database database_;
 
@@ -773,9 +434,6 @@ private:
 	std::map<std::string, std::shared_ptr<CollabVMUser>, case_insensitive_cmp> usernames_;
 
 	std::set<std::shared_ptr<CollabVMUser>, std::owner_less<std::shared_ptr<CollabVMUser>>> admin_connections_;
-
-	std::map<websocketpp::connection_hdl, HttpBodyData*, std::owner_less<websocketpp::connection_hdl>> http_connections_;
-	std::mutex http_connections_lock_;
 
 	std::map<uint32_t, IPData*> ipv4_data_;
 	std::map<std::array<uint8_t, 16>, IPData*> ipv6_data_;
@@ -920,5 +578,4 @@ private:
 
 	std::mutex upload_lock_;
 	std::map<std::string, std::shared_ptr<UploadInfo>, case_insensitive_cmp> upload_ids_;
-
 };

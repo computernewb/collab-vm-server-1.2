@@ -5,14 +5,15 @@
 #ifndef __CYGWIN__
 #include <execinfo.h>
 #else
-int backtrace (void **buffer, int size);
-char ** backtrace_symbols (void *const *buffer, int size);
-void backtrace_symbols_fd (void *const *buffer, int size, int fd);
+	// Stubs
+	int backtrace (void **buffer, int size) { return 0; }
+	char ** backtrace_symbols (void *const *buffer, int size) { return nullptr; }
+	void backtrace_symbols_fd (void *const *buffer, int size, int fd) {}
 #endif
 #include <cxxabi.h>
 
 /** Print a demangled stack backtrace of the caller function to FILE* out. */
-static inline void PrintStackTrace(FILE *out = stderr, unsigned int max_frames = 63)
+inline void PrintStackTrace(FILE *out = stderr, unsigned int max_frames = 63)
 {
     fprintf(out, "Stack Trace:\n");
 

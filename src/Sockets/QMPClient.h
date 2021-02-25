@@ -17,35 +17,31 @@ class QMPCallback;
  * Controls QEMU using the QEMU Machine Protocol (QMP). QMP uses JSON
  * and it allows the controller to be notified of events when they occur.
  */
-class QMPClient : public std::enable_shared_from_this<QMPClient>
-{
-public:
-	QMPClient(boost::asio::io_service& service) :
-		timer_(service),
-		state_(ConnectionState::kDisconnected)
-	{
+class QMPClient : public std::enable_shared_from_this<QMPClient> {
+   public:
+	QMPClient(boost::asio::io_service& service)
+		: timer_(service),
+		  state_(ConnectionState::kDisconnected) {
 	}
 
-	enum class Events
-	{
+	enum class Events {
 		BLOCK_IO_ERROR,
-		RESET,				// Emitted when the VM is reset
-		RESUME,				// Emitted when the VM resumes execution
+		RESET,	// Emitted when the VM is reset
+		RESUME, // Emitted when the VM resumes execution
 		RTC_CHANGE,
-		SHUTDOWN,			// Emitted when the VM is powered down
-		STOP,				// Emitted when the VM is stopped
+		SHUTDOWN, // Emitted when the VM is powered down
+		STOP,	  // Emitted when the VM is stopped
 		VNC_CONNECTED,
 		VNC_DISCONNECTED,
 		VNC_INITIALIZED,
 		WATCHDOG
 	};
 
-	enum class QMPState
-	{
-		kConnected,			// Connected to QEMU
-		kConnectFailure,	// Failed to connect to QEMU
-		kProtocolError,		// A protocol error occurred
-		kDisconnected		// Disconnected from QEMU
+	enum class QMPState {
+		kConnected,		 // Connected to QEMU
+		kConnectFailure, // Failed to connect to QEMU
+		kProtocolError,	 // A protocol error occurred
+		kDisconnected	 // Disconnected from QEMU
 	};
 
 	typedef std::function<void(rapidjson::Document&)> EventCallback;
@@ -56,7 +52,7 @@ public:
 	 * Attempts to connect to QEMU.
 	 */
 	void Connect(std::weak_ptr<QMPCallback> controller);
-	
+
 	/**
 	 * Disconnects from QEMU.
 	 */
@@ -104,12 +100,11 @@ public:
 	/**
 	 * Whether the client is connected and the handshake is complete.
 	 */
-	bool IsConnected() const
-	{
+	bool IsConnected() const {
 		return state_ == ConnectionState::kConnected;
 	}
 
-protected:
+   protected:
 	void OnConnect(std::shared_ptr<SocketCtx>& ctx);
 	void OnDisconnect();
 
@@ -120,23 +115,21 @@ protected:
 	virtual void DoWriteData(const char data[], size_t len, std::shared_ptr<SocketCtx>& ctx) = 0;
 
 	template<typename SocketType>
-	void ReadLine(SocketType& socket, std::shared_ptr<SocketCtx>& ctx)
-	{
+	void ReadLine(SocketType& socket, std::shared_ptr<SocketCtx>& ctx) {
 		boost::asio::async_read_until(socket, buf_, "\r\n",
-			std::bind(&QMPClient::OnReadLine, shared_from_this(), std::placeholders::_1, std::placeholders::_2, ctx));
+									  std::bind(&QMPClient::OnReadLine, shared_from_this(), std::placeholders::_1, std::placeholders::_2, ctx));
 	}
 
 	template<typename SocketType>
-	void WriteData(SocketType& socket, const char data[], size_t len, std::shared_ptr<SocketCtx>& ctx)
-	{
+	void WriteData(SocketType& socket, const char data[], size_t len, std::shared_ptr<SocketCtx>& ctx) {
 		boost::asio::async_write(socket, boost::asio::buffer(data, len),
-			std::bind(&QMPClient::OnWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2, ctx));
+								 std::bind(&QMPClient::OnWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2, ctx));
 	}
 
 	virtual boost::asio::io_service& GetService() = 0;
 	virtual std::shared_ptr<SocketCtx>& GetSocketContext() = 0;
 
-private:
+   private:
 #ifdef USE_SYSTEM_CLOCK
 	typedef std::chrono::system_clock time_clock;
 #else
@@ -148,13 +141,12 @@ private:
 	void OnWrite(const boost::system::error_code& ec, size_t size, std::shared_ptr<SocketCtx> ctx);
 	void StartTimeoutTimer();
 
-	enum class ConnectionState
-	{
+	enum class ConnectionState {
 		kDisconnected,
-		kConnecting,	// Handshake not started
-		kCapabilities,	// Waiting for "QMP" command for capability negotiation
-		kResponse,		// Waiting for "return" command to confirm negotiation
-		kConnected		// Done negotiating
+		kConnecting,   // Handshake not started
+		kCapabilities, // Waiting for "QMP" command for capability negotiation
+		kResponse,	   // Waiting for "return" command to confirm negotiation
+		kConnected	   // Done negotiating
 	};
 
 	boost::asio::steady_timer timer_;
@@ -184,34 +176,28 @@ private:
 	const std::chrono::seconds kReadTimeout = std::chrono::seconds(3);
 };
 
-class QMPCallback
-{
-public:
+class QMPCallback {
+   public:
 	virtual void OnQMPStateChange(QMPClient::QMPState state) = 0;
 };
 
 template<typename Socket>
-class QMPClientSocket : public Socket
-{
-public:
+class QMPClientSocket : public Socket {
+   public:
 	QMPClientSocket(boost::asio::io_service& service, const std::string& host, uint16_t port)
-		: TCPSocketClient<QMPClient>(service, host, port)
-	{
+		: TCPSocketClient<QMPClient>(service, host, port) {
 	}
 
-	QMPClientSocket(boost::asio::io_service& service, const std::string& name) :
-		LocalSocketClient<QMPClient>(service, name)
-	{
+	QMPClientSocket(boost::asio::io_service& service, const std::string& name)
+		: LocalSocketClient<QMPClient>(service, name) {
 	}
 
-protected:
-	void DoReadLine(std::shared_ptr<SocketCtx>& ctx) override
-	{
+   protected:
+	void DoReadLine(std::shared_ptr<SocketCtx>& ctx) override {
 		Socket::ReadLine(Socket::GetSocket(), ctx);
 	}
 
-	void DoWriteData(const char data[], size_t len, std::shared_ptr<SocketCtx>& ctx) override
-	{
+	void DoWriteData(const char data[], size_t len, std::shared_ptr<SocketCtx>& ctx) override {
 		Socket::WriteData(Socket::GetSocket(), data, len, ctx);
 	}
 };

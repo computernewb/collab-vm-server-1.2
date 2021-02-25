@@ -27,22 +27,20 @@ class VMController;
 class GuacBroadcastSocket;
 class GuacUser;
 
-class GuacVNCClient : public GuacClient
-{
-public:
-	GuacVNCClient(CollabVMServer& server, VMController& controller, UserList& users, const std::string& hostname, uint16_t port/*, uint16_t frame_duration*/);
+class GuacVNCClient : public GuacClient {
+   public:
+	GuacVNCClient(CollabVMServer& server, VMController& controller, UserList& users, const std::string& hostname, uint16_t port /*, uint16_t frame_duration*/);
 	void Start() override;
 	void Stop() override;
 	void CleanUp() override;
-	~GuacVNCClient();
+	~GuacVNCClient() override;
 
-private:
-
-	void OnUserJoin(GuacUser& user);
-	void OnUserLeave(GuacUser& user);
-	void MouseHandler(GuacUser& user, int x, int y, int button_mask);
-	void KeyHandler(GuacUser& user, int keysym, int pressed);
-	void ClipboardHandler(GuacUser& user, guac_stream* stream, char* mimetype);
+   private:
+	void OnUserJoin(GuacUser& user) override;
+	void OnUserLeave(GuacUser& user) override;
+	void MouseHandler(GuacUser& user, int x, int y, int button_mask) override;
+	void KeyHandler(GuacUser& user, int keysym, int pressed) override;
+	void ClipboardHandler(GuacUser& user, guac_stream* stream, char* mimetype) override;
 
 	static void guac_vnc_update(rfbClient* client, int x, int y, int w, int h);
 	static void guac_vnc_copyrect(rfbClient* client, int src_x, int src_y, int w, int h, int dest_x, int dest_y);
@@ -132,6 +130,4 @@ private:
 	static char* GUAC_VNC_CLIENT_KEY;
 
 	const CollabVMServer& server_;
-
 };
-

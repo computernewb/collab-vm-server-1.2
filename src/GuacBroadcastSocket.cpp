@@ -3,14 +3,14 @@
 #include "CollabVMUser.h"
 #include <assert.h>
 
-GuacBroadcastSocket::GuacBroadcastSocket(CollabVMServer& server, UserList& users) :
-	server_(server),
-	users_(users)
-{
+#include <websocketmm/websocket_user.h>
+
+GuacBroadcastSocket::GuacBroadcastSocket(CollabVMServer& server, UserList& users)
+	: server_(server),
+	  users_(users) {
 }
 
-void GuacBroadcastSocket::InstructionBegin()
-{
+void GuacBroadcastSocket::InstructionBegin() {
 	// Lock stringstream
 	mutex_.lock();
 
@@ -18,8 +18,7 @@ void GuacBroadcastSocket::InstructionBegin()
 	ss_.str("");
 }
 
-void GuacBroadcastSocket::InstructionEnd()
-{
+void GuacBroadcastSocket::InstructionEnd() {
 	std::string str = ss_.str();
 
 	// Unlock stringstream
@@ -28,8 +27,8 @@ void GuacBroadcastSocket::InstructionEnd()
 	// Check that the message ends with a semicolon
 	assert(str[str.length() - 1] == ';');
 
-	users_.ForEachUserLock([&](CollabVMUser& user)
-	{
-		server_.SendGuacMessage(user.guac_user->socket_.websocket_handle_, str);
+	users_.ForEachUserLock([&](CollabVMUser& user) {
+		user.guac_user->socket_.websocket_handle_->send(websocketmm::BuildWebsocketMessage(str));
+		//server_.SendGuacMessage(user.guac_user->socket_.websocket_handle_, str);
 	});
 }

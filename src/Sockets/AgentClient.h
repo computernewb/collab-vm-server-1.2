@@ -27,31 +27,24 @@ typedef char16_t utf16_t;
 static_assert(sizeof(utf16_t) == sizeof(uint16_t), "utf16_t must be exactly 16 bits");
 typedef std::basic_string<utf16_t> winstring;
 
-class AgentClient : public std::enable_shared_from_this<AgentClient>
-{
-public:
+class AgentClient : public std::enable_shared_from_this<AgentClient> {
+   public:
 	AgentClient(boost::asio::io_service& service);
 
-	void Init(const std::string& agent_path, uint16_t heartbeat_timeout)
-	{
+	void Init(const std::string& agent_path, uint16_t heartbeat_timeout) {
 		auto self = shared_from_this();
-		GetService().dispatch([this, self, agent_path, heartbeat_timeout]()
-		{
-			if (state_ == ConnectionState::kNotConnected)
-			{
+		GetService().dispatch([this, self, agent_path, heartbeat_timeout]() {
+			if(state_ == ConnectionState::kNotConnected) {
 				agent_path_ = agent_path;
 				heartbeat_timeout_ = heartbeat_timeout;
 			}
 		});
 	}
 
-	void Connect(std::weak_ptr<AgentCallback> callback)
-	{
+	void Connect(std::weak_ptr<AgentCallback> callback) {
 		auto self = shared_from_this();
-		GetService().dispatch([this, self, callback]()
-		{
-			if (state_ == ConnectionState::kNotConnected)
-			{
+		GetService().dispatch([this, self, callback]() {
+			if(state_ == ConnectionState::kNotConnected) {
 				state_ = ConnectionState::kConnecting;
 				connect_received_ = false;
 				file_upload_state_ = UploadState::kNotUploading;
@@ -61,12 +54,10 @@ public:
 		});
 	}
 
-	void Disconnect()
-	{
+	void Disconnect() {
 		auto self = shared_from_this();
-		GetService().dispatch([this, self]()
-		{
-			if (state_ != ConnectionState::kNotConnected)
+		GetService().dispatch([this, self]() {
+			if(state_ != ConnectionState::kNotConnected)
 				DisconnectSocket();
 		});
 	}
@@ -88,7 +79,7 @@ public:
 
 	~AgentClient();
 
-protected:
+   protected:
 	void OnConnect(std::shared_ptr<SocketCtx>& ctx);
 	void OnDisconnect();
 
@@ -99,21 +90,19 @@ protected:
 	virtual void DoWrite(const uint8_t data[], size_t len, Callback cb) = 0;
 
 	template<typename SocketType>
-	void Read(SocketType& socket, size_t size, Callback cb)
-	{
+	void Read(SocketType& socket, size_t size, Callback cb) {
 		boost::asio::async_read(socket, boost::asio::buffer(read_buf_, size), cb);
 	}
 
 	template<typename SocketType>
-	void Write(SocketType& socket, const uint8_t data[], size_t len, Callback cb)
-	{
+	void Write(SocketType& socket, const uint8_t data[], size_t len, Callback cb) {
 		boost::asio::async_write(socket, boost::asio::buffer(data, len), cb);
 	}
 
 	virtual boost::asio::io_service& GetService() = 0;
 	virtual std::shared_ptr<SocketCtx>& GetSocketContext() = 0;
 
-private:
+   private:
 	void OnReadUploadReq(const boost::system::error_code& ec, size_t size, std::shared_ptr<SocketCtx> ctx);
 	void OnReadHeader(const boost::system::error_code& ec, size_t size, std::shared_ptr<SocketCtx> ctx);
 	void OnReadBody(const boost::system::error_code& ec, size_t size, std::shared_ptr<SocketCtx> ctx);
@@ -166,8 +155,7 @@ private:
 
 	//} file_upload_info_;
 
-	enum class UploadState
-	{
+	enum class UploadState {
 		kNotUploading,
 		kCreateFile,
 		kUploadFile,
@@ -175,8 +163,7 @@ private:
 	} file_upload_state_;
 	std::shared_ptr<UploadInfo> file_upload_info_;
 
-	enum class ConnectionState
-	{
+	enum class ConnectionState {
 		kNotConnected,
 		kConnecting,
 		kAgentUpload,
@@ -185,9 +172,8 @@ private:
 	} state_;
 };
 
-class AgentCallback
-{
-public:
+class AgentCallback {
+   public:
 	//enum DisconnectReason
 	//{
 	//	kConnectFailed,
@@ -200,26 +186,23 @@ public:
 	virtual void OnAgentDisconnect(bool protocol_error) = 0;
 	virtual void OnAgentHeartbeatTimeout() = 0;
 	virtual void OnFileUploadStarted(const std::shared_ptr<UploadInfo>& info, std::string* filename) = 0;
-	virtual void OnFileUploadFailed(const std::shared_ptr<UploadInfo>& info/*, Reason*/) = 0;
+	virtual void OnFileUploadFailed(const std::shared_ptr<UploadInfo>& info /*, Reason*/) = 0;
 	virtual void OnFileUploadFinished(const std::shared_ptr<UploadInfo>& info) = 0;
 	virtual void OnFileUploadExecFinished(const std::shared_ptr<UploadInfo>& info, bool exec_success) = 0;
 };
 
 template<typename Socket>
-class AgentClientSocket : public Socket
-{
-public:
+class AgentClientSocket : public Socket {
+   public:
 	AgentClientSocket(boost::asio::io_service& service, const std::string& host, uint16_t port)
-		: TCPSocketClient<AgentClient>(service, host, port)
-	{
+		: TCPSocketClient<AgentClient>(service, host, port) {
 	}
 
-	AgentClientSocket(boost::asio::io_service& service, const std::string& name) :
-		LocalSocketClient<AgentClient>(service, name)
-	{
+	AgentClientSocket(boost::asio::io_service& service, const std::string& name)
+		: LocalSocketClient<AgentClient>(service, name) {
 	}
 
-protected:
+   protected:
 	//virtual void DoReadUploadReq(std::shared_ptr<SocketCtx>& ctx)
 	//{
 	//	Socket::ReadReadUploadReq(Socket::GetSocket(), ctx);
@@ -235,13 +218,11 @@ protected:
 	//	Socket::ReadBody(Socket::GetSocket(), size, ctx);
 	//}
 
-	void DoRead(size_t size, Callback cb) override
-	{
+	void DoRead(size_t size, Callback cb) override {
 		Socket::Read(Socket::GetSocket(), size, cb);
 	}
 
-	void DoWrite(const uint8_t data[], size_t len, Callback cb) override
-	{
+	void DoWrite(const uint8_t data[], size_t len, Callback cb) override {
 		Socket::Write(Socket::GetSocket(), data, len, cb);
 	}
 };

@@ -117,7 +117,7 @@ public:
 
 	void EndVote(bool cancelVote);
 
-	void TurnRequest(const std::shared_ptr<CollabVMUser>& user);
+	void TurnRequest(const std::shared_ptr<CollabVMUser>& user, bool turnJack, bool isStaff);
 
 	/**
 	 * After a turn has ended, this function will update the turn

@@ -12,7 +12,6 @@ class GuacClient;
 class GuacWebSocket;
 
 struct guac_user_info {
-
 	/**
 	 * The number of pixels the remote client requests for the display width.
 	 * This need not be honored by a client plugin implementation, but if the
@@ -49,19 +48,18 @@ struct guac_user_info {
 	 * stated resolution of the display size request is recommended.
 	 */
 	int optimal_resolution;
-
 };
 
 /**
  * A user that is connected to a Guacamole client and receives
  * messages containing screen data.
  */
-class GuacUser
-{
+class GuacUser {
 	friend class GuacClient;
 	friend class GuacVNCClient;
-public:
-	GuacUser(CollabVMServer* server, std::weak_ptr<void> handle);
+
+   public:
+	GuacUser(CollabVMServer* server, websocketmm::websocket_user* handle);
 
 	guac_stream* AllocStream();
 	void FreeStream(guac_stream* stream);
@@ -103,7 +101,7 @@ public:
 	 */
 	int processing_lag;
 
-//private:
+	//private:
 	/**
 	 * The unique identifier allocated for this user, which may be used within
 	 * the Guacamole protocol to refer to this user.  This identifier is
@@ -383,4 +381,3 @@ public:
 	 */
 	//guac_user_leave_handler* leave_handler;
 };
-

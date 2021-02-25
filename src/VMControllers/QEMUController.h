@@ -13,14 +13,12 @@
 
 class CollabVMServer;
 
-class QEMUController : public VMController, public QMPCallback
-{
-public:
-	enum ErrorCode
-	{
-		kQEMUError,		// QEMU returned a nonzero status code after terminating
-		kQMPFailed,		// The QMP client failed to connect
-		kVNCFailed		// The VNC client failed to connect
+class QEMUController : public VMController, public QMPCallback {
+   public:
+	enum ErrorCode {
+		kQEMUError, // QEMU returned a nonzero status code after terminating
+		kQMPFailed, // The QMP client failed to connect
+		kVNCFailed	// The VNC client failed to connect
 	};
 
 	/**
@@ -70,20 +68,17 @@ public:
 
 	const std::string& GetErrorMessage() const override;
 
-	bool IsRunning() const override
-	{
+	bool IsRunning() const override {
 		return internal_state_ != InternalState::kInactive;
 	}
 
 	ControllerState GetState() const override;
 
-	StopReason GetStopReason() const override
-	{
+	StopReason GetStopReason() const override {
 		return stop_reason_;
 	}
 
-	inline void UpdateThumbnail() override
-	{
+	inline void UpdateThumbnail() override {
 		guac_client_.UpdateThumbnail();
 	}
 
@@ -92,12 +87,12 @@ public:
 	 */
 	void OnQMPStateChange(QMPClient::QMPState state) override;
 
-protected:
+   protected:
 	void OnAddUser(CollabVMUser& user) override;
 
 	void OnRemoveUser(CollabVMUser& user) override;
 
-private:
+   private:
 	/**
 	* Sets the command used for starting QEMU. The comand should
 	* not contain any of the following arguments:
@@ -127,7 +122,7 @@ private:
 	 * Terminates the QEMU process by sending the kill signal to it.
 	 */
 	void KillQEMU();
-	
+
 	void StartQMPCallback(const boost::system::error_code& ec);
 
 	/**
@@ -167,12 +162,11 @@ private:
 
 	void OnAgentDisconnect(bool protocol_error) override;
 
-	enum class InternalState
-	{
-		kInactive,		// The controller hasn't been started
+	enum class InternalState {
+		kInactive, // The controller hasn't been started
 		//kQEMUStarting,	// The QEMU hypervisor is starting
-		kQMPConnecting,	// The QMP client is connecting
-		kVNCConnecting,	// The VNC client is connecting
+		kQMPConnecting, // The QMP client is connecting
+		kVNCConnecting, // The VNC client is connecting
 		kConnected,		// The QEMU process is running, and the QMP and VNC clients are connected
 		kStopping		// Waiting for QEMU process to terminate and VNC and QMP to close
 	};

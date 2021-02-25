@@ -99,6 +99,7 @@ void VMController::Vote(CollabVMUser& user, bool vote)
 		case VoteState::kCoolingdown:
 		{
 			int32_t time_remaining = std::chrono::duration_cast<std::chrono::duration<int32_t>>(vote_timer_.expires_from_now()).count();
+			// Earlier I was attempting to get staff to bypass this but this will need more work, come back to it later
 			if (time_remaining > 0)
 			{
 				server_.VoteCoolingDown(user, time_remaining);
@@ -130,8 +131,7 @@ void VMController::Vote(CollabVMUser& user, bool vote)
 			{
 				IPData::VoteDecision prev_vote = user.ip_data.votes[this];
 				bool changed = false;
-				if(user.voted_limit == false) {
-
+				if (user.voted_limit == false) {
 					if(user.voted_amount >= 5) {
 						user.voted_limit = true;
 						goto _vote_limit_die;
@@ -206,34 +206,53 @@ void VMController::EndVote(bool cancelVote)
 		RestoreVMSnapshot();
 }
 
-void VMController::TurnRequest(const std::shared_ptr<CollabVMUser>& user)
+void VMController::TurnRequest(const std::shared_ptr<CollabVMUser>& user, bool turnJack, bool isStaff)
 {
 	// If the user is already in the queue or they are already
 	// in control don't allow them to make another turn request
-	if (!settings_->TurnsEnabled || GetState() != ControllerState::kRunning ||
-		current_turn_ == user || user->waiting_turn)
+	if (GetState() != ControllerState::kRunning || (!settings_->TurnsEnabled && !isStaff) ||
+		(user->waiting_turn && !turnJack) || current_turn_ == user)
 		return;
 
-	if (!current_turn_)
-	{
+	if (user->waiting_turn) {
+		for (auto it = turn_queue_.begin(); it != turn_queue_.end(); it++) {
+			if (*it == user) {
+				turn_queue_.erase(it);
+				user->waiting_turn = false;
+				break;
+			}
+		}
+	};
+
+	if (!current_turn_) {
 		// If no one currently has a turn then give the requesting user control
 		current_turn_ = user;
 		// Start the turn timer
 		boost::system::error_code ec;
 		turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
 		turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
-	}
-	else
-	{
-		// Otherwise add them to the queue
-		turn_queue_.push_back(user);
-		user->waiting_turn = true;
-	}
+	} else {
+		if (!turnJack) {
+			// Otherwise add them to the queue
+			turn_queue_.push_back(user);
+			user->waiting_turn = true;
+		} else {
+			// Turn-jack
+			turn_queue_.push_front(current_turn_);
+			current_turn_->waiting_turn = true;
+			current_turn_ = user;
 
+			boost::system::error_code ec;
+			turn_timer_.cancel(ec);
+			turn_timer_.expires_from_now(std::chrono::seconds(settings_->TurnTime), ec);
+			turn_timer_.async_wait(std::bind(&VMController::TurnTimerCallback, shared_from_this(), std::placeholders::_1));
+		}
+	};
+	
 	server_.BroadcastTurnInfo(*this, users_, turn_queue_, current_turn_.get(),
 		std::chrono::duration_cast<millisecs_t>(turn_timer_.expires_from_now()).count());
 }
-
+ 
 void VMController::NextTurn()
 {
 	int32_t time_remaining;
