@@ -22,11 +22,10 @@ struct VMSettings;
  * creating a Guacamole client, and possibly a guest service controller. Derived
  * classes will implement functionality specific to the hypervisor.
  */
-class VMController : public std::enable_shared_from_this<VMController>, public AgentCallback
-{
+class VMController : public std::enable_shared_from_this<VMController>, public AgentCallback {
 	friend GuacBroadcastSocket;
-public:
 
+   public:
 	virtual void ChangeSettings(const std::shared_ptr<VMSettings>& settings);
 
 	/**
@@ -34,16 +33,14 @@ public:
 	 */
 	virtual void Start() = 0;
 
-	enum StopReason
-	{
-		kNormal,	// The controller was stopped normally
-		kRestart,	// The controller should be restarted
-		kRemove,	// The controller is being deleted
-		kError		// The controller failed to start
+	enum StopReason {
+		kNormal,  // The controller was stopped normally
+		kRestart, // The controller should be restarted
+		kRemove,  // The controller is being deleted
+		kError	  // The controller failed to start
 	};
 
-	enum ControllerState
-	{
+	enum ControllerState {
 		kStopped,
 		kStarting,
 		kRunning,
@@ -96,8 +93,7 @@ public:
 	*/
 	virtual void OnGuacDisconnect(bool cleanup) = 0;
 
-	const VMSettings& GetSettings() const
-	{
+	const VMSettings& GetSettings() const {
 		return *settings_;
 	}
 
@@ -125,13 +121,11 @@ public:
 	 */
 	void NextTurn();
 
-	std::shared_ptr<CollabVMUser> CurrentTurn() const
-	{
+	std::shared_ptr<CollabVMUser> CurrentTurn() const {
 		return current_turn_;
 	}
 
-	const std::deque<std::shared_ptr<CollabVMUser>>& GetTurnQueue() const
-	{
+	const std::deque<std::shared_ptr<CollabVMUser>>& GetTurnQueue() const {
 		return turn_queue_;
 	}
 
@@ -147,14 +141,12 @@ public:
 	 */
 	void NewThumbnail(std::string* str);
 
-	inline std::string* GetThumbnail() const
-	{
+	inline std::string* GetThumbnail() const {
 		return thumbnail_str_;
 	}
 
-	inline void SetThumbnail(std::string* str)
-	{
-		if (thumbnail_str_)
+	inline void SetThumbnail(std::string* str) {
+		if(thumbnail_str_)
 			delete thumbnail_str_;
 		thumbnail_str_ = str;
 	}
@@ -169,16 +161,14 @@ public:
 	//	turn_list_cache_ = str;
 	//}
 
-	inline UserList& GetUsersList()
-	{
+	inline UserList& GetUsersList() {
 		return users_;
 	}
 
 	bool IsFileUploadValid(const std::shared_ptr<CollabVMUser>& user, const std::string& filename, size_t file_size, bool run_file);
 
-	void UploadFile(const std::shared_ptr<UploadInfo>& info)
-	{
-		if (agent_)
+	void UploadFile(const std::shared_ptr<UploadInfo>& info) {
+		if(agent_)
 			agent_->UploadFile(info);
 	}
 
@@ -194,7 +184,7 @@ public:
 
 	virtual ~VMController();
 
-protected:
+   protected:
 	VMController(CollabVMServer& server, boost::asio::io_service& service, const std::shared_ptr<VMSettings>& settings);
 
 	virtual void OnAddUser(CollabVMUser& user) = 0;
@@ -208,7 +198,7 @@ protected:
 	void OnAgentDisconnect(bool protocol_error) override;
 	void OnAgentHeartbeatTimeout() override;
 	void OnFileUploadStarted(const std::shared_ptr<UploadInfo>& info, std::string* filename) override;
-	void OnFileUploadFailed(const std::shared_ptr<UploadInfo>& info/*, Reason*/) override;
+	void OnFileUploadFailed(const std::shared_ptr<UploadInfo>& info /*, Reason*/) override;
 	void OnFileUploadFinished(const std::shared_ptr<UploadInfo>& info) override;
 	void OnFileUploadExecFinished(const std::shared_ptr<UploadInfo>& info, bool exec_success) override;
 
@@ -235,9 +225,8 @@ protected:
 	std::shared_ptr<AgentClient> agent_;
 	std::string agent_address_;
 
-private:
-	enum class VoteState
-	{
+   private:
+	enum class VoteState {
 		kIdle,
 		kVoting,
 		kCoolingdown
@@ -273,5 +262,4 @@ private:
 	//std::string turn_list_cache_;
 
 	const uint32_t kMaxFilenameLen = 100;
-
 };
