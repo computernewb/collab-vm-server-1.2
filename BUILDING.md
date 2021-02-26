@@ -96,7 +96,7 @@ make
 
 Visual Studio is currently unsupported, however it may be supported later once stuff is completed.
 
-#### Linux 
+### Linux 
 On Linux, compiling with both clang and gcc seem to work fine. It is recommended to use clang.
 
 First download ODB from either [the CodeSynthesis website](http://www.codesynthesis.com/products/odb/download.xhtml) or download it from your local repositories. (On Ubuntu, you can type `sudo apt install -y odb`).
@@ -122,7 +122,7 @@ make
 
 To build with Clang (and, also possibly instrument the binary with ASAN/such), do `make CC=clang CXX=clang++`.
 
-#### MacOS X
+### MacOS X
 **NOTE**: This is untested, and is not guaranteed to work.
 
 On MacOS X, there is a development kit called "XCode". I have no idea at all if it would be compatible with this, so instead, this will use Homebrew to build the server.
@@ -136,10 +136,10 @@ On MacOS X, there is a development kit called "XCode". I have no idea at all if 
 - Verify all the dependencies have been successfully installed and build the solution.
 
 
-#### BSD
+### BSD
 CollabVM Server is confirmed to be working on FreeBSD and OpenBSD, but it requires building ODB by yourself, which can be quite a pain. The instructions are the same as Linux for the most part except having to build odb by yourself. The source code is available on the [the CodeSynthesis website](http://www.codesynthesis.com/products/odb/download.xhtml).
 
-##  Others?
+### Others?
 It's possible that CollabVM Server may run on other operating systems such as GNU/Hurd, OpenIndiana, etc. 
 
 Its possible it might run on MINIX, but these platforms are unsupported and are NOT tested. 
