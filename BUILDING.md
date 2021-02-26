@@ -1,29 +1,29 @@
 ## Building the collab-vm-server 
 
-Compiling the server is fairly easy. The server is confirmed to work on the i386 (32-bit), amd64 (64-bit), and armhf architectures on both Windows and Linux. It should also work on Aarch64, PowerPC, and MIPS machines, but note that this isn't tested.
+Compiling the server is fairly easy. The server is confirmed to work on the i386 (32-bit), amd64 (64-bit), and armhf architectures on both Windows and Linux.
+
+It should also work on Aarch64, PowerPC, and MIPS machines, but note that this isn't tested.
 
 CollabVM Server is confirmed to build and work in the following environments:
 
-* Ubuntu, Debian, Arch Linux, CentOS, etc. 
+* Ubuntu, Debian, Raspbian, Arch Linux, CentOS, etc. 
 * Windows XP Professional, Windows 7, and Windows 10, and their server counterparts.
 * FreeBSD and OpenBSD
 * Haiku
 * Android OS (using Termux)
 
-Make flags (To enable, set these using `FLAG=1`):
+Make flags for the Makeconfig-based build system (soon to be replaced) (To enable, set these using `FLAG=1`):
 
-- JPEG - Controls/enables JPEG support.
-- DEBUG - Enables debug symbols
+- JPEG - Controls/enables the JPEG support.
+- DEBUG - Enables debug symbols and doesn't build a optimized binary. Also possibly includes some debug assert code
 - V - Displays compile command lines, useful for debugging errors
 
 ### All Required Dependencies
 
-Your version of GCC or clang should be able to compile C++17 programs. If it cannot, you need to install a newer compiler.
+First and foremost, your version of GCC or clang should be able to compile C++17 programs. If it cannot, you need to install a newer compiler.
 
 * Boost 1.67 or above (1.67 is untested, 1.71 works fine though)
-* GCC 8
-#* Visual C++ 2019 if building with Visual Studio
-* Clang 7
+* GCC 8/Clang 7/MSVC 2019
 * libvncserver 
 * libpng
 * libturbojpeg
@@ -39,32 +39,41 @@ Your version of GCC or clang should be able to compile C++17 programs. If it can
 On Windows, you have the following options:
 * MSYS2 with MinGW
 * Cygwin
-#* Visual Studio
 
 #### MSYS2 with MinGW 
 To build the server with MSYS2 with MinGW, do the following: 
 
-Download ODB [here.](http://www.codesynthesis.com/products/odb/download.xhtml)
- - Grab the executable for your platform from the website. Extract wherever, just make sure it's in the PATH.
-	 - Go to the src/Database folder and type this command in: `odb -d sqlite -s -q Config.h VMSettings.h`
+Download ODB [here](http://www.codesynthesis.com/products/odb/download.xhtml).
+
+- Grab the executable for your platform from the website. Extract wherever, just make sure it's in your MSYS2 PATH when building the server.
 
 Then execute the following commands:
 ```
 pacman -Syu
+
 # Restart MSYS for the arch you want to compile (e.g on win32 MSYS MinGW 32bit, or on Win64 MSYS MinGW x86_64)
+
 # Install the Win32 compiler
 pacman -S --noconf mingw-w64-i686-toolchain git
-# Restart MSYS again
+
+# Restart MSYS again.
+
 # Install the Win64 compiler
 pacman -S --noconf mingw-w64-x86_64-toolchain git
+
 # Restart MSYS again.
+
 # Get all of the CollabVM Server dependencies (for Win64).
 ./scripts/grab_deps_mw64.sh
+
 # Get all of the CollabVM Server dependencies (for Win32).
 ./scripts/grab_deps_mw32.sh
+
 # If you get a Permission Denied error, go into the scripts directory and type chmod +x *.sh.
+
 make
-# Or for Win32.
+
+# Or a Win32 build.
 make WARCH=w32
 ```
 
@@ -78,10 +87,13 @@ Regardless, to build the server with Cygwin, obviously install Cygwin with GCC a
 ```
 # Grab the dependencies 
 ./scripts/grab_deps_cyg.sh
+
 # Build the server 
+make
 ```
 
 #### Visual Studio 
+
 Visual Studio is currently unsupported, however it may be supported later once stuff is completed.
 
 #### Linux 
@@ -94,18 +106,21 @@ Then run the following commands:
 ```
 # on Arch Linux:
 sudo pacman -S base-devel
+
 # on Debian/Ubuntu:
 sudo apt install -y build-essential
+
 # on Fedora/Red Hat/CentOS/Etc:
 sudo yum groupinstall 'Development Tools'
+
 # Get all of the CollabVM Server dependencies for Linux.
-# If you get a Permission Denied error, go into the scripts directory and type chmod +x *.sh.
 ./scripts/grab_deps_linux.sh
-# cd back to the root folder, and finally, build the server 
+
+# build the server 
 make
 ```
 
-To build with Clang (and, also possibly instrument the binary), do `make CC=clang CXX=clang++`.
+To build with Clang (and, also possibly instrument the binary with ASAN/such), do `make CC=clang CXX=clang++`.
 
 #### MacOS X
 **NOTE**: This is untested, and is not guaranteed to work.
@@ -128,4 +143,5 @@ CollabVM Server is confirmed to be working on FreeBSD and OpenBSD, but it requir
 It's possible that CollabVM Server may run on other operating systems such as GNU/Hurd, OpenIndiana, etc. 
 
 Its possible it might run on MINIX, but these platforms are unsupported and are NOT tested. 
+
 Let me know what crazy operating systems you get it to run on, though!
