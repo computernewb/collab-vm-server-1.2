@@ -8,19 +8,19 @@ CollabVM Server is confirmed to build and work in the following environments:
 * Windows XP Professional, Windows 7, and Windows 10, and their server counterparts.
 * FreeBSD and OpenBSD
 * Haiku
-* Raspbian 
 * Android OS (using Termux)
 
-To build the server you will need at least GCC 5 (or greater), or Visual C++ 2012 (11.0) (or greater).
-
-Make flags (To enable, set these ala `FLAG=1`):
+Make flags (To enable, set these using `FLAG=1`):
 
 - JPEG - Controls/enables JPEG support.
 - DEBUG - Enables debug symbols
 - V - Displays compile command lines, useful for debugging errors
 
 ### All Required Dependencies
-* Boost 1.67 or above (1.67 is untested)
+
+Your version of GCC or clang should be able to compile C++17 programs. If it cannot, you need to install a newer compiler.
+
+* Boost 1.67 or above (1.67 is untested, 1.71 works fine though)
 * GCC 8
 #* Visual C++ 2019 if building with Visual Studio
 * Clang 7
