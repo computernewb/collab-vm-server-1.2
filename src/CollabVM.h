@@ -46,7 +46,7 @@ class GuacUser;
 
 class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
    public:
-	CollabVMServer(boost::asio::io_service& service);
+	explicit CollabVMServer(boost::asio::io_service& service);
 
 	~CollabVMServer();
 
@@ -124,7 +124,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	/**
 	 * Sends a message from a Guacamole client to WebSocket connection.
 	 */
-	//void SendGuacMessage(websocdata, const std::string& str);
+	void SendGuacMessage(std::weak_ptr<websocketmm::websocket_user> ptr, const std::string& str);
 
 	void ExecuteCommandAsync(std::string command);
 	void MuteUser(const std::shared_ptr<CollabVMUser>& user, bool permanent);
@@ -284,9 +284,9 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 
 	//bool ValidateSessionId(const std::string& cookies);
 
-	bool OnValidate(websocketmm::websocket_user* handle);
-	void OnOpen(websocketmm::websocket_user* handle);
-	void OnClose(websocketmm::websocket_user* handle);
+	bool OnValidate(std::weak_ptr<websocketmm::websocket_user> handle);
+	void OnOpen(std::weak_ptr<websocketmm::websocket_user> handle);
+	void OnClose(std::weak_ptr<websocketmm::websocket_user> handle);
 
 	void TimerCallback(const boost::system::error_code& ec, ActionType action);
 	void VMPreviewTimerCallback(const boost::system::error_code ec);
@@ -308,7 +308,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 
 	//std::string GenerateUuid();
 
-	void OnMessageFromWS(websocketmm::websocket_user* handle, std::shared_ptr<const websocketmm::websocket_message> msg);
+	void OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> handle, std::shared_ptr<const websocketmm::websocket_message> msg);
 	void SendWSMessage(CollabVMUser& user, const std::string& str);
 	void ProcessingThread();
 

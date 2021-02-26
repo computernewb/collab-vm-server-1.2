@@ -46,6 +46,8 @@ class GuacClient {
 
 	GuacClient(CollabVMServer& server, VMController& controller, UserList& users, const std::string& hostname, uint16_t port, uint16_t frame_duration);
 
+	virtual ~GuacClient();
+
 	/**
 	 * Start the client thread.
 	 */
@@ -129,7 +131,6 @@ class GuacClient {
 		update_thumbnail_ = true;
 	}
 
-	virtual ~GuacClient();
 
 	GuacBroadcastSocket broadcast_socket_;
 

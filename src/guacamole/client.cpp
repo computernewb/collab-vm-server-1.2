@@ -247,6 +247,9 @@ void guac_client_free(guac_client* client) {
 
     }
 
+	if(client->connection_id != nullptr)
+		free(client->connection_id);
+
     /* Free layer pools */
     guac_pool_free(client->__buffer_pool);
     guac_pool_free(client->__layer_pool);

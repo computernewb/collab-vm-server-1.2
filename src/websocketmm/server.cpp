@@ -25,6 +25,7 @@ namespace websocketmm {
 		listener_.reset();
 	}
 
+	/*
 	void server::join_to_server(websocket_user* user) {
 		std::lock_guard<std::mutex> lock(users_lock_);
 		users_.insert(user);
@@ -36,8 +37,9 @@ namespace websocketmm {
 		users_.erase(user);
 		//close(user);
 	}
+	*/
 
-	bool server::verify(websocket_user* user) {
+	bool server::verify(const std::weak_ptr<websocketmm::websocket_user>& user) {
 		if(verify_handler)
 			return verify_handler(user);
 
@@ -46,21 +48,42 @@ namespace websocketmm {
 		return true;
 	}
 
-	void server::open(websocket_user* user) {
+	void server::open(const std::weak_ptr<websocketmm::websocket_user>& user) {
 		if(open_handler)
 			open_handler(user);
 	}
 
-	void server::message(websocket_user* user, std::shared_ptr<const websocket_message> message) {
+	void server::message(const std::weak_ptr<websocketmm::websocket_user>& user, std::shared_ptr<const websocket_message> message) {
 		if(message_handler)
 			message_handler(user, message);
 	}
 
-	void server::close(websocket_user* user) {
+	void server::close(const std::weak_ptr<websocketmm::websocket_user>& user) {
 		if(close_handler)
 			close_handler(user);
 	}
 
+	bool server::send_message(std::weak_ptr<websocketmm::websocket_user>& user,const std::shared_ptr<const websocket_message>& message) {
+
+		// If the user is expired,
+		// don't bother.
+		if(user.expired())
+			return false;
+
+		// Similar if the message is null.
+		if(!message)
+			return false;
+
+		if(auto user_sp = user.lock()) {
+			user_sp->send(message);
+			return true;
+		}
+
+		// If the user shared-ptr somehow
+		return false;
+	}
+
+	/*
 	void server::broadcast_message(const websocket_message& message) {
 		// Copy the message into a shared_ptr
 		// so we can manage the message lifetime ourselves.
@@ -81,4 +104,5 @@ namespace websocketmm {
 			if(auto strong_ptr = user.lock())
 				strong_ptr->send(sp);
 	}
+	 */
 } // namespace websocketmm

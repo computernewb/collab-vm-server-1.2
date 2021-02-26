@@ -29,13 +29,13 @@ namespace websocketmm {
 	}
 
 	websocket_user::~websocket_user() {
-		server_->leave_server(this);
+		//server_->leave_server(this);
 		//std::cout << "~websocket_user() @ " << this << '\n';
-		//server_->close(this);
+		//server_->close(weak_from_this());
 	}
 
 	bool websocket_user::do_validate() {
-		return server_->verify(this);
+		return server_->verify(weak_from_this());
 	}
 
 	per_user_data& websocket_user::get_userdata() {
@@ -78,8 +78,8 @@ namespace websocketmm {
 		if(ec)
 			return;
 
-		server_->open(this);
-		server_->join_to_server(this);
+		server_->open(weak_from_this());
+		//server_->join_to_server(this);
 
 		// Start looping by reading a message
 		ws_.async_read(
@@ -91,7 +91,7 @@ namespace websocketmm {
 
 	void websocket_user::on_read(beast::error_code ec, std::size_t bytes_transferred) {
 		if(ec == websocket::error::closed) {
-			server_->close(this);
+			server_->close(weak_from_this());
 			return;
 		}
 
@@ -106,7 +106,7 @@ namespace websocketmm {
 		buffer_.consume(buffer_.size());
 
 		// call the message handler
-		server_->message(this, message);
+		server_->message(weak_from_this(), message);
 
 		// then read anothe rmessage
 		ws_.async_read(
@@ -150,7 +150,7 @@ namespace websocketmm {
 
 	void websocket_user::on_write(beast::error_code ec, std::size_t bytes_transferred) {
 		if(ec == websocket::error::closed) {
-			server_->close(this);
+			server_->close(weak_from_this());
 			return;
 		}
 

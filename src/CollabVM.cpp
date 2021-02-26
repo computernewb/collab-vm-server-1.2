@@ -462,7 +462,7 @@ void CollabVMServer::DeleteIPData(IPData& ip_data) {
 	delete &ip_data;
 }
 
-bool CollabVMServer::OnValidate(websocketmm::websocket_user* handle) {
+bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handle) {
 	//std::cout << "are we calling validate handler ? \n";
 	auto is_ok = [](beast::string_view offered_tokens) -> bool {
 		// tokenize the Sec-Websocket-Protocol header offered by the client
@@ -482,57 +482,64 @@ bool CollabVMServer::OnValidate(websocketmm::websocket_user* handle) {
 
 		return false;
 	};
+	if(auto handle_sp = handle.lock()) {
+		if(is_ok(handle_sp->get_subprotocols())) {
+			// Create new IPData object
+			const boost::asio::ip::address& addr = handle_sp->socket().remote_endpoint().address();
 
-	if(is_ok(handle->get_subprotocols())) {
-		// Create new IPData object
-		const boost::asio::ip::address& addr = handle->socket().remote_endpoint().address();
+			unique_lock<std::mutex> ip_lock(ip_lock_);
+			IPData* ip_data;
 
-		unique_lock<std::mutex> ip_lock(ip_lock_);
-		IPData* ip_data;
+			if(FindIPData(addr, ip_data)) {
+				if(ip_data->connections >= database_.Configuration.MaxConnections)
+					return false;
+				// Reuse existing IPData
+				ip_data->connections++;
+			} else {
+				// Create new IPData
+				ip_data = CreateIPData(addr, true);
+			}
 
-		if(FindIPData(addr, ip_data)) {
-			if(ip_data->connections >= database_.Configuration.MaxConnections)
-				return false;
-			// Reuse existing IPData
-			ip_data->connections++;
-		} else {
-			// Create new IPData
-			ip_data = CreateIPData(addr, true);
+			ip_lock.unlock();
+
+			handle_sp->get_userdata().user = std::make_shared<CollabVMUser>(handle, *ip_data);
+			return true;
 		}
-
-		ip_lock.unlock();
-
-		handle->get_userdata().user = std::make_shared<CollabVMUser>(handle, *ip_data);
-		return true;
 	}
-
 	return false;
 }
 
-void CollabVMServer::OnOpen(websocketmm::websocket_user* handle) {
-	// Add the CollabVMUser to the connection-data map
-	unique_lock<std::mutex> lock(process_queue_lock_);
-	// Add the add connection action to the queue
-	process_queue_.push(new UserAction(*handle->get_userdata().user, ActionType::kAddConnection));
-	lock.unlock();
-	process_wait_.notify_one();
+void CollabVMServer::OnOpen(std::weak_ptr<websocketmm::websocket_user> handle) {
+	if(auto handle_sp = handle.lock()) {
+		// Add the connection action to the processing thread queue
+		unique_lock<std::mutex> lock(process_queue_lock_);
+
+		process_queue_.push(new UserAction(*handle_sp->get_userdata().user, ActionType::kAddConnection));
+		lock.unlock();
+		process_wait_.notify_one();
+	}
 }
 
-void CollabVMServer::OnClose(websocketmm::websocket_user* handle) {
-	unique_lock<std::mutex> lock(process_queue_lock_);
-
+void CollabVMServer::OnClose(std::weak_ptr<websocketmm::websocket_user> handle) {
 	//std::cout << "CLOSE FUC KFUC KFUCK !!!!!\n";
 
 	// TODO: will this fix the thing
 
-	// HACK(that seems to work. good prod moment?)
-	connections_.erase(handle->get_userdata().user);
-	RemoveConnection(handle->get_userdata().user);
+	if(auto handle_sp = handle.lock()) {
+		// copy the user so we can keep it around
+		auto user = handle_sp->get_userdata().user;
 
-	// Add the remove connection action to the queue
-	//process_queue_.push(new UserAction(*handle->get_userdata().user, ActionType::kRemoveConnection));
-	//lock.unlock();
-	//process_wait_.notify_one();
+		unique_lock<std::mutex> lock(process_queue_lock_);
+
+		// HACK(that seems to work. good prod moment?)
+		//connections_.erase(handle->get_userdata().user);
+		//RemoveConnection(handle->get_userdata().user);
+
+		// Add the remove connection action to the queue
+		process_queue_.push(new UserAction(*user, ActionType::kRemoveConnection));
+		lock.unlock();
+		process_wait_.notify_one();
+	}
 }
 
 /*
@@ -568,20 +575,22 @@ std::string CollabVMServer::GenerateUuid()
 }
 */
 
-void CollabVMServer::OnMessageFromWS(websocketmm::websocket_user* handle, std::shared_ptr<const websocketmm::websocket_message> msg) {
-	unique_lock<std::mutex> lock(process_queue_lock_);
+void CollabVMServer::OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> handle, std::shared_ptr<const websocketmm::websocket_message> msg) {
+	if(auto handle_sp = handle.lock()) {
+		unique_lock<std::mutex> lock(process_queue_lock_);
 
-	// Do not respond to binary messages.
-	if(msg->message_type != websocketmm::websocket_message::type::text)
-		return;
+		// Do not respond to binary messages.
+		if(msg->message_type != websocketmm::websocket_message::type::text)
+			return;
 
-	// Log messages
-	//std::cout << "[WebSocket Message] " << con->get_raw_socket().remote_endpoint().address() << " \"" << msg->get_payload() << "\"\n";
+		// Log messages
+		//std::cout << "[WebSocket Message] " << con->get_raw_socket().remote_endpoint().address() << " \"" << msg->get_payload() << "\"\n";
 
-	process_queue_.push(new MessageAction(msg, *handle->get_userdata().user, ActionType::kMessage));
+		process_queue_.push(new MessageAction(msg, *handle_sp->get_userdata().user, ActionType::kMessage));
 
-	lock.unlock();
-	process_wait_.notify_one();
+		lock.unlock();
+		process_wait_.notify_one();
+	}
 }
 
 void CollabVMServer::SendWSMessage(CollabVMUser& user, const std::string& str) {
@@ -593,15 +602,8 @@ void CollabVMServer::SendWSMessage(CollabVMUser& user, const std::string& str) {
 	if(!user.connected)
 		return;
 
-	if(user.handle)
-		user.handle->send(websocketmm::BuildWebsocketMessage(str));
-
-	/*
-	if (ec)
-	{
-		//server_.close(user.handle, websocketpp::close::status::normal, std::string(), ec);
-		if (user.connected)
-		{
+	if(!server_->send_message(user.handle, websocketmm::BuildWebsocketMessage(str))) {
+		if(user.connected) {
 			// Disconnect the client if an error occurs
 			unique_lock<std::mutex> lock(process_queue_lock_);
 			process_queue_.push(new UserAction(user, ActionType::kRemoveConnection));
@@ -609,7 +611,6 @@ void CollabVMServer::SendWSMessage(CollabVMUser& user, const std::string& str) {
 			process_wait_.notify_one();
 		}
 	}
-	 */
 }
 
 void CollabVMServer::TimerCallback(const boost::system::error_code& ec, ActionType action) {
@@ -1015,7 +1016,8 @@ void CollabVMServer::ProcessingThread() {
 
 						if((now - user->last_nop_instr).count() > kKeepAliveTimeout) {
 							// Disconnect the websocket client
-							user->handle->close();
+							if(!user->handle.expired())
+								user->handle.lock()->close();
 
 							it = connections_.erase(it);
 							if(user->connected)
@@ -1089,7 +1091,8 @@ void CollabVMServer::ProcessingThread() {
 
 				// Disconnect all active clients
 				for(const auto& connection : connections_) {
-					connection->handle->close();
+					if(!connection->handle.expired())
+						connection->handle.lock()->close();
 				}
 
 				// If there are no VM controllers running, exit the processing thread
@@ -1176,7 +1179,7 @@ void CollabVMServer::BroadcastTurnInfo(VMController& controller, UserList& users
 		for(const auto& user : turn_queue) {
 			users_list += ',';
 
-				users_list += std::to_string(user->username->length());
+			users_list += std::to_string(user->username->length());
 			users_list += '.';
 			users_list += *user->username;
 		}
@@ -1258,7 +1261,7 @@ void CollabVMServer::SendTurnInfo(CollabVMUser& user, uint32_t time_remaining, c
 	for(const auto& user : turn_queue) {
 		instr += ',';
 
-			instr += std::to_string(user->username->length());
+		instr += std::to_string(user->username->length());
 		instr += '.';
 		instr += *user->username;
 	}
@@ -1462,22 +1465,18 @@ void CollabVMServer::OnVMControllerCleanUp(const std::shared_ptr<VMController>& 
 	process_wait_.notify_one();
 }
 
-/*
-void CollabVMServer::SendGuacMessage(const std::weak_ptr<void>& user_ptr, const string& str)
-{
-    // dead code atm
-	std::shared_ptr<void> ptr = user_ptr.lock();
-	if (!ptr)
-		return;
-
-	CollabVMUser* user = (CollabVMUser*)ptr.get();
-	if (!user->connected)
-		return;
-
-	websocketpp::lib::error_code ec;
-	server_.send(user->handle, str, websocketpp::frame::opcode::text, ec);
+void CollabVMServer::SendGuacMessage(std::weak_ptr<websocketmm::websocket_user> handle, const std::string& str) {
+	if(!server_->send_message(handle, websocketmm::BuildWebsocketMessage(str))) {
+		if(auto handle_sp = handle.lock()) {
+			auto user = handle_sp->get_userdata().user;
+			// Disconnect the client if an error occurs
+			unique_lock<std::mutex> lock(process_queue_lock_);
+			process_queue_.push(new UserAction(*user, ActionType::kRemoveConnection));
+			lock.unlock();
+			process_wait_.notify_one();
+		}
+	}
 }
-*/
 
 inline void CollabVMServer::AppendChatMessage(std::ostringstream& ss, ChatMessage* chat_msg) {
 	ss << ',' << chat_msg->username->length() << '.' << *chat_msg->username << ',' << chat_msg->message.length() << '.' << chat_msg->message;
@@ -1552,7 +1551,7 @@ void CollabVMServer::SendOnlineUsersList(CollabVMUser& user) {
 	std::string num = std::to_string(usernames_.size());
 	ss << num.size() << '.' << num;
 
-	for(auto & username : usernames_) {
+	for(auto& username : usernames_) {
 		std::shared_ptr<CollabVMUser> data = username.second;
 		// Append the user to the online users list
 		num = std::to_string(data->user_rank);
@@ -2336,7 +2335,8 @@ void CollabVMServer::OnQEMUResponse(std::weak_ptr<CollabVMUser> data, rapidjson:
 
 		//websocketpp::lib::error_code ec;
 		//server_.send(ptr->handle, ss.str(), websocketpp::frame::opcode::text, ec);
-		ptr->handle->send(websocketmm::BuildWebsocketMessage(ss.str()));
+
+		server_->send_message(ptr->handle, websocketmm::BuildWebsocketMessage(ss.str()));
 	}
 }
 

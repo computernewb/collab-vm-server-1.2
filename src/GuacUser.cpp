@@ -2,7 +2,7 @@
 #include "GuacClient.h"
 #include "guacamole/user-constants.h"
 
-GuacUser::GuacUser(CollabVMServer* server, websocketmm::websocket_user* handle)
+GuacUser::GuacUser(CollabVMServer* server, std::weak_ptr<websocketmm::websocket_user> handle)
 	: socket_(server, handle),
 	  client_(nullptr),
 	  last_received_timestamp(guac_timestamp_current()),

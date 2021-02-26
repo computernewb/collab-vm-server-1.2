@@ -12,7 +12,7 @@ class CollabVMServer;
 class GuacWebSocket : public GuacSocket
 {
 public:
-	GuacWebSocket(CollabVMServer* server, websocketmm::websocket_user* handle);
+	GuacWebSocket(CollabVMServer* server, std::weak_ptr<websocketmm::websocket_user> handle);
 
 	size_t Read(void* buf, size_t count);
 	size_t Write(const void* buf, size_t count);
@@ -22,5 +22,5 @@ public:
 	void InstructionEnd() override;
 
 	CollabVMServer* server_;
-    websocketmm::websocket_user* websocket_handle_;
+    std::weak_ptr<websocketmm::websocket_user> websocket_handle_;
 };

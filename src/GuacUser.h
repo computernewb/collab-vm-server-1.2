@@ -59,7 +59,7 @@ class GuacUser {
 	friend class GuacVNCClient;
 
    public:
-	GuacUser(CollabVMServer* server, websocketmm::websocket_user* handle);
+	GuacUser(CollabVMServer* server, std::weak_ptr<websocketmm::websocket_user> handle);
 
 	guac_stream* AllocStream();
 	void FreeStream(guac_stream* stream);

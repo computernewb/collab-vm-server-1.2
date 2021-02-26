@@ -165,7 +165,7 @@ struct IPv6Data : IPData {
  */
 class CollabVMUser : public std::enable_shared_from_this<CollabVMUser> {
    public:
-	CollabVMUser(websocketmm::websocket_user* handle, IPData& ip_data)
+	CollabVMUser(std::weak_ptr<websocketmm::websocket_user> handle, IPData& ip_data)
 		: next_(nullptr),
 		  prev_(nullptr),
 		  handle(handle),
@@ -192,7 +192,7 @@ class CollabVMUser : public std::enable_shared_from_this<CollabVMUser> {
 	 * The websocket handle associated with the client's
 	 * websocket connection.
 	 */
-	websocketmm::websocket_user* handle;
+	std::weak_ptr<websocketmm::websocket_user> handle;
 
 	/**
 	 * The VM controller that the client is viewing. May be null.

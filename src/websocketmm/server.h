@@ -27,7 +27,7 @@ namespace websocketmm {
 
 		explicit server(net::io_context& context_);
 
-		void start(const std::string& host, const std::uint16_t port);
+		void start(const std::string& host, std::uint16_t port);
 
 		void stop();
 
@@ -36,34 +36,41 @@ namespace websocketmm {
          *
          * \param[in] message Message to broadcast
          */
-		void broadcast_message(const websocket_message& message);
+		//void broadcast_message(const std::shared_ptr<const websocket_message> message);
 
-		inline void set_verify_handler(std::function<bool(websocket_user*)> handler) {
-			verify_handler = handler;
+		/**
+		 * Send a message to a websocket user.
+		 * This architechure is garbage
+		 * im sorry
+		 */
+		bool send_message(std::weak_ptr<websocketmm::websocket_user>& user, const std::shared_ptr<const websocket_message>& message);
+
+		inline void set_verify_handler(std::function<bool(std::weak_ptr<websocketmm::websocket_user>)> handler) {
+			verify_handler = std::move(handler);
 		}
 
-		inline void set_open_handler(std::function<void(websocket_user*)> handler) {
-			open_handler = handler;
+		inline void set_open_handler(std::function<void(std::weak_ptr<websocketmm::websocket_user>)> handler) {
+			open_handler = std::move(handler);
 		}
 
-		inline void set_message_handler(std::function<void(websocket_user*, std::shared_ptr<const websocket_message>)> handler) {
-			message_handler = handler;
+		inline void set_message_handler(std::function<void(std::weak_ptr<websocketmm::websocket_user>, std::shared_ptr<const websocket_message>)> handler) {
+			message_handler = std::move(handler);
 		}
 
-		inline void set_close_handler(std::function<void(websocket_user*)> handler) {
-			close_handler = handler;
+		inline void set_close_handler(std::function<void(std::weak_ptr<websocketmm::websocket_user>)> handler) {
+			close_handler = std::move(handler);
 		}
 
 	   protected:
-		void join_to_server(websocket_user* user);
-		void leave_server(websocket_user* user);
+		//void join_to_server(websocket_user* user);
+		//void leave_server(websocket_user* user);
 
 		// these run the internal handlers or do nothing
-		bool verify(websocket_user* user);
-		void open(websocket_user* user);
-		void message(websocket_user* user, std::shared_ptr<const websocket_message> message);
+		bool verify(const std::weak_ptr<websocketmm::websocket_user>& user);
+		void open(const std::weak_ptr<websocketmm::websocket_user>& user);
+		void message(const std::weak_ptr<websocketmm::websocket_user>& user, std::shared_ptr<const websocket_message> message);
 
-		void close(websocket_user* user);
+		void close(const std::weak_ptr<websocketmm::websocket_user>& user);
 
 	   private:
 		/**
@@ -73,14 +80,14 @@ namespace websocketmm {
 		std::shared_ptr<listener> listener_;
 
 		std::mutex users_lock_;
-		std::set<websocket_user*> users_;
+		//std::set<websocket_user*> users_;
 
 		// Handlers
 
-		std::function<bool(websocket_user*)> verify_handler;
-		std::function<void(websocket_user*)> open_handler;
-		std::function<void(websocket_user*, std::shared_ptr<const websocket_message>)> message_handler;
-		std::function<void(websocket_user*)> close_handler;
+		std::function<bool(std::weak_ptr<websocket_user>)> verify_handler;
+		std::function<void(std::weak_ptr<websocket_user>)> open_handler;
+		std::function<void(std::weak_ptr<websocket_user>, std::shared_ptr<const websocket_message>)> message_handler;
+		std::function<void(std::weak_ptr<websocket_user>)> close_handler;
 	};
 
 } // namespace websocketmm

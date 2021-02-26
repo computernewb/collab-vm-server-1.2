@@ -87,9 +87,9 @@ namespace websocketmm {
 		void write_message(const std::shared_ptr<const websocket_message>& message);
 
 		/**
-         * a wrapper for server->Validate()
-         * because we manage header dependencies properly
-         */
+		 * a wrapper for server->Validate()
+		 * because we manage header dependencies properly
+		 */
 		bool do_validate();
 
 		std::shared_ptr<server> server_;
@@ -99,14 +99,14 @@ namespace websocketmm {
 		websocket::stream<beast::tcp_stream> ws_;
 
 		/**
-         * http request
-         * only valid during validation period
-         */
+		 * http request
+		 * only valid during validation period
+		 */
 		std::optional<http::request<http::string_body>> upgrade_request_;
 
 		/**
-         * internal queue of websocket messages
-         */
+		 * internal queue of websocket messages
+		 */
 		std::vector<std::shared_ptr<const websocket_message>> message_queue_;
 	};
 } // namespace websocketmm

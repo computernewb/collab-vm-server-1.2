@@ -28,7 +28,10 @@ void GuacBroadcastSocket::InstructionEnd() {
 	assert(str[str.length() - 1] == ';');
 
 	users_.ForEachUserLock([&](CollabVMUser& user) {
-		user.guac_user->socket_.websocket_handle_->send(websocketmm::BuildWebsocketMessage(str));
-		//server_.SendGuacMessage(user.guac_user->socket_.websocket_handle_, str);
+		//user.guac_user->socket_.websocket_handle_->send(websocketmm::BuildWebsocketMessage(str))
+
+		// This really shouldn't happen, but if it does, it does.
+		if(user.guac_user != nullptr)
+			server_.SendGuacMessage(user.guac_user->socket_.websocket_handle_, str);
 	});
 }

@@ -35,6 +35,13 @@ GuacClient::GuacClient(CollabVMServer& server, VMController& controller, UserLis
 	__layer_pool = guac_pool_alloc(GUAC_BUFFER_POOL_INITIAL_SIZE);
 }
 
+GuacClient::~GuacClient() {
+	/* Free layer pools */
+	guac_pool_free(__buffer_pool);
+	guac_pool_free(__layer_pool);
+}
+
+
 //void GuacClient::Start()
 //{
 //	// TODO: If current state is "stopping" wait state to be "stopped"
@@ -365,8 +372,3 @@ void GuacClient::HandleDisconnect(GuacUser& user, std::vector<char*>& args) {
 void GuacClient::Log(guac_client_log_level level, const char* format, ...) {
 }
 
-GuacClient::~GuacClient() {
-	/* Free layer pools */
-	guac_pool_free(__buffer_pool);
-	guac_pool_free(__layer_pool);
-}
