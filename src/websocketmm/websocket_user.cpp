@@ -42,6 +42,11 @@ namespace websocketmm {
 		return user_data_;
 	}
 
+
+	void websocket_user::select_subprotocol(const std::string& subprotocol) {
+		selected_subprotocol_ = subprotocol;
+	}
+
 	void websocket_user::run(http::request<http::string_body> upgrade) {
 		upgrade_request_ = upgrade;
 
@@ -51,10 +56,18 @@ namespace websocketmm {
 		beast::role_type::server));
 
 		// Ploy as WebSocket++.
-		ws_.set_option(websocket::stream_base::decorator([](websocket::response_type& res) {
+		ws_.set_option(websocket::stream_base::decorator([&](websocket::response_type& res) {
 			res.set(http::field::server,
 					"WebSocket++/0.8.1");
+
+			// If a subprotocol has been negotiated,
+			// we decocorate the response with it.
+			//
+			// Fixes Chrome, which expects this header to exist in the response..
+			if(selected_subprotocol_.has_value())
+				res.set(http::field::sec_websocket_protocol, selected_subprotocol_.value());
 		}));
+
 
 		if(!do_validate()) {
 			// Validation failed. Close the connection and return early,
@@ -78,6 +91,10 @@ namespace websocketmm {
 		if(ec)
 			return;
 
+		// Deallocate the selected subprotocol; Beast internally doesn't care about it once
+		// the accept is finished or errored (i.e: when this completion handler is called)
+		selected_subprotocol_.reset();
+
 		server_->open(weak_from_this());
 		//server_->join_to_server(this);
 
@@ -100,13 +117,10 @@ namespace websocketmm {
 		if(ws_.binary())
 			type = websocket_message::type::binary;
 
-		// Build the message.
-		auto message = BuildWebsocketMessage(type, (std::uint8_t*)buffer_.data().data(), buffer_.size());
-
 		buffer_.consume(buffer_.size());
 
 		// call the message handler
-		server_->message(weak_from_this(), message);
+		server_->message(weak_from_this(), BuildWebsocketMessage(type, (std::uint8_t*)buffer_.data().data(), buffer_.size()));
 
 		// then read anothe rmessage
 		ws_.async_read(
@@ -157,6 +171,8 @@ namespace websocketmm {
 		if(ec)
 			return;
 
+		// once we've written that message, reset it
+		//message_queue_.begin()->reset();
 		message_queue_.erase(message_queue_.begin());
 
 		if(!message_queue_.empty())

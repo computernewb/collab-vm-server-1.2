@@ -67,6 +67,8 @@ namespace websocketmm {
 			return "";
 		}
 
+		void select_subprotocol(const std::string& subprotocol);
+
 		inline const tcp::socket& socket() {
 			return ws_.next_layer().socket();
 		}
@@ -103,6 +105,8 @@ namespace websocketmm {
 		 * only valid during validation period
 		 */
 		std::optional<http::request<http::string_body>> upgrade_request_;
+
+		std::optional<std::string> selected_subprotocol_;
 
 		/**
 		 * internal queue of websocket messages

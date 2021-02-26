@@ -476,14 +476,19 @@ bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handl
 		for(auto proto : supported) {
 			auto iter = std::find(offered.begin(), offered.end(), proto);
 
-			if(iter != offered.end())
+			if(iter != offered.end()) {
+				// TODO:
+				//handle_sp->select_subprotocol("guacamole");
 				return true;
+			}
 		}
 
 		return false;
 	};
 	if(auto handle_sp = handle.lock()) {
 		if(is_ok(handle_sp->get_subprotocols())) {
+			// Select the Guacamole subprotocol
+			handle_sp->select_subprotocol("guacamole");
 			// Create new IPData object
 			const boost::asio::ip::address& addr = handle_sp->socket().remote_endpoint().address();
 
@@ -862,6 +867,7 @@ void CollabVMServer::ProcessingThread() {
 				if(connection->connected) {
 					connections_.erase(connection);
 					RemoveConnection(connection);
+					connection.reset();
 				}
 				break;
 			}

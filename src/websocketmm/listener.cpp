@@ -6,6 +6,8 @@
 #include <websocketmm/server.h>
 #include <websocketmm/websocket_user.h>
 
+#include <iostream>
+
 namespace websocketmm {
 
 	// TODO: Move this to a seperate file, and make it work with POSTs
@@ -138,8 +140,10 @@ namespace websocketmm {
 	}
 
 	void listener::on_accept(beast::error_code ec, tcp::socket socket) {
-		if(ec)
+		if(ec) {
+			std::cout << "Error Code And Of : " << ec.message() << '\n';
 			return;
+		}
 
 		std::make_shared<session>(std::move(socket), server_)->run();
 
