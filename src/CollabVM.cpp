@@ -432,7 +432,7 @@ bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handl
 
 				if(iter != offered.end()) {
 					// Select compatible subprotocol
-					handle_sp->select_subprotocol((*iter).to_string());
+					handle_sp->SelectSubprotocol((*iter).to_string());
 					return true;
 				}
 			}
@@ -440,7 +440,7 @@ bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handl
 			return false;
 		};
 
-		if(do_subprotocol_check(handle_sp->get_subprotocols())) {
+		if(do_subprotocol_check(handle_sp->GetSubprotocols())) {
 			// Create new IPData object
 			const boost::asio::ip::address& addr = handle_sp->socket().remote_endpoint().address();
 
@@ -459,7 +459,7 @@ bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handl
 
 			ip_lock.unlock();
 
-			handle_sp->get_userdata().user = std::make_shared<CollabVMUser>(handle, *ip_data);
+			handle_sp->GetUserData().user = std::make_shared<CollabVMUser>(handle, *ip_data);
 			return true;
 		}
 	}
@@ -468,18 +468,15 @@ bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handl
 
 void CollabVMServer::OnOpen(std::weak_ptr<websocketmm::websocket_user> handle) {
 	if(auto handle_sp = handle.lock()) {
-		// Add the connection action to the processing thread queue
-		PostAction<UserAction>(*handle_sp->get_userdata().user, ActionType::kAddConnection);
+		PostAction<UserAction>(*handle_sp->GetUserData().user, ActionType::kAddConnection);
 	}
 }
 
 void CollabVMServer::OnClose(std::weak_ptr<websocketmm::websocket_user> handle) {
 	if(auto handle_sp = handle.lock()) {
 		// copy the user so we can keep it around
-		auto user = handle_sp->get_userdata().user;
-
-		// Add the remove connection action to the queue
-		PostAction<UserAction>(*handle_sp->get_userdata().user, ActionType::kRemoveConnection);
+		auto user = handle_sp->GetUserData().user;
+		PostAction<UserAction>(*handle_sp->GetUserData().user, ActionType::kRemoveConnection);
 	}
 }
 
@@ -522,22 +519,11 @@ void CollabVMServer::OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> 
 		if(msg->message_type != websocketmm::websocket_message::type::text)
 			return;
 
-		// Log messages
-		//std::cout << "[WebSocket Message] " << con->get_raw_socket().remote_endpoint().address() << " \"" << msg->get_payload() << "\"\n";
-
-		PostAction<MessageAction>(msg, *handle_sp->get_userdata().user, ActionType::kMessage);
+		PostAction<MessageAction>(msg, *handle_sp->GetUserData().user, ActionType::kMessage);
 	}
 }
 
 void CollabVMServer::SendWSMessage(CollabVMUser& user, const std::string& str) {
-	//websocketpp::lib::error_code ec;
-	//server_.send(user.handle, str, websocketpp::frame::opcode::text, ec);
-
-	// this really shouldn't be using a reference
-	// but whatever
-	if(!user.connected)
-		return;
-
 	if(!server_->send_message(user.handle, websocketmm::BuildWebsocketMessage(str))) {
 		if(user.connected) {
 			// Disconnect the client if an error occurs
@@ -1369,7 +1355,7 @@ void CollabVMServer::OnVMControllerCleanUp(const std::shared_ptr<VMController>& 
 void CollabVMServer::SendGuacMessage(std::weak_ptr<websocketmm::websocket_user> handle, const std::string& str) {
 	if(!server_->send_message(handle, websocketmm::BuildWebsocketMessage(str))) {
 		if(auto handle_sp = handle.lock()) {
-			auto user = handle_sp->get_userdata().user;
+			auto user = handle_sp->GetUserData().user;
 
 			// Disconnect the client if an error occurs
 			PostAction<UserAction>(*user, ActionType::kRemoveConnection);

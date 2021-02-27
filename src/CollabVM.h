@@ -301,11 +301,14 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	};
 
 	/**
-	 * Post an action into the processing queue.
+	 * Boilerplate-condensing function to post an action into the processing queue.
+	 * Arguments to this function are constructor arguments.
+	 *
+	 * \tparam TAction The action to post. Should be, or inherit from the Action class.
 	 */
 	template<class TAction, class ...Args>
 	inline void PostAction(Args&&... args) {
-		static_assert(std::is_base_of_v<Action, TAction>, "TAction needs to inherit from CollabVMServer::Action!");
+		static_assert(std::is_base_of_v<Action, TAction> || std::is_same_v<TAction, Action>, "TAction needs to inherit from or be CollabVMServer::Action!");
 		std::unique_lock<std::mutex> lock(process_queue_lock_);
 
 		process_queue_.push(new TAction(std::forward<Args>(args)...));
@@ -382,7 +385,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 * have an old username, a list of all the online users will be sent to 
 	 * the client.
 	 *
-	 * @param data The client to send the response to
+	 * @param data The client to Send the response to
 	 * @param newUsername The new username for the client
 	 * @param result The result of the username change
 	 * @param send_history Whether the chat history should be sent. Only valid

@@ -31,18 +31,14 @@ namespace websocketmm {
 
 		void stop();
 
+
+		//void broadcast_message(const std::shared_ptr<const websocket_message> message);
+
 		/**
          * Broadcast a message to all connected Websocket users.
          *
          * \param[in] message Message to broadcast
          */
-		//void broadcast_message(const std::shared_ptr<const websocket_message> message);
-
-		/**
-		 * Send a message to a websocket user.
-		 * This architechure is garbage
-		 * im sorry
-		 */
 		bool send_message(std::weak_ptr<websocketmm::websocket_user>& user, const std::shared_ptr<const websocket_message>& message);
 
 		inline void set_verify_handler(std::function<bool(std::weak_ptr<websocketmm::websocket_user>)> handler) {

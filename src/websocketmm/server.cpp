@@ -75,7 +75,7 @@ namespace websocketmm {
 			return false;
 
 		if(auto user_sp = user.lock()) {
-			user_sp->send(message);
+			user_sp->Send(message);
 			return true;
 		}
 

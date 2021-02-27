@@ -29,51 +29,65 @@ namespace websocketmm {
 	};
 
 	/**
-     * Build a websocket message to send.
-     *
-     */
+	 * Build a websocket message to Send to users.
+	 */
 	std::shared_ptr<const websocket_message> BuildWebsocketMessage(websocket_message::type t, std::uint8_t* data, std::size_t size);
 	std::shared_ptr<const websocket_message> BuildWebsocketMessage(const std::string& str);
 
 	struct server;
 
 	/**
-    * per user data type
-    */
+     * per user data type
+     */
 	struct per_user_data {
 		// TODO: use std::any
 		std::shared_ptr<CollabVMUser> user;
 	};
 
+	/**
+	 * A Websocket connection
+	 */
 	struct websocket_user : public std::enable_shared_from_this<websocket_user> {
 		friend struct listener;
 		friend struct session;
 
 		websocket_user(std::shared_ptr<server> server, tcp::socket&& socket);
-		//~websocket_user();
 
-		per_user_data& get_userdata();
+		per_user_data& GetUserData();
 
 		/**
-         * send a message. If message send ops are occuring at this point then
-         * the message is put in a queue
+         * Send a message to this specific user.
+         * If an message send for this user is occurring at this point then
+         * the message is put in a queue and will be deferred
+         *
          * \param[in] message
          */
-		void send(const std::shared_ptr<const websocket_message>& message);
+		void Send(const std::shared_ptr<const websocket_message>& message);
 
-		inline beast::string_view get_subprotocols() { // TODO:.cpp
-			if(upgrade_request_.has_value())
-				return upgrade_request_.value()[http::field::sec_websocket_protocol];
+		/**
+		 * Get the value of "Sec-Websocket-Protocol" stored in the handshake HTTP request.
+		 * This function only returns well-defined results during the verification stage of the connection.
+		 */
+		beast::string_view GetSubprotocols();
 
-			return "";
-		}
+		/**
+		 * Select a subprotocol for this user's connection.
+		 * Once this function is called, an internal optional is written to
+		 * to allow the accept stage of the connection to set the Sec-Websocket-Protocol header to this value.
+		 *
+		 * \param[in] subprotocol The selected subprotocol
+		 */
+		void SelectSubprotocol(const std::string& subprotocol);
 
-		void select_subprotocol(const std::string& subprotocol);
-
-		inline const tcp::socket& socket() {
+		inline tcp::socket& socket() {
 			return ws_.next_layer().socket();
 		}
 
+		/**
+		 * Close the WebSocket connection.
+		 * This function also clears the send queue for this connection entirely,
+		 * and allows this websocket_user to be destroyed.
+		 */
 		void close();
 
 	   protected:
@@ -89,12 +103,6 @@ namespace websocketmm {
 
 		void write_message(const std::shared_ptr<const websocket_message>& message);
 
-		/**
-		 * a wrapper for server->Validate()
-		 * because we manage header dependencies properly
-		 */
-		bool do_validate();
-
 		std::shared_ptr<server> server_;
 		per_user_data user_data_;
 
@@ -102,8 +110,8 @@ namespace websocketmm {
 		websocket::stream<beast::tcp_stream> ws_;
 
 		/**
-		 * http request
-		 * only valid during validation period
+		 * A optional containing the HTTP request that spawned the session.
+		 * Only valid during validation period.
 		 */
 		std::optional<http::request<http::string_body>> upgrade_request_;
 
@@ -114,8 +122,7 @@ namespace websocketmm {
 		 */
 		std::vector<std::shared_ptr<const websocket_message>> message_queue_;
 		std::mutex message_queue_lock_;
-
 	};
 } // namespace websocketmm
 
-#endif //COLLAB_VM_SERVER_CAPTCHA_WEBSOCKET_USER_H
+#endif //WEBSOCKETMM_WEBSOCKET_USER_H

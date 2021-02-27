@@ -5,7 +5,6 @@
 #include <websocketmm/websocket_user.h>
 #include <websocketmm/server.h>
 
-#include <iostream>
 #include <utility>
 
 namespace websocketmm {
@@ -37,15 +36,18 @@ namespace websocketmm {
 		  ws_(std::move(socket)) {
 	}
 
-	bool websocket_user::do_validate() {
-		return server_->verify(weak_from_this());
+	beast::string_view websocket_user::GetSubprotocols() {
+		if(upgrade_request_.has_value())
+			return upgrade_request_.value()[http::field::sec_websocket_protocol];
+
+		return "";
 	}
 
-	per_user_data& websocket_user::get_userdata() {
+	per_user_data& websocket_user::GetUserData() {
 		return user_data_;
 	}
 
-	void websocket_user::select_subprotocol(const std::string& subprotocol) {
+	void websocket_user::SelectSubprotocol(const std::string& subprotocol) {
 		selected_subprotocol_ = subprotocol;
 	}
 
@@ -53,14 +55,10 @@ namespace websocketmm {
 		upgrade_request_ = upgrade;
 
 		// Set suggested timeout settings for the websocket
-		ws_.set_option(
-		websocket::stream_base::timeout::suggested(
-		beast::role_type::server));
+		ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
 
-		// Ploy as WebSocket++.
 		ws_.set_option(websocket::stream_base::decorator([&](websocket::response_type& res) {
-			res.set(http::field::server,
-					"WebSocket++/0.8.1");
+			res.set(http::field::server,"collab-vm-server/1.2.11-rc");
 
 			// If a subprotocol has been negotiated,
 			// we decorate the response with it.
@@ -71,15 +69,17 @@ namespace websocketmm {
 		}));
 
 		// We wrap validation and accepting inside of the strand we were given by the
-		// listener object.
-
+		// listener object to avoid concurrency issues.
 		net::post(ws_.get_executor(), [self = shared_from_this()]() {
-			if(!self->do_validate()) {
+			if(!self->server_->verify(self->weak_from_this())) {
 				// Validation failed.
 				// Close the connection and return early.
 				//
 				// Resources will be cleaned up by the shared_ptr destructor.
-				self->ws_.next_layer().socket().close();
+				beast::error_code ec;
+				self->socket().shutdown(tcp::socket::shutdown_send,ec);
+
+				// connection is gracefully shut down once we reach this point
 				return;
 			}
 
@@ -90,10 +90,8 @@ namespace websocketmm {
 	}
 
 	void websocket_user::on_accept(beast::error_code ec) {
-		if(ec) {
-			std::cout << "fuck: " << ec.message() << '\n';
+		if(ec)
 			return;
-		}
 
 		// Deallocate the selected subprotocol; Beast internally doesn't care about it once
 		// the accept is finished or errored (i.e: when this completion handler is called)
@@ -138,7 +136,7 @@ namespace websocketmm {
 		});
 	}
 
-	void websocket_user::send(const std::shared_ptr<const websocket_message>& message) {
+	void websocket_user::Send(const std::shared_ptr<const websocket_message>& message) {
 		// Post the work to happen on the strand,
 		// to avoid concurrency problems.
 		net::post(ws_.get_executor(), beast::bind_front_handler(&websocket_user::on_send, shared_from_this(), message));

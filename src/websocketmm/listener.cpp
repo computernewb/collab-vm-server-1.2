@@ -6,7 +6,6 @@
 #include <websocketmm/server.h>
 #include <websocketmm/websocket_user.h>
 
-#include <iostream>
 #include <utility>
 
 namespace websocketmm {
@@ -90,7 +89,8 @@ namespace websocketmm {
 		}
 
 		void do_close() {
-			// Send a TCP shutdown
+			// Send a TCP shutdown to the connection.
+
 			beast::error_code ec;
 			stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
 
@@ -110,27 +110,23 @@ namespace websocketmm {
 
 		// Open the acceptor
 		acceptor_.open(endpoint.protocol(), ec);
-		if(ec) {
+		if(ec)
 			return;
-		}
 
 		// Allow address reuse
 		acceptor_.set_option(net::socket_base::reuse_address(true), ec);
-		if(ec) {
+		if(ec)
 			return;
-		}
 
 		// Bind to the server address
 		acceptor_.bind(endpoint, ec);
-		if(ec) {
+		if(ec)
 			return;
-		}
 
 		// Start listening for connections
 		acceptor_.listen(net::socket_base::max_listen_connections, ec);
-		if(ec) {
+		if(ec)
 			return;
-		}
 
 		acceptor_.async_accept(net::make_strand(ioc_), beast::bind_front_handler(&listener::on_accept, shared_from_this()));
 	}
@@ -141,14 +137,12 @@ namespace websocketmm {
 	}
 
 	void listener::on_accept(beast::error_code ec, tcp::socket socket) {
-		if(ec) {
-			//std::cout << "Error Code And Of : " << ec.message() << '\n';
+		if(ec)
 			return;
-		}
 
 		std::make_shared<session>(std::move(socket), server_)->run();
 
-		// Do another connection
+		// Accept another connection
 		acceptor_.async_accept(net::make_strand(ioc_),
 							   beast::bind_front_handler(&listener::on_accept, shared_from_this()));
 	}
