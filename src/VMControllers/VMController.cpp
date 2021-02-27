@@ -378,5 +378,3 @@ bool VMController::IsFileUploadValid(const std::shared_ptr<CollabVMUser>& user, 
 		   AgentClient::IsFilenameValid(agent_max_filename_, filename);
 }
 
-VMController::~VMController() {
-}

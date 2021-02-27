@@ -26,6 +26,9 @@ class VMController : public std::enable_shared_from_this<VMController>, public A
 	friend GuacBroadcastSocket;
 
    public:
+
+	virtual ~VMController() = default;
+
 	virtual void ChangeSettings(const std::shared_ptr<VMSettings>& settings);
 
 	/**
@@ -181,8 +184,6 @@ class VMController : public std::enable_shared_from_this<VMController>, public A
 	bool agent_connected_;
 	bool agent_upload_in_progress_;
 	std::deque<std::shared_ptr<UploadInfo>> agent_upload_queue_;
-
-	virtual ~VMController();
 
    protected:
 	VMController(CollabVMServer& server, boost::asio::io_service& service, const std::shared_ptr<VMSettings>& settings);

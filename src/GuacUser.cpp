@@ -63,8 +63,8 @@ void GuacUser::Log(guac_client_log_level level, const char* format, ...) {
 }
 
 GuacUser::~GuacUser() {
-	delete __input_streams;
-	delete __output_streams;
+	delete[] __input_streams;
+	delete[] __output_streams;
 
 	guac_pool_free(__stream_pool);
 }

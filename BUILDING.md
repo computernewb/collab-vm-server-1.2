@@ -16,6 +16,8 @@ Make flags for the Makeconfig-based build system (soon to be replaced) (To enabl
 
 - JPEG - Controls/enables the JPEG support.
 - DEBUG - Enables debug symbols and doesn't build a optimized binary. Also possibly includes some debug assert code
+- ASAN - Enables the instrumentation of the binary with AddressSanitizer. Needs DEBUG=1 beforehand.
+- TSAN - Enables the instrumentation of the binary with ThreadSanitizer. Needs DEBUG=1 beforehand, and is not compatiable with ASAN=1.
 - V - Displays compile command lines, useful for debugging errors
 
 ### All Required Dependencies

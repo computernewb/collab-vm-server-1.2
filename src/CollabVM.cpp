@@ -113,7 +113,7 @@ enum CONFIG_FUNCTIONS {
 /**
  * The names of functions that can be performed from the admin panel.
  */
-static const std::string config_functions_[] = {
+const static std::string config_functions_[] = {
 	"settings",
 	"password",
 	"mod-pw",
@@ -158,7 +158,7 @@ enum SERVER_SETTINGS {
 	kModPerms
 };
 
-static const std::string server_settings_[] = {
+const static std::string server_settings_[] = {
 	"chat-rate-count",
 	"chat-rate-time",
 	"chat-mute-time",
@@ -329,56 +329,9 @@ void CollabVMServer::Run(uint16_t port, string doc_root) {
 	server_->set_open_handler(std::bind(&CollabVMServer::OnOpen, this, _1));
 	server_->set_close_handler(std::bind(&CollabVMServer::OnClose, this, _1));
 	server_->set_message_handler(std::bind(&CollabVMServer::OnMessageFromWS, this, _1, _2));
-	/*
-
-    server_.set_open_handler([self = shared_from_this()](websocketmm::websocket_user* user) {
-        self->OnOpen(user);
-    });
-
-
-    server_.set_close_handler([self = shared_from_this()](websocketmm::websocket_user* user) {
-        self->OnClose(user);
-    });
-
-    server_.set_message_handler([self = shared_from_this()](websocketmm::websocket_user* user, std::shared_ptr<const websocketmm::websocket_message> msg) -> void {
-        self->OnMessageFromWS(user, msg);
-    });
-*/
 
 	// retains compatibility with previous server behaviour
 	server_->start("0.0.0.0", port);
-
-	// Register handler callbacks
-	/*
-	server_.set_validate_handler(bind(&CollabVMServer::OnValidate, shared_from_this(), std::placeholders::_1));
-//	server_.set_http_handler(bind(&CollabVMServer::OnHttp, shared_from_this(), std::placeholders::_1));
-	server_.set_open_handler(bind(&CollabVMServer::OnOpen, shared_from_this(), std::placeholders::_1));
-	server_.set_close_handler(bind(&CollabVMServer::OnClose, shared_from_this(), std::placeholders::_1));
-	server_.set_message_handler(bind(&CollabVMServer::OnMessageFromWS, shared_from_this(), std::placeholders::_1, std::placeholders::_2));
-
-	 */
-	//server_.set_open_handshake_timeout(0);
-	//server_.set_reuse_addr(true);
-	/*
-	// Start WebSocket server listening on specified port
-	websocketpp::lib::error_code ec;
-	server_.listen(port, ec);
-	if (ec)
-	{
-		std::cout << "Error listening on port " << port << ": " << ec.message() << std::endl;
-		return;
-	}
-
-	// Start the server accept loop
-	server_.start_accept(ec);
-	if (ec)
-	{
-		std::cout << "start_accept failed: " << ec.message() << std::endl;
-		return;
-	}
-
- */
-	//asio_work_ = std::unique_ptr<boost::asio::io_service::work>(new boost::asio::io_service::work(service_));
 
 	boost::system::error_code asio_ec;
 	vm_preview_timer_.expires_from_now(std::chrono::seconds(kVMPreviewInterval), asio_ec);
@@ -463,32 +416,31 @@ void CollabVMServer::DeleteIPData(IPData& ip_data) {
 }
 
 bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handle) {
-	//std::cout << "are we calling validate handler ? \n";
-	auto is_ok = [](beast::string_view offered_tokens) -> bool {
-		// tokenize the Sec-Websocket-Protocol header offered by the client
-		http::token_list offered(offered_tokens);
-		// TODO
+	if(auto handle_sp = handle.lock()) {
 
-		constexpr std::array<beast::string_view, 1> supported = {
-			"guacamole"
+		auto do_subprotocol_check = [&](beast::string_view offered_tokens) -> bool {
+			// tokenize the Sec-Websocket-Protocol header offered by the client
+			http::token_list offered(offered_tokens);
+			// TODO
+
+			constexpr std::array<beast::string_view, 1> supported {
+				"guacamole"
+			};
+
+			for(auto proto : supported) {
+				auto iter = std::find(offered.begin(), offered.end(), proto);
+
+				if(iter != offered.end()) {
+					// Select compatible subprotocol
+					handle_sp->select_subprotocol((*iter).to_string());
+					return true;
+				}
+			}
+
+			return false;
 		};
 
-		for(auto proto : supported) {
-			auto iter = std::find(offered.begin(), offered.end(), proto);
-
-			if(iter != offered.end()) {
-				// TODO:
-				//handle_sp->select_subprotocol("guacamole");
-				return true;
-			}
-		}
-
-		return false;
-	};
-	if(auto handle_sp = handle.lock()) {
-		if(is_ok(handle_sp->get_subprotocols())) {
-			// Select the Guacamole subprotocol
-			handle_sp->select_subprotocol("guacamole");
+		if(do_subprotocol_check(handle_sp->get_subprotocols())) {
 			// Create new IPData object
 			const boost::asio::ip::address& addr = handle_sp->socket().remote_endpoint().address();
 
@@ -517,33 +469,17 @@ bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handl
 void CollabVMServer::OnOpen(std::weak_ptr<websocketmm::websocket_user> handle) {
 	if(auto handle_sp = handle.lock()) {
 		// Add the connection action to the processing thread queue
-		unique_lock<std::mutex> lock(process_queue_lock_);
-
-		process_queue_.push(new UserAction(*handle_sp->get_userdata().user, ActionType::kAddConnection));
-		lock.unlock();
-		process_wait_.notify_one();
+		PostAction<UserAction>(*handle_sp->get_userdata().user, ActionType::kAddConnection);
 	}
 }
 
 void CollabVMServer::OnClose(std::weak_ptr<websocketmm::websocket_user> handle) {
-	//std::cout << "CLOSE FUC KFUC KFUCK !!!!!\n";
-
-	// TODO: will this fix the thing
-
 	if(auto handle_sp = handle.lock()) {
 		// copy the user so we can keep it around
 		auto user = handle_sp->get_userdata().user;
 
-		unique_lock<std::mutex> lock(process_queue_lock_);
-
-		// HACK(that seems to work. good prod moment?)
-		//connections_.erase(handle->get_userdata().user);
-		//RemoveConnection(handle->get_userdata().user);
-
 		// Add the remove connection action to the queue
-		process_queue_.push(new UserAction(*user, ActionType::kRemoveConnection));
-		lock.unlock();
-		process_wait_.notify_one();
+		PostAction<UserAction>(*handle_sp->get_userdata().user, ActionType::kRemoveConnection);
 	}
 }
 
@@ -582,8 +518,6 @@ std::string CollabVMServer::GenerateUuid()
 
 void CollabVMServer::OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> handle, std::shared_ptr<const websocketmm::websocket_message> msg) {
 	if(auto handle_sp = handle.lock()) {
-		unique_lock<std::mutex> lock(process_queue_lock_);
-
 		// Do not respond to binary messages.
 		if(msg->message_type != websocketmm::websocket_message::type::text)
 			return;
@@ -591,10 +525,7 @@ void CollabVMServer::OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> 
 		// Log messages
 		//std::cout << "[WebSocket Message] " << con->get_raw_socket().remote_endpoint().address() << " \"" << msg->get_payload() << "\"\n";
 
-		process_queue_.push(new MessageAction(msg, *handle_sp->get_userdata().user, ActionType::kMessage));
-
-		lock.unlock();
-		process_wait_.notify_one();
+		PostAction<MessageAction>(msg, *handle_sp->get_userdata().user, ActionType::kMessage);
 	}
 }
 
@@ -610,10 +541,7 @@ void CollabVMServer::SendWSMessage(CollabVMUser& user, const std::string& str) {
 	if(!server_->send_message(user.handle, websocketmm::BuildWebsocketMessage(str))) {
 		if(user.connected) {
 			// Disconnect the client if an error occurs
-			unique_lock<std::mutex> lock(process_queue_lock_);
-			process_queue_.push(new UserAction(user, ActionType::kRemoveConnection));
-			lock.unlock();
-			process_wait_.notify_one();
+			PostAction<UserAction>(user, ActionType::kRemoveConnection);
 		}
 	}
 }
@@ -622,23 +550,14 @@ void CollabVMServer::TimerCallback(const boost::system::error_code& ec, ActionTy
 	if(ec)
 		return;
 
-	unique_lock<std::mutex> lock(process_queue_lock_);
-	// Let the processing thread handle the next turn
-	process_queue_.push(new Action(action));
-
-	lock.unlock();
-	process_wait_.notify_one();
+	PostAction<Action>(action);
 }
 
 void CollabVMServer::VMPreviewTimerCallback(const boost::system::error_code ec) {
 	if(ec)
 		return;
 
-	unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new Action(ActionType::kUpdateThumbnails));
-
-	lock.unlock();
-	process_wait_.notify_one();
+	PostAction<Action>(ActionType::kUpdateThumbnails);
 
 	boost::system::error_code asio_ec;
 	vm_preview_timer_.expires_from_now(std::chrono::seconds(kVMPreviewInterval), asio_ec);
@@ -766,9 +685,7 @@ void CollabVMServer::RemoveConnection(std::shared_ptr<CollabVMUser>& user) {
 	if(user->vm_controller)
 		user->vm_controller->RemoveUser(user);
 
-	if(user->guac_user) {
-		delete user->guac_user;
-	}
+	delete user->guac_user;
 
 	if(user->username) {
 		// Remove the connection data from the map
@@ -833,8 +750,9 @@ void CollabVMServer::ProcessingThread() {
 			case ActionType::kMessage: {
 				MessageAction* msg_action = static_cast<MessageAction*>(action);
 				if(msg_action->user->connected) {
-					const std::string& instr = std::string((char*)msg_action->message->data.data(), msg_action->message->data.size());
-					GuacInstructionParser::ParseInstruction(*this, msg_action->user, instr);
+					if(msg_action->message) {
+						GuacInstructionParser::ParseInstruction(*this, msg_action->user, std::string((char*)msg_action->message->data.data(), msg_action->message->data.size()));
+					}
 				}
 				break;
 			}
@@ -1109,25 +1027,16 @@ void CollabVMServer::ProcessingThread() {
 					goto stop;
 				}
 				std::cout << "Stopping all VM Controllers..." << std::endl;
+
 				// Stop all VM controllers
-				for(auto it = vm_controllers_.begin(); it != vm_controllers_.end();) {
-					const std::shared_ptr<VMController>& controller = it->second;
-					if(controller->IsRunning()) {
-						it->second->Stop(VMController::StopReason::kRemove);
-						it++;
-					} else {
-						it = vm_controllers_.erase(it);
+				for(auto [id, vm] : vm_controllers_) {
+					if(vm->IsRunning()) {
+						vm->Stop(VMController::StopReason::kRemove);
+						//vm->~VMController();
 					}
 				}
 
-				if(vm_controllers_.empty()) {
-					//asio_work_.reset();
-					delete action;
-					// Exit the processing loop
-					goto stop;
-				}
-
-				// Wait for all VM controllers to stop
+				// (we don't need to worry about erasing them, the CollabVMServer destructor will do that for us.)
 		}
 
 		delete action;
@@ -1137,24 +1046,15 @@ stop:
 }
 
 void CollabVMServer::OnVMControllerVoteEnded(const std::shared_ptr<VMController>& controller) {
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new VMAction(controller, ActionType::kVoteEnded));
-	lock.unlock();
-	process_wait_.notify_one();
+	PostAction<VMAction>(controller, ActionType::kVoteEnded);
 }
 
 void CollabVMServer::OnVMControllerTurnChange(const std::shared_ptr<VMController>& controller) {
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new VMAction(controller, ActionType::kTurnChange));
-	lock.unlock();
-	process_wait_.notify_one();
+	PostAction<VMAction>(controller, ActionType::kTurnChange);
 }
 
 void CollabVMServer::OnVMControllerThumbnailUpdate(const std::shared_ptr<VMController>& controller, std::string* str) {
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new VMThumbnailUpdate(controller, str));
-	lock.unlock();
-	process_wait_.notify_one();
+	PostAction<VMThumbnailUpdate>(controller, str);
 }
 
 void CollabVMServer::BroadcastTurnInfo(VMController& controller, UserList& users, const std::deque<std::shared_ptr<CollabVMUser>>& turn_queue, CollabVMUser* current_turn, uint32_t time_remaining) {
@@ -1426,14 +1326,15 @@ void CollabVMServer::Stop() {
 			delete process_queue_.front();
 			process_queue_.pop();
 		}
+
+		lock.unlock();
+
 		// Clear processing queue by swapping it with an empty one
 		std::queue<Action*> emptyQueue;
 		process_queue_.swap(emptyQueue);
-		// Add the stop action to the processing queue
-		process_queue_.push(new Action(ActionType::kShutdown));
 
-		lock.unlock();
-		process_wait_.notify_one();
+		// Add the stop action to the processing queue
+		PostAction<Action>(ActionType::kShutdown);
 	}
 
 	// Wait for the processing thread to stop
@@ -1458,33 +1359,25 @@ void CollabVMServer::OnVMControllerStateChange(const std::shared_ptr<VMControlle
 	}
 	std::cout << std::endl;
 
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new VMStateChange(controller, state));
-	lock.unlock();
-	process_wait_.notify_one();
+	PostAction<VMStateChange>(controller, state);
 }
 
 void CollabVMServer::OnVMControllerCleanUp(const std::shared_ptr<VMController>& controller) {
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new VMAction(controller, ActionType::kVMCleanUp));
-	lock.unlock();
-	process_wait_.notify_one();
+	PostAction<VMAction>(controller, ActionType::kVMCleanUp);
 }
 
 void CollabVMServer::SendGuacMessage(std::weak_ptr<websocketmm::websocket_user> handle, const std::string& str) {
 	if(!server_->send_message(handle, websocketmm::BuildWebsocketMessage(str))) {
 		if(auto handle_sp = handle.lock()) {
 			auto user = handle_sp->get_userdata().user;
+
 			// Disconnect the client if an error occurs
-			unique_lock<std::mutex> lock(process_queue_lock_);
-			process_queue_.push(new UserAction(*user, ActionType::kRemoveConnection));
-			lock.unlock();
-			process_wait_.notify_one();
+			PostAction<UserAction>(*user, ActionType::kRemoveConnection);
 		}
 	}
 }
 
-inline void CollabVMServer::AppendChatMessage(std::ostringstream& ss, ChatMessage* chat_msg) {
+void CollabVMServer::AppendChatMessage(std::ostringstream& ss, ChatMessage* chat_msg) {
 	ss << ',' << chat_msg->username->length() << '.' << *chat_msg->username << ',' << chat_msg->message.length() << '.' << chat_msg->message;
 }
 
@@ -1646,8 +1539,7 @@ void CollabVMServer::ChangeUsername(const std::shared_ptr<CollabVMUser>& data, c
 		instr += ';';
 
 		// Send instruction to all users viewing a VM
-		for(auto it = connections_.begin(); it != connections_.end(); it++) {
-			std::shared_ptr<CollabVMUser> user = *it;
+		for(const auto& user : connections_) {
 			if(user->vm_controller)
 				SendWSMessage(*user, instr);
 		}
@@ -2088,6 +1980,7 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 				break;
 
 			// TODO: Verify that the VMController is a QEMUController
+			// TODO: Implement ^
 			std::static_pointer_cast<QEMUController>(it->second)->SendMonitorCommand(string(args[2], strLen), std::bind(&CollabVMServer::OnQEMUResponse, shared_from_this(), user, std::placeholders::_1));
 			break;
 		}
@@ -2150,7 +2043,7 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			}
 			break;
 		case kBanUser:
-			if(args.size() == 2 && database_.Configuration.BanCommand != "")
+			if(args.size() == 2 && database_.Configuration.BanCommand != "") {
 				for(auto it = connections_.begin(); it != connections_.end(); it++) {
 					std::shared_ptr<CollabVMUser> banUser = *it;
 					if(!banUser->username)
@@ -2158,20 +2051,22 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 					if(*banUser->username == args[1]) {
 						// Replace $IP in ban command with user's IP
 						std::string banCmd = database_.Configuration.BanCommand;
+
 						for(size_t it = 0; banCmd.find("$IP", it) != std::string::npos; it = banCmd.find("$IP", it))
 							banCmd.replace(banCmd.find("$IP", it), 3, banUser->ip_data.GetIP());
+
 						for(size_t it = 0; banCmd.find("$NAME", it) != std::string::npos; it = banCmd.find("$NAME", it))
 							banCmd.replace(banCmd.find("$NAME", it), 5, *banUser->username);
+
 						// Block user's IP
 						ExecuteCommandAsync(banCmd);
+
 						// Disconnect user
-						unique_lock<std::mutex> lock(process_queue_lock_);
-						process_queue_.push(new UserAction(*banUser, ActionType::kRemoveConnection));
-						lock.unlock();
-						process_wait_.notify_one();
+						PostAction<UserAction>(*banUser, ActionType::kRemoveConnection);
 						break;
 					}
 				}
+			}
 			break;
 		case kForceVote:
 			if(user->vm_controller != nullptr) {
@@ -2204,10 +2099,7 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 						continue;
 					if(*kickUser->username == args[1]) {
 						// Disconnect user
-						unique_lock<std::mutex> lock(process_queue_lock_);
-						process_queue_.push(new UserAction(*kickUser, ActionType::kRemoveConnection));
-						lock.unlock();
-						process_wait_.notify_one();
+						PostAction<UserAction>(*kickUser, ActionType::kRemoveConnection);
 						break;
 					};
 				};
@@ -2418,8 +2310,8 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 	instr += msg;
 	instr += ';';
 
-	for(auto it = connections_.begin(); it != connections_.end(); it++)
-		SendWSMessage(**it, instr);
+	for(const auto& connection : connections_)
+		SendWSMessage(*connection, instr);
 }
 
 void CollabVMServer::OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
@@ -2432,9 +2324,7 @@ void CollabVMServer::OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user
 			return;
 	}
 
-	//        if (database_.Configuration.ChatRateCount && database_.Configuration.ChatRateTime)
-	//        {
-	// Calculate the time since the user's last message
+	// Calculate the time since the user's last turn instruction
 	if((now - user->ip_data.last_turn).count() < database_.Configuration.TurnRateTime) {
 		if(++user->ip_data.turn_count >= database_.Configuration.TurnRateCount) {
 			std::string mute_time = std::to_string(database_.Configuration.TurnMuteTime);
@@ -2446,7 +2336,6 @@ void CollabVMServer::OnTurnInstruction(const std::shared_ptr<CollabVMUser>& user
 		user->ip_data.turn_count = 0;
 		//                        user->ip_data.last_turn = now;
 	}
-	//        }
 
 	if(user->vm_controller != nullptr && user->username) {
 		user->ip_data.last_turn = now;
@@ -2496,10 +2385,15 @@ void CollabVMServer::OnFileInstruction(const std::shared_ptr<CollabVMUser>& user
 
 					user->upload_info = std::make_shared<UploadInfo>(user, vm, filename, file_size, run_file,
 																	 user->vm_controller->GetSettings().UploadCooldownTime);
+
 					std::unique_lock<std::mutex> lock(upload_lock_);
+
 					user->upload_info->upload_it = upload_ids_.end();
+
 					lock.unlock();
+
 					user->ip_data.upload_in_progress = true;
+
 					if(upload_count_ != kMaxFileUploads) {
 						StartFileUpload(*user);
 					} else {
@@ -2517,25 +2411,17 @@ void CollabVMServer::OnFileInstruction(const std::shared_ptr<CollabVMUser>& user
 void CollabVMServer::OnAgentConnect(const std::shared_ptr<VMController>& controller,
 									const std::string& os_name, const std::string& service_pack,
 									const std::string& pc_name, const std::string& username, uint32_t max_filename) {
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new AgentConnectAction(controller, os_name, service_pack, pc_name, username, max_filename));
-	lock.unlock();
-	process_wait_.notify_one();
+	PostAction<AgentConnectAction>(controller, os_name, service_pack, pc_name, username, max_filename);
 }
 
 void CollabVMServer::OnAgentDisconnect(const std::shared_ptr<VMController>& controller) {
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new VMAction(controller, ActionType::kAgentDisconnect));
-	lock.unlock();
-	process_wait_.notify_one();
+	PostAction<VMAction>(controller, ActionType::kAgentDisconnect);
 }
 
-//void CollabVMServer::OnAgentHeartbeatTimeout(const std::shared_ptr<VMController>& controller)
-//{
-//	std::unique_lock<std::mutex> lock(process_queue_lock_);
-//	process_queue_.push(new VMAction(controller, ActionType::kHeartbeatTimeout));
-//	lock.unlock();
-//	process_wait_.notify_one();
+// TODO
+
+//void CollabVMServer::OnAgentHeartbeatTimeout(const std::shared_ptr<VMController>& controller) {
+//	PostAction<VMAction>(controller, ActionType::kHeartbeatTimeout);
 //}
 
 bool CollabVMServer::IsFilenameValid(const std::string& filename) {
@@ -2862,27 +2748,21 @@ void CollabVMServer::BroadcastUploadedFileInfo(UploadInfo& upload_info, VMContro
 
 void CollabVMServer::OnFileUploadFailed(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info) {
 	assert(controller == info->vm_controller);
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new FileUploadAction(info, FileUploadAction::UploadResult::kFailed));
-	lock.unlock();
-	process_wait_.notify_one();
+
+	PostAction<FileUploadAction>(info, FileUploadAction::UploadResult::kFailed);
 }
 
 void CollabVMServer::OnFileUploadFinished(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info) {
 	assert(controller == info->vm_controller);
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new FileUploadAction(info, FileUploadAction::UploadResult::kSuccess));
-	lock.unlock();
-	process_wait_.notify_one();
+
+	PostAction<FileUploadAction>(info, FileUploadAction::UploadResult::kSuccess);
 }
 
 void CollabVMServer::OnFileUploadExecFinished(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info, bool exec_success) {
 	assert(controller == info->vm_controller);
 	// TODO: Send exec_success
-	std::unique_lock<std::mutex> lock(process_queue_lock_);
-	process_queue_.push(new FileUploadAction(info, FileUploadAction::UploadResult::kSuccess));
-	lock.unlock();
-	process_wait_.notify_one();
+
+	PostAction<FileUploadAction>(info, FileUploadAction::UploadResult::kSuccess);
 }
 
 /**

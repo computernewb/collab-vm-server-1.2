@@ -162,6 +162,9 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 */
 	typedef websocketmm::server Server;
 
+	// TODO: This should only be in .cpp, because
+	// it is not needed anywhere else.
+
 	enum class ActionType {
 		kMessage,		   // Process message
 		kAddConnection,	   // Add connection to map
@@ -184,24 +187,44 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 		kShutdown // Stop processing thread
 	};
 
+	/**
+	 * Base class for actions that are consumed by the processing thread.
+	 */
 	struct Action {
 		ActionType action;
-		Action(ActionType action)
+
+		explicit Action(ActionType action)
 			: action(action) {
 		}
+
+		// Define a default virtual destructor, otherwise when deleting we
+		// will end up only calling the generated ~Action().
+		// This is crucial, as destructors for derived classes will not be called,
+		// leaving them in limbo (and even not deallocating the right size & such)
+		//
+		// We want all destructors to be called, including this one.
+		virtual ~Action() = default;
 	};
 
+	/**
+	 * Base class for actions which take in a user.
+	 */
 	struct UserAction : public Action {
 		std::shared_ptr<CollabVMUser> user;
+
 		UserAction(CollabVMUser& user, ActionType action)
 			: Action(action),
 			  user(user.shared_from_this()) {
 		}
 	};
 
+	/**
+	 * An action emitted when a WebSocket message is received.
+	 */
 	struct MessageAction : public UserAction {
 		std::shared_ptr<const websocketmm::websocket_message> message;
-		MessageAction(std::shared_ptr<const websocketmm::websocket_message> msg, CollabVMUser& user, ActionType action)
+
+		MessageAction(std::shared_ptr<const websocketmm::websocket_message>& msg, CollabVMUser& user, ActionType action)
 			: UserAction(user, action),
 			  message(msg) {
 		}
@@ -232,6 +255,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	};
 
 	struct FileUploadAction : public Action {
+		// why not just define the enum here?
 		enum class UploadResult;
 
 		FileUploadAction(const std::shared_ptr<UploadInfo>& upload_info, UploadResult result)
@@ -276,6 +300,19 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 		}
 	};
 
+	/**
+	 * Post an action into the processing queue.
+	 */
+	template<class TAction, class ...Args>
+	inline void PostAction(Args&&... args) {
+		static_assert(std::is_base_of_v<Action, TAction>, "TAction needs to inherit from CollabVMServer::Action!");
+		std::unique_lock<std::mutex> lock(process_queue_lock_);
+
+		process_queue_.push(new TAction(std::forward<Args>(args)...));
+		lock.unlock();
+		process_wait_.notify_one();
+	}
+
 	struct case_insensitive_cmp {
 		bool operator()(const std::string& str1, const std::string& str2) const {
 			return strcasecmp(str1.c_str(), str2.c_str()) < 0;
@@ -296,6 +333,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 * Determines whether an IPData object should be deleted.
 	 */
 	bool ShouldCleanUpIPData(IPData& ip_data) const;
+
 	void RemoveConnection(std::shared_ptr<CollabVMUser>& user);
 
 	void UpdateVMStatus(const std::string& vm_name, VMController::ControllerState state);
@@ -310,10 +348,11 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 
 	void OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> handle, std::shared_ptr<const websocketmm::websocket_message> msg);
 	void SendWSMessage(CollabVMUser& user, const std::string& str);
-	void ProcessingThread();
 
-	//void Send404Page(Server::connection_ptr& con, std::string& path);
-	//void SendHTTPFile(Server::connection_ptr& con, std::string& path, std::string& full_path);
+	/**
+	 * The main loop for the processing thread.
+	 */
+	void ProcessingThread();
 
 	void AppendChatMessage(std::ostringstream& ss, ChatMessage* chat_msg);
 
@@ -342,6 +381,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 * all other online users. If the result successful and the client did not
 	 * have an old username, a list of all the online users will be sent to 
 	 * the client.
+	 *
 	 * @param data The client to send the response to
 	 * @param newUsername The new username for the client
 	 * @param result The result of the username change
@@ -361,6 +401,8 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	void SendActionInstructions(VMController& controller, const VMSettings& settings);
 
 	bool IsFilenameValid(const std::string& filename);
+
+
 	void OnUploadTimeout(const boost::system::error_code ec, std::shared_ptr<UploadInfo> upload_info);
 	void StartFileUpload(CollabVMUser& user);
 	void SendUploadResultToIP(IPData& ip_data, const CollabVMUser& user, const std::string& instr);
@@ -378,12 +420,20 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 * and sends a success or fail message to the user.
 	 */
 	void FileUploadEnded(const std::shared_ptr<UploadInfo>& upload_info, const std::shared_ptr<CollabVMUser>* user, FileUploadResult result);
+
 	void StartNextUpload();
+
 	void CancelFileUpload(CollabVMUser& user);
+
 	void SetUploadCooldownTime(IPData& ip_data, uint32_t time);
+
 	bool SendUploadCooldownTime(CollabVMUser& user, const VMController& vm_controller);
+
 	void BroadcastUploadedFileInfo(UploadInfo& upload_info, VMController& vm_controller);
 
+	/**
+	 * Generate a random username for a user who does not have one.
+	 */
 	std::string GenerateUsername();
 
 	/**

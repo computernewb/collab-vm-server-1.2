@@ -4,14 +4,38 @@
 
 CCFLAGS = -Isrc -Isrc/uriparser
 
+# Build type switches
+# debug mode, disable optimizations and note debugging
 ifeq ($(DEBUG),1)
-# debug mode, disable optimizationss and note debugging
+
 CCFLAGS += -g -O0 -D_DEBUG -DDEBUG
 LDFLAGS = -g
+
+# Enable asan instrumentation if DEBUG=1
+# and ASAN=1
+ifeq ($(ASAN),1)
+CCFLAGS += -fsanitize=address
+LDFLAGS += -fsanitize=address
+endif
+
+# Enable tsan instrumentation if DEBUG=1
+# and TSAN=1
+ifeq ($(TSAN),1)
+
+ifeq ($(ASAN),1)
+$(error TSAN=1 and ASAN=1 are not compatiable)
+endif
+
+CCFLAGS += -fsanitize=thread
+LDFLAGS += -fsanitize=thread
+endif
+
 else
+
 # release mode, build with optimizations and strip binaries
 CCFLAGS += -O3 -ffast-math -march=native -mtune=native
 LDFLAGS = -s
+
 endif
 
 ifeq ($(JPEG), 1) 
@@ -20,7 +44,7 @@ CCFLAGS += -DUSE_JPEG
 endif
 
 # TODO: Remove -fpermissive, all -Wno- and enable -Wall
-CXXFLAGS = $(CCFLAGS)  -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings \
+CXXFLAGS = $(CCFLAGS) -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings \
 		-fpermissive -std=c++17 \
 		-Isrc/rapidjson -Isrc/Database -Isrc/VMControllers \
 		-Isrc/Sockets -Isrc/guacamole -Isrc/cpr -I$(OBJDIR) -DRAPIDJSON_HAS_CXX11_RVALUE_REFS

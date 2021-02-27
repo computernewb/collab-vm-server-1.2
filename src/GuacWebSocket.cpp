@@ -4,20 +4,17 @@
 
 #include <websocketmm/websocket_user.h>
 
-GuacWebSocket::GuacWebSocket(CollabVMServer* server, std::weak_ptr<websocketmm::websocket_user> handle) :
-	server_(server),
-	websocket_handle_(handle)
-{
+GuacWebSocket::GuacWebSocket(CollabVMServer* server, std::weak_ptr<websocketmm::websocket_user> handle)
+	: server_(server),
+	  websocket_handle_(handle) {
 }
 
-void GuacWebSocket::InstructionBegin()
-{
+void GuacWebSocket::InstructionBegin() {
 	// Lock stringstream
 	mutex_.lock();
 }
 
-void GuacWebSocket::InstructionEnd()
-{
+void GuacWebSocket::InstructionEnd() {
 	std::string str = ss_.str();
 
 	// Clear stringstream
@@ -28,7 +25,7 @@ void GuacWebSocket::InstructionEnd()
 
 	// Check that the message ends with a semicolon
 	//assert(str[str.length() - 1] == ';');
-	if (str.length() && str[str.length() - 1] == ';')
-        //websocket_handle_->send(websocketmm::BuildWebsocketMessage(str));
+	if(str.length() && str[str.length() - 1] == ';') {
 		server_->SendGuacMessage(websocket_handle_, str);
+	}
 }

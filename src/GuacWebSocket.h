@@ -9,9 +9,8 @@ class CollabVMServer;
 /**
  * Forwards instructions to a WebSocket client.
  */
-class GuacWebSocket : public GuacSocket
-{
-public:
+class GuacWebSocket : public GuacSocket {
+   public:
 	GuacWebSocket(CollabVMServer* server, std::weak_ptr<websocketmm::websocket_user> handle);
 
 	size_t Read(void* buf, size_t count);
@@ -22,5 +21,5 @@ public:
 	void InstructionEnd() override;
 
 	CollabVMServer* server_;
-    std::weak_ptr<websocketmm::websocket_user> websocket_handle_;
+	std::weak_ptr<websocketmm::websocket_user> websocket_handle_;
 };

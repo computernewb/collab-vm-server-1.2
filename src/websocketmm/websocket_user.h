@@ -41,6 +41,7 @@ namespace websocketmm {
     * per user data type
     */
 	struct per_user_data {
+		// TODO: use std::any
 		std::shared_ptr<CollabVMUser> user;
 	};
 
@@ -49,7 +50,7 @@ namespace websocketmm {
 		friend struct session;
 
 		websocket_user(std::shared_ptr<server> server, tcp::socket&& socket);
-		~websocket_user();
+		//~websocket_user();
 
 		per_user_data& get_userdata();
 

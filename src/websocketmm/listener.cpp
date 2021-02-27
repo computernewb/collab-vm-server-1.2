@@ -7,6 +7,7 @@
 #include <websocketmm/websocket_user.h>
 
 #include <iostream>
+#include <utility>
 
 namespace websocketmm {
 
@@ -58,7 +59,7 @@ namespace websocketmm {
 			if(websocket::is_upgrade(req_)) {
 				std::make_shared<websocket_user>(server_, std::move(stream_.release_socket()))->run(req_);
 			} else {
-				// TODO: process request in this case.
+				// TODO: process request in this case, for either static server or POST callback
 				return do_close();
 			}
 
@@ -93,14 +94,14 @@ namespace websocketmm {
 			beast::error_code ec;
 			stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
 
-			// At this point the connection is closed gracefully
+			// At this point the connection is closed gracefully.
 		}
 	};
 
 	listener::listener(net::io_context& ioc, tcp::endpoint ep, const std::shared_ptr<server>& server)
 		: ioc_(ioc),
 		  acceptor_(ioc),
-		  endpoint(ep),
+		  endpoint(std::move(ep)),
 		  server_(server) {
 	}
 
@@ -141,7 +142,7 @@ namespace websocketmm {
 
 	void listener::on_accept(beast::error_code ec, tcp::socket socket) {
 		if(ec) {
-			std::cout << "Error Code And Of : " << ec.message() << '\n';
+			//std::cout << "Error Code And Of : " << ec.message() << '\n';
 			return;
 		}
 
