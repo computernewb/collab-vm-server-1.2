@@ -1,7 +1,3 @@
-//
-// Created by lily on 1/24/21.
-//
-
 #ifndef WEBSOCKETMM_SERVER_H
 #define WEBSOCKETMM_SERVER_H
 

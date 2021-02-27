@@ -1,7 +1,3 @@
-//
-// Created by lily on 1/25/21.
-//
-
 #ifndef WEBSOCKETMM_LISTENER_H
 #define WEBSOCKETMM_LISTENER_H
 

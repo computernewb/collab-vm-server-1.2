@@ -1,7 +1,3 @@
-//
-// Created by lily on 1/25/21.
-//
-
 #include <websocketmm/listener.h>
 #include <websocketmm/server.h>
 #include <websocketmm/websocket_user.h>

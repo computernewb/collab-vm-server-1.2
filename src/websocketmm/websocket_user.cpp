@@ -1,7 +1,3 @@
-//
-// Created by lily on 1/25/21.
-//
-
 #include <websocketmm/websocket_user.h>
 #include <websocketmm/server.h>
 
@@ -106,7 +102,7 @@ namespace websocketmm {
 	}
 
 	void websocket_user::on_read(beast::error_code ec, std::size_t bytes_transferred) {
-		(void)bytes_transferred;
+		boost::ignore_unused(bytes_transferred);
 
 		if(ec == websocket::error::closed) {
 			net::post(ws_.get_executor(), [self = shared_from_this()]() {
@@ -158,15 +154,12 @@ namespace websocketmm {
 	void websocket_user::write_message(const std::shared_ptr<const websocket_message>& message) {
 		ws_.binary(message->message_type == websocket_message::type::binary);
 
-		ws_.async_write(
-		net::buffer(message->data),
-		beast::bind_front_handler(
-		&websocket_user::on_write,
-		shared_from_this()));
+		ws_.async_write(net::buffer(message->data),beast::bind_front_handler(&websocket_user::on_write,shared_from_this()));
 	}
 
 	void websocket_user::on_write(beast::error_code ec, std::size_t bytes_transferred) {
-		(void)bytes_transferred;
+		boost::ignore_unused(bytes_transferred);
+
 		// This code is a bit wonky at the moment
 		std::unique_lock<std::mutex> lockGuard(message_queue_lock_);
 
@@ -192,16 +185,22 @@ namespace websocketmm {
 
 	void websocket_user::close() {
 		net::post(ws_.get_executor(), [self = shared_from_this()]() {
-			beast::error_code ec;
-			std::unique_lock<std::mutex> lock(self->message_queue_lock_);
-
-			if(!self->message_queue_.empty()) {
-				self->message_queue_.clear();
-			}
-
-			lock.unlock();
-			self->ws_.close(websocket::close_reason(websocket::close_code::normal), ec);
+			self->ws_.async_close(websocket::close_reason(websocket::close_code::normal), beast::bind_front_handler(&websocket_user::on_close, self->shared_from_this()));
 		});
+	}
+
+	void websocket_user::on_close(beast::error_code ec) {
+		// empty completion handler
+		// possible TODO?
+		boost::ignore_unused(ec);
+		std::unique_lock<std::mutex> lock(message_queue_lock_);
+
+
+		// Clear the message queue
+		if(!message_queue_.empty()) {
+			message_queue_.clear();
+			lock.unlock();
+		}
 	}
 
 } // namespace websocketmm

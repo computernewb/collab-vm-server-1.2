@@ -1,13 +1,11 @@
 //
-// forward declarations of websocketmm types
+// forward declarations of websocket-- types
 // for compile time performance increase
-// this file should be preferred for a public
-//
-// Created by lily on 1/25/21.
+// this file should be preferred for a public include of websocket--
 //
 
-#ifndef COLLAB_VM_SERVER_CAPTCHA_FWD_H
-#define COLLAB_VM_SERVER_CAPTCHA_FWD_H
+#ifndef WEBSOCKETMM_FWD_H
+#define WEBSOCKETMM_FWD_H
 
 namespace websocketmm {
 
@@ -17,4 +15,4 @@ namespace websocketmm {
 
 } // namespace websocketmm
 
-#endif //COLLAB_VM_SERVER_CAPTCHA_FWD_H
+#endif //WEBSOCKETMM_FWD_H

@@ -1,7 +1,3 @@
-//
-// Created by lily on 1/25/21.
-//
-
 #ifndef WEBSOCKETMM_WEBSOCKET_USER_H
 #define WEBSOCKETMM_WEBSOCKET_USER_H
 
@@ -100,6 +96,8 @@ namespace websocketmm {
 		void on_write(beast::error_code ec, std::size_t bytes_transferred);
 
 		void on_send(const std::shared_ptr<const websocket_message>& message);
+
+		void on_close(beast::error_code ec);
 
 		void write_message(const std::shared_ptr<const websocket_message>& message);
 
