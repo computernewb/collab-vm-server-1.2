@@ -10,7 +10,8 @@
 #endif
 
 // Enable this to allow Asio multi threading
-#define ENABLE_ASIO_MULTITHREADING
+// Currently a bit buggy and unneeded with beast..
+//#define ENABLE_ASIO_MULTITHREADING
 
 void IgnorePipe() {
 	// Ignores SIGPIPE to prevent LibVNCClient from crashing on Linux

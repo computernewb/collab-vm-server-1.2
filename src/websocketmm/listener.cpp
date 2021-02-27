@@ -127,11 +127,11 @@ namespace websocketmm {
 		}
 
 		// Start listening for connections
-		acceptor_.listen(
-		net::socket_base::max_listen_connections, ec);
+		acceptor_.listen(net::socket_base::max_listen_connections, ec);
 		if(ec) {
 			return;
 		}
+
 		acceptor_.async_accept(net::make_strand(ioc_), beast::bind_front_handler(&listener::on_accept, shared_from_this()));
 	}
 

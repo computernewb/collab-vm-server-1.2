@@ -37,13 +37,6 @@ namespace websocketmm {
 		  ws_(std::move(socket)) {
 	}
 
-	/*
-	websocket_user::~websocket_user() {
-		server_->leave_server(weak_from_this());
-		server_->close(weak_from_this());
-	}
-	 */
-
 	bool websocket_user::do_validate() {
 		return server_->verify(weak_from_this());
 	}
@@ -77,22 +70,23 @@ namespace websocketmm {
 				res.set(http::field::sec_websocket_protocol, selected_subprotocol_.value());
 		}));
 
-		if(!do_validate()) {
-			// Validation failed.
-			// Close the connection and return early.
-			//
-			// Resources will be cleaned up by the shared_ptr destructor.
-			ws_.next_layer().socket().close();
-			return;
-		}
+		// We wrap validation and accepting inside of the strand we were given by the
+		// listener object.
 
-		// Once the verify is finished, we
-		// clear the upgrade request
-		//
-		// and begin accepting the WebSocket connection
+		net::post(ws_.get_executor(), [self = shared_from_this()]() {
+			if(!self->do_validate()) {
+				// Validation failed.
+				// Close the connection and return early.
+				//
+				// Resources will be cleaned up by the shared_ptr destructor.
+				self->ws_.next_layer().socket().close();
+				return;
+			}
 
-		upgrade_request_.reset();
-		ws_.async_accept(upgrade, beast::bind_front_handler(&websocket_user::on_accept, shared_from_this()));
+			// Once the verify is finished, we
+			// begin accepting the WebSocket connection.
+			self->ws_.async_accept(self->upgrade_request_.value(), beast::bind_front_handler(&websocket_user::on_accept, self->shared_from_this()));
+		});
 	}
 
 	void websocket_user::on_accept(beast::error_code ec) {
@@ -105,38 +99,43 @@ namespace websocketmm {
 		// the accept is finished or errored (i.e: when this completion handler is called)
 		selected_subprotocol_.reset();
 
-		server_->open(weak_from_this());
-		//server_->join_to_server(this);
+		net::post(ws_.get_executor(), [self = shared_from_this()]() {
+			self->server_->open(self);
 
-		// Start looping by reading a message
-		ws_.async_read(buffer_, beast::bind_front_handler(&websocket_user::on_read, shared_from_this()));
+			// Start looping by reading a message
+			self->ws_.async_read(self->buffer_, beast::bind_front_handler(&websocket_user::on_read, self->shared_from_this()));
+		});
 	}
 
 	void websocket_user::on_read(beast::error_code ec, std::size_t bytes_transferred) {
+		(void)bytes_transferred;
+
 		if(ec == websocket::error::closed) {
-			server_->close(weak_from_this());
+			net::post(ws_.get_executor(), [self = shared_from_this()]() {
+				self->server_->close(self->weak_from_this());
+			});
 			return;
 		}
 
-		auto type = websocket_message::type::text;
+		net::post(ws_.get_executor(), [self = shared_from_this()]() {
+			auto type = websocket_message::type::text;
 
-		if(ws_.binary())
-			type = websocket_message::type::binary;
+			if(self->ws_.binary())
+				type = websocket_message::type::binary;
 
-		// Call the server's message handler
-		// with a built websocket message from our data buffer.
-		// The thread "blocks" while this is going on.
-		server_->message(weak_from_this(), BuildWebsocketMessage(type, (std::uint8_t*)buffer_.data().data(), buffer_.size()));
+			auto buffer_size = self->buffer_.size();
 
-		// Consume the data buffer after the server has processed it.
-		buffer_.consume(buffer_.size());
+			// Call the server's message handler
+			// with a built websocket message from our data buffer.
+			// The thread "blocks" while this is going on.
+			self->server_->message(self->weak_from_this(), BuildWebsocketMessage(type, (std::uint8_t*)self->buffer_.data().data(), buffer_size));
 
-		//
-		ws_.async_read(
-		buffer_,
-		beast::bind_front_handler(
-		&websocket_user::on_read,
-		shared_from_this()));
+			// Consume the data buffer after the server has processed it.
+			self->buffer_.consume(buffer_size);
+
+			//
+			self->ws_.async_read(self->buffer_, beast::bind_front_handler(&websocket_user::on_read, self->shared_from_this()));
+		});
 	}
 
 	void websocket_user::send(const std::shared_ptr<const websocket_message>& message) {
@@ -149,10 +148,12 @@ namespace websocketmm {
 		// Always add to queue
 		message_queue_.push_back(message);
 
-		// Are we already writing?
+		// If we are already trying to write a message,
+		// return early.
 		if(message_queue_.size() > 1)
 			return;
 
+		// Otherwise, we should write the message immediately.
 		write_message(message_queue_.front());
 	}
 
@@ -167,24 +168,42 @@ namespace websocketmm {
 	}
 
 	void websocket_user::on_write(beast::error_code ec, std::size_t bytes_transferred) {
+		(void)bytes_transferred;
+		// This code is a bit wonky at the moment
+		std::unique_lock<std::mutex> lockGuard(message_queue_lock_);
+
 		if(ec == websocket::error::closed) {
-			server_->close(weak_from_this());
+			lockGuard.unlock();
+			net::post(ws_.get_executor(), [self = shared_from_this()]() {
+				self->server_->close(self->weak_from_this());
+			});
 			return;
 		}
 
-		if(ec)
+		if(ec) {
+			lockGuard.unlock();
 			return;
+		}
 
 		message_queue_.erase(message_queue_.begin());
 
+		// Write more messages to empty the queue
 		if(!message_queue_.empty())
-			// Write more messages then
 			write_message(message_queue_.front());
 	}
 
 	void websocket_user::close() {
-		beast::error_code ec;
-		ws_.close(websocket::close_reason(websocket::close_code::normal), ec);
+		net::post(ws_.get_executor(), [self = shared_from_this()]() {
+			beast::error_code ec;
+			std::unique_lock<std::mutex> lock(self->message_queue_lock_);
+
+			if(!self->message_queue_.empty()) {
+				self->message_queue_.clear();
+			}
+
+			lock.unlock();
+			self->ws_.close(websocket::close_reason(websocket::close_code::normal), ec);
+		});
 	}
 
 } // namespace websocketmm

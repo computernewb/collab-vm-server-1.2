@@ -13,6 +13,7 @@
 #include <thread>
 #include <vector>
 #include <condition_variable>
+#include <atomic>
 
 class CollabVMServer;
 class VMController;
@@ -210,7 +211,7 @@ class GuacClient {
 	 * This member is used for cross-thread notification so it could
 	 * be benefit from being atomic.
 	 */
-	bool update_thumbnail_;
+	std::atomic<bool> update_thumbnail_;
 
    private:
 	/**
