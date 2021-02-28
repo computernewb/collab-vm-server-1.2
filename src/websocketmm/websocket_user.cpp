@@ -56,7 +56,7 @@ namespace websocketmm {
 		ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
 
 		ws_.set_option(websocket::stream_base::decorator([&](websocket::response_type& res) {
-			res.set(http::field::server, "collab-vm-server/1.2.11-rc");
+			res.set(http::field::server, "collab-vm-server/1.2.11");
 
 			// If a subprotocol has been negotiated,
 			// we decorate the response with it.
