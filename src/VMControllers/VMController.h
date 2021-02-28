@@ -114,7 +114,9 @@ class VMController : public std::enable_shared_from_this<VMController>, public A
 
 	void Vote(CollabVMUser& user, bool vote);
 
-	void EndVote(bool cancelVote);
+	void EndVote();
+
+	void SkipVote(bool pass);
 
 	void TurnRequest(const std::shared_ptr<CollabVMUser>& user, bool turnJack, bool isStaff);
 
@@ -236,6 +238,8 @@ class VMController : public std::enable_shared_from_this<VMController>, public A
 	// Used for turn and vote timers. This means the max value for a
 	// turn or a vote is about 9.1 hours.
 	typedef std::chrono::duration<int32_t, std::milli> millisecs_t;
+
+	void EndVoteCommonLogic(bool vote_passed);
 
 	void VoteEndedCallback(const boost::system::error_code& ec);
 

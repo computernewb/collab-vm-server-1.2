@@ -158,13 +158,23 @@ void VMController::VoteEndedCallback(const boost::system::error_code& ec) {
 	server_.OnVMControllerVoteEnded(shared_from_this());
 }
 
-void VMController::EndVote(bool cancelVote) {
+void VMController::EndVote() {
 	if(vote_state_ != VoteState::kVoting)
 		return;
 
-	bool vote_succeeded = (vote_count_yes_ >= vote_count_no_) && !cancelVote;
+	EndVoteCommonLogic((vote_count_yes_ >= vote_count_no_));
+}
 
-	server_.BroadcastVoteEnded(*this, users_, vote_succeeded);
+void VMController::SkipVote(bool pass) {
+	if(vote_state_ != VoteState::kVoting)
+		return;
+
+	EndVoteCommonLogic(pass);
+}
+
+
+void VMController::EndVoteCommonLogic(bool vote_passed) {
+	server_.BroadcastVoteEnded(*this, users_, vote_passed);
 
 	if(settings_->VoteCooldownTime) {
 		vote_state_ = VoteState::kCoolingdown;
@@ -179,7 +189,7 @@ void VMController::EndVote(bool cancelVote) {
 		vote_state_ = VoteState::kIdle;
 	}
 
-	if(vote_succeeded)
+	if(vote_passed)
 		RestoreVMSnapshot();
 }
 
