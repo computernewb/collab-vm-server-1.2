@@ -1,3 +1,5 @@
+// Networking TS compatibility header
+
 #ifndef WEBSOCKETMM_BEAST_NET_H
 #define WEBSOCKETMM_BEAST_NET_H
 

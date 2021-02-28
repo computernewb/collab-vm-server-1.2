@@ -9,7 +9,7 @@ CCFLAGS = -Isrc -Isrc/uriparser
 ifeq ($(DEBUG),1)
 
 CCFLAGS += -g -O0 -D_DEBUG -DDEBUG
-LDFLAGS = -g
+LDFLAGS += -g
 
 # Enable asan instrumentation if DEBUG=1
 # and ASAN=1
@@ -43,9 +43,9 @@ ifeq ($(JPEG), 1)
 CCFLAGS += -DUSE_JPEG
 endif
 
-# TODO: Remove -fpermissive, all -Wno- and enable -Wall
+# TODO: Remove -fpermissive, all -Wno- and enable -Wall + -Wextra.
 CXXFLAGS = $(CCFLAGS) -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings \
-		-fpermissive -std=c++17 \
+		-fpermissive -std=c++17 $(EXTRAINCS) \
 		-Isrc/rapidjson -Isrc/Database -Isrc/VMControllers \
 		-Isrc/Sockets -Isrc/guacamole -Isrc/cpr -I$(OBJDIR) -DRAPIDJSON_HAS_CXX11_RVALUE_REFS
 
@@ -172,7 +172,7 @@ hardclean:
 
 $(BINDIR)/collab-vm-server: $(OBJS)
 	$(info Linking executable $@)
-	$(CXX) $(OBJS) $(LIBS) $(LDFLAGS) -o $@
+	$(CXX) $(LDFLAGS) $(OBJS) $(LIBS) -o $@
 
 # Source generation rules
 

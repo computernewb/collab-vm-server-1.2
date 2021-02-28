@@ -7,21 +7,21 @@ Geodude
 
 Special Thanks:
 
+modeco80
 CHOCOLATEMAN
 Colonel Seizureton/Colonel Munchkin
 CtrlAltDel
 FluffyVulpix
-modeco80
 hannah
 LoveEevee
 Matthew
 Vanilla
-and the rest of the Collab VM Community for all their help over the years,
-including, but of course not limited to:
+
+and the rest of the Collab VM Community for all their help over the years, including, but of course not limited to:
 Donating, using the site, telling their friends/family, being a great help, and more.
 
-A special shoutout to the Collab VM community for being such a great help.
-You've made the last 5 years great.
+A special shoutout to the Collab VM community for being such a great help. You've made the last 5 years great.
+
 Here is the team's special thanks to you - the Collab VM Server Source Code.
 We really hope you enjoy and we hope you continue using the website. Thank you all.
 The Webframe source code is here: https://github.com/computernewb/collab-vm-web-app
@@ -30,6 +30,7 @@ Please email rightowner@gmail.com for any assistance.
 
 ~Cosmic Sans, Dartz, and Geodude
 */
+
 #include "CollabVM.h"
 #include "GuacInstructionParser.h"
 
@@ -44,6 +45,7 @@ Please email rightowner@gmail.com for any assistance.
 #ifdef _WIN32
 	#include <sys/types.h>
 #endif
+
 #include <sys/stat.h>
 
 #include "guacamole/user-handlers.h"
@@ -51,23 +53,13 @@ Please email rightowner@gmail.com for any assistance.
 #ifdef USE_JPEG
 	#include "guacamole/protocol.h"
 #endif
+
 #include <ossp/uuid.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/reader.h>
 #include <rapidjson/stringbuffer.h>
 
 #define STR_LEN(str) sizeof(str) - 1
-
-using std::string;
-using std::ostringstream;
-using std::chrono::steady_clock;
-using std::shared_ptr;
-using std::unique_lock;
-using std::thread;
-using std::mutex;
-using std::condition_variable;
-
-//using websocketpp::connection_hdl;
 
 using rapidjson::Document;
 using rapidjson::Value;
@@ -266,7 +258,7 @@ CollabVMServer::CollabVMServer(net::io_service& service)
 	  ip_data_timer(service),
 	  ip_data_timer_running_(false),
 	  guest_rng_(1000, 99999),
-	  rng_(steady_clock::now().time_since_epoch().count()),
+	  rng_(std::chrono::steady_clock::now().time_since_epoch().count()),
 	  chat_history_(new ChatMessage[database_.Configuration.ChatMsgHistory]),
 	  chat_history_begin_(0),
 	  chat_history_end_(0),
@@ -316,7 +308,7 @@ std::shared_ptr<VMController> CollabVMServer::CreateVMController(const std::shar
 	return controller;
 }
 
-void CollabVMServer::Run(uint16_t port, string doc_root) {
+void CollabVMServer::Run(uint16_t port, std::string doc_root) {
 	using namespace std::placeholders;
 
 	// The path shouldn't end in a slash
@@ -350,7 +342,7 @@ void CollabVMServer::Run(uint16_t port, string doc_root) {
 
 	// Start message processing thread
 	process_thread_running_ = true;
-	process_thread_ = std::thread(bind(&CollabVMServer::ProcessingThread, shared_from_this()));
+	process_thread_ = std::thread(std::bind(&CollabVMServer::ProcessingThread, shared_from_this()));
 
 	// Once this function returns,
 	// io_service::run() is called in main()
@@ -444,7 +436,7 @@ bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handl
 			// Create new IPData object
 			const boost::asio::ip::address& addr = handle_sp->socket().remote_endpoint().address();
 
-			unique_lock<std::mutex> ip_lock(ip_lock_);
+			std::unique_lock<std::mutex> ip_lock(ip_lock_);
 			IPData* ip_data;
 
 			if(FindIPData(addr, ip_data)) {
@@ -677,9 +669,9 @@ void CollabVMServer::RemoveConnection(std::shared_ptr<CollabVMUser>& user) {
 		// Remove the connection data from the map
 		usernames_.erase(*user->username);
 		// Send a remove user instruction to everyone
-		ostringstream ss("7.remuser,1.1,", ostringstream::in | ostringstream::out | ostringstream::ate);
+		std::ostringstream ss("7.remuser,1.1,", std::ostringstream::in | std::ostringstream::out | std::ostringstream::ate);
 		ss << user->username->length() << '.' << *user->username << ';';
-		string instr = ss.str();
+		std::string instr = ss.str();
 
 		for(const auto& user_ : connections_) {
 			//std::shared_ptr<CollabVMUser> user = *it;
@@ -689,7 +681,8 @@ void CollabVMServer::RemoveConnection(std::shared_ptr<CollabVMUser>& user) {
 		user->username.reset();
 	}
 
-	unique_lock<std::mutex> ip_lock(ip_lock_);
+	std::unique_lock<std::mutex> ip_lock(ip_lock_);
+
 	if(!--user->ip_data.connections && ShouldCleanUpIPData(user->ip_data)) {
 		DeleteIPData(user->ip_data);
 	} else if(!ip_data_timer_running_) {
@@ -699,6 +692,7 @@ void CollabVMServer::RemoveConnection(std::shared_ptr<CollabVMUser>& user) {
 		ip_data_timer.expires_from_now(std::chrono::minutes(kIPDataTimerInterval), ec);
 		ip_data_timer.async_wait(std::bind(&CollabVMServer::IPDataTimerCallback, shared_from_this(), std::placeholders::_1));
 	}
+
 	ip_lock.unlock();
 
 	user->connected = false;
@@ -708,10 +702,10 @@ void CollabVMServer::UpdateVMStatus(const std::string& vm_name, VMController::Co
 	if(admin_connections_.empty())
 		return;
 
-	string state_str = std::to_string(static_cast<uint32_t>(state));
-	ostringstream ss("5.admin,1.3,", ostringstream::in | ostringstream::out | ostringstream::ate);
+	std::string state_str = std::to_string(static_cast<uint32_t>(state));
+	std::ostringstream ss("5.admin,1.3,", std::ostringstream::in | std::ostringstream::out | std::ostringstream::ate);
 	ss << vm_name.length() << '.' << vm_name << ',' << state_str.length() << '.' << state_str << ';';
-	string instr = ss.str();
+	std::string instr = ss.str();
 
 	for(const auto& admin_connection : admin_connections_) {
 		assert(admin_connection->admin_connected);
@@ -1304,7 +1298,7 @@ void CollabVMServer::Stop() {
 	vm_preview_timer_.cancel(asio_ec);
 
 	if(process_thread_running_) {
-		unique_lock<std::mutex> lock(process_queue_lock_);
+		std::unique_lock<std::mutex> lock(process_queue_lock_);
 		// Delete all actions currently in the queue and add the
 		// shutdown action to signal the processing queue to disconnect
 		// all websocket clients and stop all VM controllers
@@ -1549,16 +1543,21 @@ void CollabVMServer::ChangeUsername(const std::shared_ptr<CollabVMUser>& data, c
 std::string CollabVMServer::GenerateUsername() {
 	// If the username is already taken generate a new one
 	uint32_t num = guest_rng_(rng_);
-	string username = "guest" + std::to_string(num);
+
+	constexpr static auto username_base = "guest";
+
+	std::string username = username_base + std::to_string(num);
+
 	// Increment the number until a username is found that is not taken
 	while(usernames_.find(username) != usernames_.end()) {
-		username = "guest" + std::to_string(++num);
+		username = username_base + std::to_string(++num);
 	}
+
 	return username;
 }
 
-string CollabVMServer::EncodeHTMLString(const char* str, size_t strLen) {
-	ostringstream ss;
+std::string CollabVMServer::EncodeHTMLString(const char* str, size_t strLen) {
+	std::ostringstream ss;
 	for(size_t i = 0; i < strLen; i++) {
 		char c = str[i];
 		switch(c) {
@@ -1936,16 +1935,16 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			}
 			break;
 		case kGetSettings: {
-			ostringstream ss("5.admin,1.1,", ostringstream::in | ostringstream::out | ostringstream::ate);
-			string resp = GetServerSettings();
+			std::ostringstream ss("5.admin,1.1,", std::ostringstream::in | std::ostringstream::out | std::ostringstream::ate);
+			std::string resp = GetServerSettings();
 			ss << resp.length() << '.' << resp << ';';
 			SendWSMessage(*user, ss.str());
 			break;
 		}
 		case kSetSettings:
 			if(args.size() == 2) {
-				ostringstream ss("5.admin,1.1,", ostringstream::in | ostringstream::out | ostringstream::ate);
-				string resp = PerformConfigFunction(args[1]);
+				std::ostringstream ss("5.admin,1.1,", std::ostringstream::in | std::ostringstream::out | std::ostringstream::ate);
+				std::string resp = PerformConfigFunction(args[1]);
 				ss << resp.length() << '.' << resp << ';';
 				SendWSMessage(*user, ss.str());
 			}
@@ -1967,7 +1966,7 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 
 			// TODO: Verify that the VMController is a QEMUController
 			// TODO: Implement ^
-			std::static_pointer_cast<QEMUController>(it->second)->SendMonitorCommand(string(args[2], strLen), std::bind(&CollabVMServer::OnQEMUResponse, shared_from_this(), user, std::placeholders::_1));
+			std::static_pointer_cast<QEMUController>(it->second)->SendMonitorCommand(std::string(args[2], strLen), std::bind(&CollabVMServer::OnQEMUResponse, shared_from_this(), user, std::placeholders::_1));
 			break;
 		}
 		case kStartController: {
@@ -2210,15 +2209,12 @@ void CollabVMServer::OnQEMUResponse(std::weak_ptr<CollabVMUser> data, rapidjson:
 	rapidjson::Value::MemberIterator r = d.FindMember("return");
 	if(r != d.MemberEnd() && r->value.IsString() && r->value.GetStringLength() > 0) {
 		rapidjson::Value& v = r->value;
-		string msg = EncodeHTMLString(v.GetString(), v.GetStringLength());
+		std::string msg = EncodeHTMLString(v.GetString(), v.GetStringLength());
 		if(msg.length() < 1)
 			return;
 
-		ostringstream ss("5.admin,1.2,", ostringstream::in | ostringstream::out | ostringstream::ate);
+		std::ostringstream ss("5.admin,1.2,", std::ostringstream::in | std::ostringstream::out | std::ostringstream::ate);
 		ss << msg.length() << '.' << msg << ';';
-
-		//websocketpp::lib::error_code ec;
-		//server_.send(ptr->handle, ss.str(), websocketpp::frame::opcode::text, ec);
 
 		server_->send_message(ptr->handle, websocketmm::BuildWebsocketMessage(ss.str()));
 	}
@@ -2256,7 +2252,7 @@ void CollabVMServer::OnChatInstruction(const std::shared_ptr<CollabVMUser>& user
 	if(!str_len || str_len > kMaxChatMsgLen)
 		return;
 
-	string msg = EncodeHTMLString(args[0], str_len);
+	std::string msg = EncodeHTMLString(args[0], str_len);
 	if(msg.empty())
 		return;
 
@@ -2505,7 +2501,7 @@ void CollabVMServer::StartFileUpload(CollabVMUser& user) {
 }
 
 void CollabVMServer::SendUploadResultToIP(IPData& ip_data, const CollabVMUser& user, const std::string& instr) {
-	for(const shared_ptr<CollabVMUser>& connection : connections_)
+	for(const std::shared_ptr<CollabVMUser>& connection : connections_)
 		if(&connection->ip_data == &ip_data && connection->vm_controller && connection.get() != &user)
 			SendWSMessage(*connection, instr);
 }
@@ -2798,7 +2794,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						break;
 					case kDisplayName:
 						if(value.IsString()) {
-							vm.DisplayName = string(value.GetString(), value.GetStringLength());
+							vm.DisplayName = std::string(value.GetString(), value.GetStringLength());
 						} else {
 							WriteJSONObject(writer, vm_settings_[kDisplayName], invalid_object_);
 							valid = false;
@@ -2840,7 +2836,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						break;
 					case kVNCAddress:
 						if(value.IsString()) {
-							vm.VNCAddress = string(value.GetString(), value.GetStringLength());
+							vm.VNCAddress = std::string(value.GetString(), value.GetStringLength());
 						} else {
 							WriteJSONObject(writer, vm_settings_[kVNCAddress], invalid_object_);
 							valid = false;
@@ -2877,7 +2873,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						break;
 					case kQMPAddress:
 						if(value.IsString())
-							vm.QMPAddress = string(value.GetString(), value.GetStringLength());
+							vm.QMPAddress = std::string(value.GetString(), value.GetStringLength());
 						else {
 							WriteJSONObject(writer, vm_settings_[kQMPAddress], invalid_object_);
 							valid = false;
@@ -2911,7 +2907,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						break;
 					case kQEMUCmd:
 						if(value.IsString()) {
-							vm.QEMUCmd = string(value.GetString(), value.GetStringLength());
+							vm.QEMUCmd = std::string(value.GetString(), value.GetStringLength());
 						} else {
 							WriteJSONObject(writer, vm_settings_[kQEMUCmd], invalid_object_);
 							valid = false;
@@ -3018,7 +3014,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						break;
 					case kAgentAddress:
 						if(value.IsString()) {
-							vm.AgentAddress = string(value.GetString(), value.GetStringLength());
+							vm.AgentAddress = std::string(value.GetString(), value.GetStringLength());
 						} else {
 							WriteJSONObject(writer, vm_settings_[kAgentAddress], invalid_object_);
 							valid = false;
@@ -3124,7 +3120,7 @@ std::string CollabVMServer::PerformConfigFunction(const std::string& json) {
 	if(!d.IsObject()) {
 		writer.String("Root value was not an object");
 		writer.EndObject();
-		return string(str_buf.GetString(), str_buf.GetSize());
+		return std::string(str_buf.GetString(), str_buf.GetSize());
 	}
 
 	for(auto it = d.MemberBegin(); it != d.MemberEnd(); it++) {
@@ -3536,7 +3532,7 @@ void CollabVMServer::ParseServerSettings(rapidjson::Value& settings, rapidjson::
 						break;
 					case kBanCommand:
 						if(value.IsString())
-							config.BanCommand = string(value.GetString(), value.GetStringLength());
+							config.BanCommand = std::string(value.GetString(), value.GetStringLength());
 						else {
 							WriteJSONObject(writer, server_settings_[kBanCommand], invalid_object_);
 							valid = false;

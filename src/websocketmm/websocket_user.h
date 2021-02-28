@@ -116,10 +116,14 @@ namespace websocketmm {
 		std::optional<std::string> selected_subprotocol_;
 
 		/**
+		 * Internal value for
+		 */
+		bool closing_{false};
+
+		/**
 		 * internal queue of websocket messages
 		 */
 		std::vector<std::shared_ptr<const websocket_message>> message_queue_;
-		std::mutex message_queue_lock_;
 	};
 } // namespace websocketmm
 

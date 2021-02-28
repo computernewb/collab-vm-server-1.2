@@ -57,7 +57,9 @@ namespace websocketmm {
 		//void join_to_server(websocket_user* user);
 		//void leave_server(websocket_user* user);
 
-		// these run the internal handlers or do nothing
+		// These functions dispatch to the internal handlers or do nothing.
+		// (return success in the case of verify).
+
 		bool verify(const std::weak_ptr<websocketmm::websocket_user>& user);
 		void open(const std::weak_ptr<websocketmm::websocket_user>& user);
 		void message(const std::weak_ptr<websocketmm::websocket_user>& user, std::shared_ptr<const websocket_message> message);
