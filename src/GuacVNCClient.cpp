@@ -708,5 +708,5 @@ void GuacVNCClient::GenerateThumbnail() {
 }
 
 GuacVNCClient::~GuacVNCClient() {
-	GuacClient::~GuacClient();
+
 }
