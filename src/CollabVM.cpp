@@ -34,6 +34,8 @@ Please email rightowner@gmail.com for any assistance.
 #include "CollabVM.h"
 #include "GuacInstructionParser.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include <websocketmm/server.h>
 #include <websocketmm/websocket_user.h>
 
@@ -147,7 +149,8 @@ enum SERVER_SETTINGS {
 	kBanCommand,
 	kJPEGQuality,
 	kModEnabled,
-	kModPerms
+	kModPerms,
+	kBlacklistedUsernames
 };
 
 const static std::string server_settings_[] = {
@@ -159,7 +162,8 @@ const static std::string server_settings_[] = {
 	"ban-cmd",
 	"jpeg-quality",
 	"mod-enabled",
-	"mod-perms"
+	"mod-perms",
+	"blacklisted-usernames"
 };
 
 enum VM_SETTINGS {
@@ -195,7 +199,8 @@ enum VM_SETTINGS {
 	kUploadsEnabled,
 	kUploadCooldownTime,
 	kUploadMaxSize,
-	kUploadMaxFilename
+	kUploadMaxFilename,
+	kMOTD
 };
 
 static const std::string vm_settings_[] = {
@@ -231,7 +236,8 @@ static const std::string vm_settings_[] = {
 	"uploads-enabled",
 	"upload-cooldown-time",
 	"upload-max-size",
-	"upload-max-filename"
+	"upload-max-filename",
+	"motd"
 };
 
 static const std::string hypervisor_names_[] {
@@ -322,6 +328,9 @@ void CollabVMServer::Run(uint16_t port, std::string doc_root) {
 	server_->set_close_handler(std::bind(&CollabVMServer::OnClose, this, _1));
 	server_->set_message_handler(std::bind(&CollabVMServer::OnMessageFromWS, this, _1, _2));
 
+	// Split blacklisted usernames into array
+	boost::split(blacklisted_usernames_, database_.Configuration.BlacklistedNames, boost::is_any_of(";"));
+
 	// retains compatibility with previous server behaviour
 	server_->start("0.0.0.0", port);
 
@@ -409,7 +418,6 @@ void CollabVMServer::DeleteIPData(IPData& ip_data) {
 
 bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handle) {
 	if(auto handle_sp = handle.lock()) {
-
 		auto do_subprotocol_check = [&](beast::string_view offered_tokens) -> bool {
 			// tokenize the Sec-Websocket-Protocol header offered by the client
 			http::token_list offered(offered_tokens);
@@ -1719,6 +1727,31 @@ void CollabVMServer::OnRenameInstruction(const std::shared_ptr<CollabVMUser>& us
 			result = UsernameChangeResult::kUsernameTaken;
 		}
 	} else {
+
+		if(!gen_username) {
+			if(std::find(blacklisted_usernames_.begin(), blacklisted_usernames_.end(), username) != blacklisted_usernames_.end() && user->user_rank != UserRank::kModerator && user->user_rank != UserRank::kAdmin) {
+				// The requested username is blacklisted
+				result = UsernameChangeResult::kBlacklisted;
+				std::string instr;
+				instr = "6.rename,1.0,1.3,";
+				if(!user->username) {
+					instr += "0.,";
+				} else {
+					instr += std::to_string(user->username->length());
+					instr += '.';
+					instr += *user->username;
+					instr += ',';
+				}
+				std::string rank = std::to_string(user->user_rank);
+				instr += std::to_string(rank.length());
+				instr += '.';
+				instr += rank;
+				instr += ';';
+				SendWSMessage(*user, instr);
+				return;
+			}
+		}
+
 		// The requested username is valid and available
 		ChangeUsername(user, username, UsernameChangeResult::kSuccess, args.size() > 1);
 		return;
@@ -1755,6 +1788,18 @@ void CollabVMServer::SendActionInstructions(VMController& controller, const VMSe
 	AppendVMActions(controller, settings, instr);
 	controller.GetUsersList().ForEachUser([this, &instr](CollabVMUser& user) {
 		SendWSMessage(user, instr);
+	});
+}
+
+void CollabVMServer::BroadcastMOTD(VMController& controller, const VMSettings& settings) {
+	std::string instr = "4.chat,0.,";
+	instr += std::to_string(settings.MOTD.length());
+	instr += '.';
+	instr += settings.MOTD;
+	instr += ';';
+
+	controller.GetUsersList().ForEachUser([self = shared_from_this(), &instr](CollabVMUser& user) {
+		self->SendWSMessage(user, instr);
 	});
 }
 
@@ -1797,6 +1842,16 @@ void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& u
 
 	SendOnlineUsersList(*user);
 	SendChatHistory(*user);
+
+	// Send the MOTD if it's not empty.
+	if(!controller.GetSettings().MOTD.empty()) {
+		instr = "4.chat,0.,";
+		instr += std::to_string(controller.GetSettings().MOTD.length());
+		instr += '.';
+		instr += controller.GetSettings().MOTD;
+		instr += ';';
+		SendWSMessage(*user, instr);
+	}
 
 	user->guac_user = new GuacUser(this, user->handle);
 	controller.AddUser(user);
@@ -3086,6 +3141,14 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 							valid = false;
 						}
 						break;
+					case kMOTD:
+						if(value.IsString()) {
+							vm.MOTD = std::string(value.GetString(), value.GetStringLength());
+						} else {
+							WriteJSONObject(writer, vm_settings_[kMOTD], invalid_object_);
+							valid = false;
+						}
+						break;
 				}
 				break;
 			}
@@ -3111,12 +3174,12 @@ std::string CollabVMServer::PerformConfigFunction(const std::string& json) {
 		return std::string(str_buf.GetString(), str_buf.GetSize());
 	}
 	// Copy the data to a writable buffer
-	size_t len = json.length() + 1;
-	char* buf = new char[len];
-	memcpy(buf, json.c_str(), len);
+	std::string buf(json);
+
 	// Parse the JSON
 	Document d;
-	d.ParseInsitu(buf);
+	d.ParseInsitu(buf.data());
+
 	if(!d.IsObject()) {
 		writer.String("Root value was not an object");
 		writer.EndObject();
@@ -3175,17 +3238,18 @@ std::string CollabVMServer::PerformConfigFunction(const std::string& json) {
 						// Check if the VM name is already taken
 						auto vm_it = database_.VirtualMachines.find(std::string(name_it->value.GetString(), name_it->value.GetStringLength()));
 						if(vm_it == database_.VirtualMachines.end()) {
-							VMSettings* vm = new VMSettings();
+							std::shared_ptr<VMSettings> vm = std::make_shared<VMSettings>();
+
 							if(ParseVMSettings(*vm, it->value, writer)) {
-								std::shared_ptr<VMSettings> vm_ptr(vm);
-								database_.AddVM(vm_ptr);
-								if(vm->AutoStart) {
-									CreateVMController(vm_ptr)->Start();
-								}
+								database_.AddVM(vm);
+
+								// If the VMSettings are configured to autostart
+								if(vm->AutoStart)
+									CreateVMController(vm)->Start();
+
 								WriteServerSettings(writer);
 								break;
 							}
-							delete vm;
 						} else {
 							writer.String("A VM with that name already exists");
 						}
@@ -3444,6 +3508,10 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 					writer.String(vm_settings_[kUploadMaxFilename].c_str());
 					writer.Uint(vm->UploadMaxFilename);
 					break;
+				case kMOTD:
+					writer.String(vm_settings_[kMOTD].c_str());
+					writer.String(vm->MOTD.c_str());
+					break;
 			}
 		}
 		writer.EndObject();
@@ -3569,6 +3637,18 @@ void CollabVMServer::ParseServerSettings(rapidjson::Value& settings, rapidjson::
 							}
 						} else {
 							WriteJSONObject(writer, server_settings_[kModPerms], invalid_object_);
+							valid = false;
+						}
+						break;
+					case kBlacklistedUsernames:
+						if(value.IsString()) {
+							config.BlacklistedNames = std::string(value.GetString(), value.GetStringLength());
+
+							// Refresh list of blacklisted usernames
+							blacklisted_usernames_.clear();
+							boost::split(blacklisted_usernames_, database_.Configuration.BlacklistedNames, boost::is_any_of(";"));
+						} else {
+							WriteJSONObject(writer, server_settings_[kBlacklistedUsernames], invalid_object_);
 							valid = false;
 						}
 						break;

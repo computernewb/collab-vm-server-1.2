@@ -155,6 +155,9 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 */
 	typedef void (CollabVMServer::*GuacamoleInstruction)(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 
+
+	void BroadcastMOTD(VMController& controller, const VMSettings& settings);
+
    private:
 
 	/**
@@ -375,7 +378,8 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	enum UsernameChangeResult : char {
 		kSuccess = '0',		  // The username was successfully changed
 		kUsernameTaken = '1', // Someone already has the username or it is registered to an account
-		kInvalid = '2'		  // The requested username had invalid characters
+		kInvalid = '2',		  // The requested username had invalid characters
+		kBlacklisted = '3'
 	};
 
 	/**
@@ -402,6 +406,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 * Sends an action instruction to all users currently connected to the VMController.
 	 */
 	void SendActionInstructions(VMController& controller, const VMSettings& settings);
+
 
 	bool IsFilenameValid(const std::string& filename);
 
@@ -488,7 +493,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 * Each connection will have it's own CollabVMUser structure
 	 * associated with it. This map should only be modified from within
 	 * the processing thread. If the map needs to be accessed from another
-	 * thread then it must aquire the _connectionsLock mutex first.
+	 * thread then it must acquire the _connectionsLock mutex first.
 	 */
 	std::set<std::shared_ptr<CollabVMUser>, std::owner_less<std::shared_ptr<CollabVMUser>>> connections_;
 
@@ -498,6 +503,11 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 * as _connections map above.
 	 */
 	std::map<std::string, std::shared_ptr<CollabVMUser>, case_insensitive_cmp> usernames_;
+
+	/**
+	 * List of usernames that should not be allowed
+	 */
+	std::vector<std::string> blacklisted_usernames_;
 
 	std::set<std::shared_ptr<CollabVMUser>, std::owner_less<std::shared_ptr<CollabVMUser>>> admin_connections_;
 

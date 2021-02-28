@@ -131,4 +131,8 @@ struct Config
 	//std::string BlackList;
 	//std::string WhiteList;
 
+	/**
+	 * Non-split blacklisted usernames.
+	 */
+	std::string BlacklistedNames;
 };

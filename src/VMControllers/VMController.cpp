@@ -61,6 +61,9 @@ void VMController::ChangeSettings(const std::shared_ptr<VMSettings>& settings) {
 	   settings->VotesEnabled != settings_->VotesEnabled ||
 	   settings->UploadsEnabled != settings_->UploadsEnabled) {
 		server_.ActionsChanged(*this, *settings);
+	} else if(settings->MOTD != settings_->MOTD &&
+			  !settings->MOTD.empty()) {
+		server_.BroadcastMOTD(*this, *settings);
 	}
 }
 
@@ -158,16 +161,19 @@ void VMController::VoteEndedCallback(const boost::system::error_code& ec) {
 void VMController::EndVote(bool cancelVote) {
 	if(vote_state_ != VoteState::kVoting)
 		return;
+
 	bool vote_succeeded = (vote_count_yes_ >= vote_count_no_) && !cancelVote;
+
 	server_.BroadcastVoteEnded(*this, users_, vote_succeeded);
+
 	if(settings_->VoteCooldownTime) {
 		vote_state_ = VoteState::kCoolingdown;
 		boost::system::error_code ec;
 		vote_timer_.expires_from_now(std::chrono::seconds(settings_->VoteCooldownTime), ec);
-		std::shared_ptr<VMController> self = shared_from_this();
-		vote_timer_.async_wait([this, self](const boost::system::error_code& ec) {
+
+		vote_timer_.async_wait([self = shared_from_this()](const boost::system::error_code& ec) {
 			if(!ec)
-				vote_state_ = VoteState::kIdle;
+				self->vote_state_ = VoteState::kIdle;
 		});
 	} else {
 		vote_state_ = VoteState::kIdle;
@@ -377,4 +383,3 @@ bool VMController::IsFileUploadValid(const std::shared_ptr<CollabVMUser>& user, 
 	return file_size >= 1 && file_size <= settings_->MaxUploadSize &&
 		   AgentClient::IsFilenameValid(agent_max_filename_, filename);
 }
-
