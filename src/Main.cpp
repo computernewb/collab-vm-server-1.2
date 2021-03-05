@@ -27,6 +27,8 @@ void IgnorePipe() {
 
 #ifndef UNIT_TEST
 int main(int argc, char* argv[]) {
+	if(!getuid()) std::cout << "\u001b[33mWarning:\u001b[0m CollabVM does not require root to run! Unless you are running a VM which requires administrator privileges, it is not advised to run as root.\n\n";
+	if(!fopen("/dev/kvm", "w")) std::cout << "\u001b[33mWarning:\u001b[0m You do not have access to KVM! The server can still run but you will not have any acceleration.\nMake sure you have Virtualization enabled, have access to /dev/kvm, are in the KVM group or your CPU supports VT-x or AMD-V.\n\n";
 	try {
 		if(argc < 2 || argc > 3) {
 			std::cout << "Usage: [Port] [HTTP dir]\n";
