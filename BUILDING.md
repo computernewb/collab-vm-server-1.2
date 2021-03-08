@@ -124,9 +124,8 @@ On MacOS X, there is a development kit called "XCode". I have no idea at all if 
 - Open a Terminal and a web browser. Go to https://brew.sh.
 - Copy the command from the home page.
 - Enter your password if it asks and start the installation.
-- Once it is finished installing, run the following command: **brew install boost cairo gcc ossp-uuid sqlite3**
-- Because libvncserver is not available in the Homebrew Forumlas, it will have to be compiled manually. Type **git clone https://github.com/LibVNC/libvncserver**. Make sure you have the dependencies and build it with **cmake -DLIBVNCSERVER_WITH_WEBSOCKETS=OFF**
-- Compile libodb and libodb-sqlite by downloading the files from Code Synthesis's website.
+- Once it is finished installing, run the following command: `brew install boost cairo gcc sqlite3`
+- Because libvncserver is not available in the Homebrew Forumlas, it will have to be compiled manually. Type `git clone https://github.com/LibVNC/libvncserver`. Make sure you have the dependencies and build it with `cmake -DLIBVNCSERVER_WITH_WEBSOCKETS=OFF`
 - Verify all the dependencies have been successfully installed and build the solution.
 
 
