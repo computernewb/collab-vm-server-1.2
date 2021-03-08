@@ -45,8 +45,6 @@ main() {
 	triplet_install "cairo";
 	triplet_install "boost";
 	triplet_install "sqlite";
-	triplet_install "odb" "nodev-but-this-string-is-meaningless";
-	triplet_install "libossp-uuid";
 	triplet_install "turbojpeg";
 
 	log "Dependency grab finished.";

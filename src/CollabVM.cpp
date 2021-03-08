@@ -56,7 +56,7 @@ Please email rightowner@gmail.com for any assistance.
 	#include "guacamole/protocol.h"
 #endif
 
-#include <ossp/uuid.h>
+//#include <ossp/uuid.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/reader.h>
 #include <rapidjson/stringbuffer.h>
@@ -1815,6 +1815,7 @@ void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& u
 		SendWSMessage(*user, "7.connect,1.0;");
 		return;
 	}
+
 	auto it = vm_controllers_.find(vm_name);
 	if(it == vm_controllers_.end()) {
 		// VM not found
@@ -1823,6 +1824,7 @@ void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& u
 	}
 
 	VMController& controller = *it->second;
+
 
 	// Send cooldown time before action instruction
 	if(user->ip_data.upload_in_progress)
@@ -3098,7 +3100,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						break;
 					case kHeartbeatTimeout:
 						if(value.IsUint()) {
-							vm.HeartbeatTimeout = value.GetUint();
+							//vm.HeartbeatTimeout = value.GetUint();
 						} else {
 							WriteJSONObject(writer, server_settings_[kHeartbeatTimeout], invalid_object_);
 							valid = false;
@@ -3490,7 +3492,8 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 					break;
 				case kHeartbeatTimeout:
 					writer.String(vm_settings_[kHeartbeatTimeout].c_str());
-					writer.Uint(vm->HeartbeatTimeout);
+					//writer.Uint(vm->HeartbeatTimeout);
+					writer.Uint(0);
 					break;
 				case kUploadsEnabled:
 					writer.String(vm_settings_[kUploadsEnabled].c_str());

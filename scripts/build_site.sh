@@ -11,7 +11,7 @@ build(){
 	DATE=$(date +"%x %I:%M %p")
 	UNAME_ARCH=$1
 	UNAME_KERN=$(uname -srv)
-	CVM_VERSION="v1.2.10~6969"
+	CVM_VERSION="v1.2.11"
 	if [ -e ./.git/refs/heads/master ]
 	then
 		UGIT_COMMIT_ID=$(git rev-parse head >/dev/null 2>&1 && git rev-parse head || git rev-parse master)

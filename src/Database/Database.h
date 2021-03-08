@@ -1,18 +1,20 @@
-#pragma once
+#ifndef COLLAB_VM_SERVER_DATABASE_H
+#define COLLAB_VM_SERVER_DATABASE_H
+
 #include <map>
 #include <memory>
 #include <string>
-#include <odb/database.hxx>
 
 #include "Config.h"
 #include "VMSettings.h"
 
 namespace CollabVM
 {
-	class Database
-	{
-	public:
+
+	class Database {
+	   public:
 		Database();
+		~Database();
 
 		/**
 		 * Save changes made to the configuration.
@@ -36,8 +38,6 @@ namespace CollabVM
 		 */
 		void RemoveVM(const std::string& name);
 
-		~Database();
-
 		/**
 		 * Server Configuration
 		 */
@@ -48,7 +48,15 @@ namespace CollabVM
 		 */
 		std::map<std::string, std::shared_ptr<VMSettings>> VirtualMachines;
 
-	private:
-		odb::database* db_;
-	};
+	   private:
+	   		struct DbImpl;
+
+
+			/**
+		 	 * A unique_ptr<> to the underlying implementation of the database.
+		 	 */
+			std::unique_ptr<DbImpl> impl;
+	   };
 }
+
+#endif

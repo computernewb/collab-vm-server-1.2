@@ -45,7 +45,7 @@ main(){
 	triplet_install "sqlite3";
 	triplet_install "cyrus-sasl";
 
-	# Install other deps
+	# Install other deps (TODO: Remove! We DON'T depend on them anymore!!!!)
 	[[ ! -d "cvmlib_src32/" ]] && mkdir cvmlib_src32;
 	[[ ! -d "cvmlib32/" ]] && mkdir cvmlib32;
 	cd cvmlib_src32;
