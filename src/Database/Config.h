@@ -7,37 +7,33 @@
 #include <stdint.h>
 
 struct Config {
+	// Default-constructor provides default server configuration.
 
-// Default-constructor provides default server configuration.
-
-	Config() :
-	ID(0),
-	MasterPassword("collabvm"), // You're gonna wanna change this because any password we put here is gonna be insecure by default.
-	ModPassword("cvmmod"), // Change this one too if you enable the Moderator rank
-	MaxConnections(5),
-	ChatRateCount(4),
-	ChatRateTime(3),
-	ChatMuteTime(30),
-	TurnRateCount(80),
-	TurnRateTime(3),
-	TurnMuteTime(5),
-	NameRateCount(20),
-	NameRateTime(3),
-	NameMuteTime(10),
-	ChatMsgHistory(10),
-	MaxUploadTime(120),
-	BanCommand(""),
+	Config()
+		: ID(0),
+		  MasterPassword("collabvm"), // You're gonna wanna change this because any password we put here is gonna be insecure by default.
+		  ModPassword("cvmmod"),	  // Change this one too if you enable the Moderator rank
+		  MaxConnections(5),
+		  ChatRateCount(4),
+		  ChatRateTime(3),
+		  ChatMuteTime(30),
+		  TurnRateCount(80),
+		  TurnRateTime(3),
+		  TurnMuteTime(5),
+		  NameRateCount(20),
+		  NameRateTime(3),
+		  NameMuteTime(10),
+		  ChatMsgHistory(10),
+		  MaxUploadTime(120),
+		  BanCommand(""),
 #ifdef USE_JPEG
-	JPEGQuality(75),
+		  JPEGQuality(75),
 #else
-	JPEGQuality(255),
+		  JPEGQuality(255),
 #endif
-	ModEnabled(false),
-	ModPerms(0)
-	{
+		  ModEnabled(false),
+		  ModPerms(0) {
 	}
-
-
 
 	uint8_t ID;
 

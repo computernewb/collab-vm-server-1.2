@@ -1727,7 +1727,6 @@ void CollabVMServer::OnRenameInstruction(const std::shared_ptr<CollabVMUser>& us
 			result = UsernameChangeResult::kUsernameTaken;
 		}
 	} else {
-
 		if(!gen_username) {
 			if(std::find(blacklisted_usernames_.begin(), blacklisted_usernames_.end(), username) != blacklisted_usernames_.end() && user->user_rank != UserRank::kModerator && user->user_rank != UserRank::kAdmin) {
 				// The requested username is blacklisted
@@ -1824,7 +1823,6 @@ void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& u
 	}
 
 	VMController& controller = *it->second;
-
 
 	// Send cooldown time before action instruction
 	if(user->ip_data.upload_in_progress)

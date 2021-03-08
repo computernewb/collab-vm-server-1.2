@@ -4,36 +4,31 @@
 #include <string>
 #include <stdint.h>
 
-
 struct VMSettings {
-
 	enum HypervisorEnum {
 		kQEMU /* Only QEMU is supported right now */
 	};
 
-	enum SnapshotMode
-	{
-		kOff, // No snapshots
+	enum SnapshotMode {
+		kOff,		  // No snapshots
 		kVMSnapshots, // Use loadvm command to load the snapshots
-		kHDSnapshots // Use hard disk snapshots
+		kHDSnapshots  // Use hard disk snapshots
 	};
 
-	enum FileMode
-	{
+	enum FileMode {
 		kNone,
 		kWhiteList,
 		kBlackList
 	};
 
-	enum SocketType
-	{
+	enum SocketType {
 		kTCP,
 		kLocal
 	};
 
 	std::string Name;
 
-	uint8_t Hypervisor{HypervisorEnum::kQEMU};
+	uint8_t Hypervisor { HypervisorEnum::kQEMU };
 
 	bool AutoStart = false;
 
@@ -46,7 +41,7 @@ struct VMSettings {
 
 	bool RestoreHeartbeat = false;
 	bool AgentEnabled = false;
-	uint8_t AgentSocketType{SocketType::kLocal};
+	uint8_t AgentSocketType { SocketType::kLocal };
 	bool AgentUseVirtio = false;
 
 	std::string AgentAddress;
@@ -64,18 +59,18 @@ struct VMSettings {
 	uint8_t MaxAttempts = 5;
 
 	bool UploadsEnabled = false;
-	uint32_t UploadCooldownTime{};
-	uint32_t MaxUploadSize{};
-	uint8_t UploadMaxFilename{};
+	uint32_t UploadCooldownTime {};
+	uint32_t MaxUploadSize {};
+	uint8_t UploadMaxFilename {};
 
 	std::string Snapshot;
 	std::string VNCAddress;
-	uint16_t VNCPort{};
-	uint8_t QMPSocketType{SocketType::kLocal};
+	uint16_t VNCPort {};
+	uint8_t QMPSocketType { SocketType::kLocal };
 	std::string QMPAddress;
-	uint16_t QMPPort{};
+	uint16_t QMPPort {};
 	std::string QEMUCmd;
-	uint8_t QEMUSnapshotMode{SnapshotMode::kOff};
+	uint8_t QEMUSnapshotMode { SnapshotMode::kOff };
 };
 
 #endif

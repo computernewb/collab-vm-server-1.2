@@ -8,11 +8,12 @@
 #include "Config.h"
 #include "VMSettings.h"
 
-namespace CollabVM
-{
+namespace CollabVM {
 
-	class Database {
-	   public:
+	/**
+	 * Abstraction structure over the database.
+	 */
+	struct Database {
 		Database();
 		~Database();
 
@@ -49,14 +50,17 @@ namespace CollabVM
 		std::map<std::string, std::shared_ptr<VMSettings>> VirtualMachines;
 
 	   private:
-	   		struct DbImpl;
+		/**
+		 * Database implementation class.
+		 */
+		struct DbImpl;
 
+		/**
+		 * A unique_ptr<> to the underlying implementation of the database.
+		 */
+		std::unique_ptr<DbImpl> impl;
+	};
 
-			/**
-		 	 * A unique_ptr<> to the underlying implementation of the database.
-		 	 */
-			std::unique_ptr<DbImpl> impl;
-	   };
-}
+} // namespace CollabVM
 
 #endif
