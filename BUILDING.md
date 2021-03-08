@@ -30,12 +30,11 @@ First and foremost, your version of GCC or clang should be able to compile C++17
 * libpng
 * libturbojpeg
 * libsqlite3-dev
-* libodb
-* libodb-sqlite
-* libossp-uuid-dev
+
+These dependencies compile with the collab-vm-server source code and are shipped with it.
+
 * RapidJSON
 * UriParser
-
 
 ### Windows
 On Windows, you have the following options:
@@ -45,11 +44,6 @@ On Windows, you have the following options:
 #### MSYS2 with MinGW 
 To build the server with MSYS2 with MinGW, do the following: 
 
-Download ODB [here](http://www.codesynthesis.com/products/odb/download.xhtml).
-
-- Grab the executable for your platform from the website. Extract wherever, just make sure it's in your MSYS2 PATH when building the server.
-
-Then execute the following commands:
 ```
 pacman -Syu
 
@@ -101,9 +95,7 @@ Visual Studio is currently unsupported, however it may be supported later once s
 ### Linux 
 On Linux, compiling with both clang and gcc seem to work fine. It is recommended to use clang.
 
-First download ODB from either [the CodeSynthesis website](http://www.codesynthesis.com/products/odb/download.xhtml) or download it from your local repositories. (On Ubuntu, you can type `sudo apt install -y odb`).
-
-Then run the following commands:
+Run the following commands:
 
 ```
 # on Arch Linux:
@@ -122,7 +114,7 @@ sudo yum groupinstall 'Development Tools'
 make
 ```
 
-To build with Clang (and, also possibly instrument the binary with ASAN/such), do `make CC=clang CXX=clang++`.
+To build with the Clang compiler (and, also possibly instrument the binary with ASAN/such), do `make CC=clang CXX=clang++`.
 
 ### MacOS X
 **NOTE**: This is untested, and is not guaranteed to work.
