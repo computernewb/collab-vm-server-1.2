@@ -1,120 +1,76 @@
-#pragma once
+#ifndef COLLAB_VM_SERVER_VMSETTINGS_H
+#define COLLAB_VM_SERVER_VMSETTINGS_H
+
 #include <string>
 #include <stdint.h>
-#include <odb/core.hxx>
 
-#pragma db object
-struct VMSettings
-{
-	enum HypervisorEnum
-	{
-		kQEMU,
-		kVirtualBox,
-		kVMWare
+struct VMSettings {
+	enum HypervisorEnum {
+		kQEMU /* Only QEMU is supported right now */
 	};
 
-	enum SnapshotMode
-	{
-		kOff,			// No snapshots
-		kVMSnapshots,	// Uses the loadvm command to restore snapshots including
-						// the CPU and RAM of the VM
-		kHDSnapshots	// Restores snapshots from a hard drive image
+	enum SnapshotMode {
+		kOff,		  // No snapshots
+		kVMSnapshots, // Use loadvm command to load the snapshots
+		kHDSnapshots  // Use hard disk snapshots
 	};
 
-	enum FileMode
-	{
+	enum FileMode {
 		kNone,
 		kWhiteList,
 		kBlackList
 	};
 
-	enum SocketType
-	{
+	enum SocketType {
 		kTCP,
-		kLocal	// Unix domain socket or named pipe
+		kLocal
 	};
 
-	VMSettings() :
-		Hypervisor(kQEMU),
-		AutoStart(false),
-		RestoreOnShutdown(false),
-		RestoreOnTimeout(false),
-		RestoreHeartbeat(false),
-		//RestorePeriodically(false),
-		//PeriodRestoreTime(3600),
-		AgentEnabled(false),
-		AgentSocketType(kLocal),
-		AgentUseVirtio(false),
-		TurnsEnabled(false),
-		TurnTime(20), // 20 seconds
-		VotesEnabled(false),
-		VoteTime(60),
-		VoteCooldownTime(600),
-		QMPSocketType(kLocal),
-		MaxAttempts(5),
-		//UploadsEnabled(false),
-		//UploadWaitTime(180), // 3 minutes
-		//MaxUploadSize(15728640), // 15 MiB
-		//FileUploadMode(NONE),
-		QEMUSnapshotMode(kOff)
-	{
-	}
-
-#pragma db id
 	std::string Name;
-	HypervisorEnum Hypervisor;
-	bool AutoStart;
+
+	uint8_t Hypervisor { HypervisorEnum::kQEMU };
+
+	bool AutoStart = false;
+
 	std::string DisplayName;
 	std::string MOTD;
 	std::string Description;
-	bool RestoreOnShutdown;
-	bool RestoreOnTimeout;
-	bool RestoreHeartbeat;
-	uint32_t HeartbeatTimeout; // seconds
-	//bool RestorePeriodically;
-	//uint32_t PeriodRestoreTime;
 
-	bool AgentEnabled;
-	SocketType AgentSocketType;
-	bool AgentUseVirtio;
+	bool RestoreOnShutdown = false;
+	bool RestoreOnTimeout = false;
+
+	bool RestoreHeartbeat = false;
+	bool AgentEnabled = false;
+	uint8_t AgentSocketType { SocketType::kLocal };
+	bool AgentUseVirtio = false;
+
 	std::string AgentAddress;
 	uint16_t AgentPort;
 
-	bool TurnsEnabled;
-	uint16_t TurnTime; // Measured in seconds
+	bool TurnsEnabled = false;
+	uint16_t TurnTime = 20;
 
-	bool VotesEnabled;
+	bool VotesEnabled = false;
 
-	/**
-	 * The amount of time a vote lasts (seconds).
-	 */
-	uint16_t VoteTime;
+	uint16_t VoteTime = 60;
 
-	/**
-	 * The amount of time in between votes (seconds).
-	 */
-	uint16_t VoteCooldownTime;
+	uint16_t VoteCooldownTime = 600;
 
-	/**
-	 * The maximum amount of attempts to connect to the hypervisor
-	 * with either the Guacamole client or some other client.
-	 */
-	uint8_t MaxAttempts;
+	uint8_t MaxAttempts = 5;
 
-	bool UploadsEnabled;
-	uint32_t UploadCooldownTime; // Measured in seconds
-	uint32_t MaxUploadSize; // Measured in bytes
-	uint8_t UploadMaxFilename;
-	//FileMode FileUploadMode;
+	bool UploadsEnabled = false;
+	uint32_t UploadCooldownTime {};
+	uint32_t MaxUploadSize {};
+	uint8_t UploadMaxFilename {};
 
-	// Possibly hypervisor-specific
 	std::string Snapshot;
 	std::string VNCAddress;
-	uint16_t VNCPort;
-	SocketType QMPSocketType;
+	uint16_t VNCPort {};
+	uint8_t QMPSocketType { SocketType::kLocal };
 	std::string QMPAddress;
-	uint16_t QMPPort;
-	// The command for starting QEMU 
+	uint16_t QMPPort {};
 	std::string QEMUCmd;
-	SnapshotMode QEMUSnapshotMode;
+	uint8_t QEMUSnapshotMode { SnapshotMode::kOff };
 };
+
+#endif

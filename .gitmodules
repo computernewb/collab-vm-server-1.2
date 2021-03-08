@@ -1,0 +1,3 @@
+[submodule "vendor/sqlite_orm"]
+	path = vendor/sqlite_orm
+	url = https://github.com/fnc12/sqlite_orm

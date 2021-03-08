@@ -66,6 +66,8 @@ namespace websocketmm {
 		 */
 		beast::string_view GetSubprotocols();
 
+		std::optional<http::request<http::string_body>>& GetUpgradeRequest();
+
 		/**
 		 * Select a subprotocol for this user's connection.
 		 * Once this function is called, an internal optional is written to

@@ -43,6 +43,11 @@ namespace websocketmm {
 		return user_data_;
 	}
 
+
+	std::optional<http::request<http::string_body>>& websocket_user::GetUpgradeRequest() {
+		return upgrade_request_;
+	}
+
 	void websocket_user::SelectSubprotocol(const std::string& subprotocol) {
 		selected_subprotocol_ = subprotocol;
 	}
