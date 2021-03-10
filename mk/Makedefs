@@ -43,10 +43,12 @@ ifeq ($(JPEG), 1)
 CCFLAGS += -DUSE_JPEG
 endif
 
+TOP := $(PWD)
+
 # TODO: Remove -fpermissive, all -Wno- and enable -Wall + -Wextra.
 CXXFLAGS = $(CCFLAGS) -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings \
 		-fpermissive -std=c++17 $(EXTRAINCS) \
-		-Isrc/rapidjson -Isrc/Database -Isrc/VMControllers \
+		-I$(TOP)/vendor/rapidjson/include -I$(TOP)/vendor/sqlite_orm/include -Isrc/Database -Isrc/VMControllers \
 		-Isrc/Sockets -Isrc/guacamole -Isrc/cpr -I$(OBJDIR) -DRAPIDJSON_HAS_CXX11_RVALUE_REFS
 
 # GCC dependency generation
@@ -55,9 +57,7 @@ DEPGEN = -MT $@ -MD -MP -MF $(OBJDIR)/$*.d
 .PHONY: all clean hardclean
 
 # All objects
-OBJS = $(OBJDIR)/Config-odb.o                    \
-       $(OBJDIR)/VMSettings-odb.o                \
-       $(OBJDIR)/Main.o                          \
+OBJS = $(OBJDIR)/Main.o                          \
        $(OBJDIR)/CollabVM.o                      \
        $(OBJDIR)/Database.o                      \
        $(OBJDIR)/QEMUController.o                \
@@ -174,15 +174,6 @@ $(BINDIR)/collab-vm-server: $(OBJS)
 	$(info Linking executable $@)
 	$(CXX) $(LDFLAGS) $(OBJS) $(LIBS) -o $@
 
-# Source generation rules
-
-$(OBJDIR)/Config-odb.cxx: src/Database/Config.h
-	$(info Generating ODB source file $@)
-	$(ODB) -d sqlite -o $(OBJDIR) -s -q $<
-
-$(OBJDIR)/VMSettings-odb.cxx: src/Database/VMSettings.h
-	$(info Generating ODB source file $@)
-	$(ODB) -d sqlite -o $(OBJDIR) -s -q $<
 
 # C/C++ compile rules
 
@@ -197,14 +188,6 @@ $(OBJDIR)/%.o: %.cxx
 $(OBJDIR)/%.o: %.c
 	$(info Compiling C source file $<)
 	$(CC) -c $< $(CCFLAGS) $(DEPGEN) -o $@
-
-
-# Explicit dependencies to help aid make when doing a compile of the source tree with multiple jobs going at once.
-# No matter what order this file ends up, it will be after the dependencies have been generated and compiled
-# meaning make -j17 (example) will now compile properly every single time.
-# 2x build perf boost
-
-src/Database/Database.cpp: $(OBJDIR)/Config-odb.cxx $(OBJDIR)/VMSettings-odb.cxx
 
 # include dependencies
 -include $(wildcard $(OBJDIR)/*.d)
