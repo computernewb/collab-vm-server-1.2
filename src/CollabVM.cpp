@@ -1684,6 +1684,25 @@ void CollabVMServer::OnKeyInstruction(const std::shared_ptr<CollabVMUser>& user,
 	}
 }
 
+void CollabVMServer::OnAutotypeInstruction(const std::shared_ptr<CollabVMUser>& user, std::string clipboard) {
+	// Only allow a user to autotype if they are an Admin or Moderator
+	if(user->vm_controller != nullptr &&
+	   (user->user_rank == UserRank::kAdmin ||
+	    user->user_rank == UserRank::kModerator ||
+		user->admin_connected) &&
+	   user->guac_user != nullptr && user->guac_user->client_) {
+        for(char& c : clipboard) {
+			std::vector<char*> v;
+			v.push_back(c);
+			v.push_back('1');
+			user->guac_user->client_->HandleKey(*user->guac_user, v);
+			v.pop_back();
+			v.push_back('0');
+			user->guac_user->client_->HandleKey(*user->guac_user, v);
+		}
+    }
+}
+
 void CollabVMServer::OnRenameInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
 	if(args.empty()) {
 		// The users wants the server to generate a username for them
