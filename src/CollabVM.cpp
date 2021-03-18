@@ -1684,13 +1684,16 @@ void CollabVMServer::OnKeyInstruction(const std::shared_ptr<CollabVMUser>& user,
 	}
 }
 
-void CollabVMServer::OnAutotypeInstruction(const std::shared_ptr<CollabVMUser>& user, std::string clipboard) {
+void CollabVMServer::OnAutotypeInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*> clipboard) {
 	// Only allow a user to autotype if they are an Admin or Moderator
 	if(user->vm_controller != nullptr &&
 	   (user->user_rank == UserRank::kAdmin ||
 	    user->user_rank == UserRank::kModerator ||
 		user->admin_connected) &&
 	   user->guac_user != nullptr && user->guac_user->client_) {
+        if(clipboard.empty()) {
+			return;
+		}
         for(char& c : clipboard) {
 			std::vector<char*> v;
 			v.push_back(c);

@@ -129,7 +129,6 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	void ExecuteCommandAsync(std::string command);
 	void MuteUser(const std::shared_ptr<CollabVMUser>& user, bool permanent);
 	void UnmuteUser(const std::shared_ptr<CollabVMUser>& user);
-	void OnAutotypeInstruction(const std::shared_ptr<CollabVMUser>& user, std::string clipboard);
 
 	// Shared definition of guacamole instruction garbage
 #define GuacamoleInstruction(name) \
