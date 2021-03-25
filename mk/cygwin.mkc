@@ -3,9 +3,8 @@
 CVM_HOME = $(shell pwd)
 CXX = g++
 CC = gcc
-ODB = $(CVM_HOME)/cvmlib/odb-2.4.0-i686-windows/bin/odb.exe
 
-LIBS = -Wl,--allow-multiple-definition -static-libstdc++ -pthread -lturbojpeg -ljpeg -lboost_system -lpng -lz -lvncclient -lcairo -lpixman-1 -ldl -lsqlite3 -Lcvmlib/lib -lodb-sqlite -lodb -luuid
+LIBS = -Wl,--allow-multiple-definition -static-libstdc++ -pthread -lturbojpeg -ljpeg -lboost_system -lpng -lz -lvncclient -lcairo -lpixman-1 -ldl -lsqlite3 -luuid
 
 OBJDIR = obj
 BINDIR = bin
@@ -15,5 +14,5 @@ BINDIR = bin
 
 -include mk/Makedefs
 
-CXXFLAGS += -DHAVE_CLOCK_GETTIME -D_GNU_SOURCE -I$(CVM_HOME)/cvmlib/include
+CXXFLAGS += -DHAVE_CLOCK_GETTIME -D_GNU_SOURCE
 

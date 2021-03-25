@@ -45,25 +45,6 @@ main(){
 	triplet_install "sqlite3";
 	triplet_install "cyrus-sasl";
 
-	# Install other deps
-	[[ ! -d "cvmlib_src/" ]] && mkdir cvmlib_src;
-	[[ ! -d "cvmlib/" ]] && mkdir cvmlib;
-	cd cvmlib_src;
-	log "Compiling local copy of libodb..";
-	tar_xrm https://www.codesynthesis.com/download/odb/2.4/libodb-2.4.0.tar.gz "libodb-2.4.0.tar.gz"
-	cd libodb-2.4.0
-	configure_build;
-	cd ..
-	log "Compiling local copy of libodb-sqlite..";
-	tar_xrm https://www.codesynthesis.com/download/odb/2.4/libodb-sqlite-2.4.0.tar.gz "libodb-sqlite-2.4.0.tar.gz"
-	cd libodb-sqlite-2.4.0
-	configure_build;
-	cd ..
-	log "Compiling local copy of ossp uuid..";
-	git clone https://github.com/sean-/ossp-uuid.git
-	cd ossp-uuid
-	configure_build_uuid;
-	log "All source dependencies built."
 	cd ..;
 	log "Dependency grab finished.";
 };main;
