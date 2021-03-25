@@ -17,25 +17,6 @@ tar_xrm(){
 	rm -f $2;
 }
 
-configure_build(){
-	log "Configuring..."
-	CPPFLAGS="-I$CVM_HOME/cvmlib32/include" LDFLAGS="-L$CVM_HOME/cvmlib32/lib" ./configure --prefix="$CVM_HOME/cvmlib32";
-	log "Building..."
-	make -j$(nproc)
-	log "Installing into prefix..."
-	make install
-}
-
-configure_build_uuid(){
-	# Behaviour to place includes correctly (ossp/)
-	log "Configuring..."
-	CPPFLAGS="-I$CVM_HOME/cvmlib32/include" LDFLAGS="-L$CVM_HOME/cvmlib32/lib" ./configure --prefix="$CVM_HOME/cvmlib32" --includedir="$CVM_HOME/cvmlib32/include/ossp";
-	log "Building..."
-	make -j$(nproc)
-	log "Installing into prefix..."
-	make install
-}
-
 main(){
 	log "Dependency grab started on $(date +"%x %I:%M %p").";
 	triplet_install "libvncserver";
