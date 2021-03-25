@@ -39,6 +39,7 @@ configure_build_uuid(){
 main(){
 	log "Dependency grab started on $(date +"%x %I:%M %p").";
 	triplet_install "libvncserver";
+	triplet_install "curl";
 	triplet_install "cairo";
 	triplet_install "dlfcn";
 	triplet_install "boost";
