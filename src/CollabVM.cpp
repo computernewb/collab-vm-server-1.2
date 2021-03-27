@@ -1684,7 +1684,7 @@ void CollabVMServer::OnKeyInstruction(const std::shared_ptr<CollabVMUser>& user,
 	}
 }
 
-void CollabVMServer::OnAutotypeInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*> clipboard) {
+void CollabVMServer::OnAutotypeInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& clipboard) {
 	// Only allow a user to autotype if they are an Admin or Moderator
 	if(user->vm_controller != nullptr &&
 	   (user->user_rank == UserRank::kAdmin ||
@@ -1694,13 +1694,19 @@ void CollabVMServer::OnAutotypeInstruction(const std::shared_ptr<CollabVMUser>& 
 		if(clipboard.empty()) {
 			return;
 		}
-		for(char& c : clipboard) {
+		// Why does it HAVE to be pointers? This is dumb.
+		for(char* c : clipboard) {
 			std::vector<char*> v;
+			std::vector<char*>& vref = v;
+			char one = '1';
+			char zero = '0';
+			char * onep = &one;
+			char * zerop = &zero;
 			v.push_back(c);
-			v.push_back('1');
+			v.push_back(onep);
 			user->guac_user->client_->HandleKey(*user->guac_user, v);
 			v.pop_back();
-			v.push_back('0');
+			v.push_back(zerop);
 			user->guac_user->client_->HandleKey(*user->guac_user, v);
 		}
 	}
