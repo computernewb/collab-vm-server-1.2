@@ -132,11 +132,10 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 
 	// Shared definition of guacamole instruction garbage
 #define GuacamoleInstruction(name) \
-		void On##name##Instruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
+	void On##name##Instruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 
 	GuacamoleInstruction(Mouse)
 	GuacamoleInstruction(Key)
-
 
 	GuacamoleInstruction(Rename)
 	GuacamoleInstruction(Connect)
@@ -156,11 +155,9 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 */
 	typedef void (CollabVMServer::*GuacamoleInstruction)(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args);
 
-
 	void BroadcastMOTD(VMController& controller, const VMSettings& settings);
 
    private:
-
 	/**
 	 * Backwards-compatibility typedef. Oops!
 	 */
@@ -310,7 +307,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 *
 	 * \tparam TAction The action to post. Should be, or inherit from the Action class.
 	 */
-	template<class TAction, class ...Args>
+	template<class TAction, class... Args>
 	inline void PostAction(Args&&... args) {
 		static_assert(std::is_base_of_v<Action, TAction> || std::is_same_v<TAction, Action>, "TAction needs to inherit from or be CollabVMServer::Action!");
 		std::unique_lock<std::mutex> lock(process_queue_lock_);
@@ -408,9 +405,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 */
 	void SendActionInstructions(VMController& controller, const VMSettings& settings);
 
-
 	bool IsFilenameValid(const std::string& filename);
-
 
 	void OnUploadTimeout(const boost::system::error_code ec, std::shared_ptr<UploadInfo> upload_info);
 	void StartFileUpload(CollabVMUser& user);
