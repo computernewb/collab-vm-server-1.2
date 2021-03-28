@@ -1698,15 +1698,11 @@ void CollabVMServer::OnAutotypeInstruction(const std::shared_ptr<CollabVMUser>& 
 		for(char* c : clipboard) {
 			std::vector<char*> v;
 			std::vector<char*>& vref = v;
-			char one = '1';
-			char zero = '0';
-			char * onep = &one;
-			char * zerop = &zero;
 			v.push_back(c);
-			v.push_back(onep);
+			v.push_back("1");
 			user->guac_user->client_->HandleKey(*user->guac_user, v);
 			v.pop_back();
-			v.push_back(zerop);
+			v.push_back("0");
 			user->guac_user->client_->HandleKey(*user->guac_user, v);
 		}
 	}
