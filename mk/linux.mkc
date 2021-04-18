@@ -4,7 +4,7 @@ CXX = g++
 CC = gcc
 ODB = odb
 
-LIBS = -pthread -lturbojpeg -ljpeg -lboost_system -lpng -lz -lvncclient -lcairo -lpixman-1 -ldl -lsqlite3 -lcurl
+LIBS = -pthread -lturbojpeg -ljpeg -lboost_system -lpng -lz -lvncclient -lcairo -lpixman-1 -ldl -lsqlite3
 
 OBJDIR = obj
 BINDIR = bin
