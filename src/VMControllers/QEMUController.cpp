@@ -262,7 +262,7 @@ void QEMUController::Start() {
 
 void QEMUController::SetCommand(const std::string& command) {
 	// Free all arguments
-	
+
 	//for(auto & it : qemu_command_)
 	//	delete[] it;
 
@@ -524,7 +524,7 @@ void QEMUController::StartQEMU() {
 		qemu_command_.push_back(nullptr);
 		std::cout << "Starting QEMU with command:\n";
 
-		for(auto & it : qemu_command_) {
+		for(auto& it : qemu_command_) {
 			if(it != nullptr)
 				std::cout << it << ' ';
 		}
@@ -766,6 +766,8 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {
 				} else {
 					std::cout << "Retrying..." << std::endl;
 					// Retry connecting
+					//KillQEMU();
+					//StartQEMU();
 					StartQMP();
 				}
 			} else if(internal_state_ == InternalState::kVNCConnecting ||
@@ -810,7 +812,7 @@ std::vector<const char*> QEMUController::SplitCommandLine(const char* command) {
 
 		return cmdList;
 	}
-#else // WIN32
+#else  // WIN32
 	{
 		// Windows has CommandLineToArgvW but not CommandLineToArgvA
 		// so the command must be converted to unicode first

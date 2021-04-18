@@ -72,9 +72,14 @@ namespace websocketmm {
 		}));
 
 		// Enable permessage deflate
-		websocket::permessage_deflate deflate;
-		deflate.server_enable = true;
-		ws_.set_option(deflate);
+		//
+		// this used to perform worse, but it was probably
+		// something else causing that
+		// maybe have this on a build time switch?
+
+//		websocket::permessage_deflate deflate;
+//		deflate.server_enable = true;
+//		ws_.set_option(deflate);
 
 		// We wrap validation and accepting inside of the strand we were given by the
 		// listener object to avoid concurrency issues.
@@ -116,6 +121,13 @@ namespace websocketmm {
 	void websocket_user::on_read(beast::error_code ec, std::size_t bytes_transferred) {
 		boost::ignore_unused(bytes_transferred);
 
+		// TODO(lily): clean this up some
+		//
+		// There is still a problem somewhere around here as the io_service thread sometimes pins..
+		// but this seems to have stopped the server completely deadlocking when this happens
+		//
+		// I still need to see what's up with that
+
 		if(ec == websocket::error::closed) {
 			net::post(ws_.get_executor(), [self = shared_from_this()]() {
 				self->server_->close(self->weak_from_this());
@@ -131,11 +143,17 @@ namespace websocketmm {
 
 			auto buffer_size = self->buffer_.size();
 
-			// Call the server's message handler
-			// with a temporary built websocket message from our data buffer (The handler can increase lifetime of this data, we don't care once we post it).
-			// Once the message handler returns, we consume the buffer.
-			self->server_->message(self->weak_from_this(), BuildWebsocketMessage(type, (std::uint8_t*)self->buffer_.data().data(), buffer_size));
-			self->buffer_.consume(buffer_size);
+			// HACK: for some reason spurious reads happen with zero size, (i think because the ec statement is still letting bad things in)
+			// for right now this is needed to avoid deadlocks
+			if(buffer_size) {
+
+				// Call the server's message handler
+				// with a temporary built websocket message from our data buffer (The handler can increase lifetime of this data, we don't care once we post it).
+				// Once the message handler returns, we consume the buffer as BuildWebsocketMessage copies the data in it.
+
+				self->server_->message(self->weak_from_this(), BuildWebsocketMessage(type, (std::uint8_t*)self->buffer_.data().data(), buffer_size));
+				self->buffer_.consume(buffer_size);
+			}
 
 			// Queue up another read operation.
 			self->ws_.async_read(self->buffer_, beast::bind_front_handler(&websocket_user::on_read, self->shared_from_this()));
@@ -172,7 +190,7 @@ namespace websocketmm {
 		if(closing_)
 			return;
 
-		// Configure the message type and schedule a asynchronous write.
+		// Configure the message opcode and then schedule a asynchronous write.
 		ws_.binary(message->message_type == websocket_message::type::binary);
 		ws_.async_write(net::buffer(message->data), beast::bind_front_handler(&websocket_user::on_write, shared_from_this()));
 	}
@@ -181,6 +199,8 @@ namespace websocketmm {
 		boost::ignore_unused(bytes_transferred);
 
 		if(ec) {
+			// probably isn't needed
+			message_queue_.clear();
 			return;
 		}
 
