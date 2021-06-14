@@ -200,7 +200,8 @@ enum VM_SETTINGS {
 	kUploadCooldownTime,
 	kUploadMaxSize,
 	kUploadMaxFilename,
-	kMOTD
+	kMOTD,
+	kVMPassword
 };
 
 static const std::string vm_settings_[] = {
@@ -237,7 +238,8 @@ static const std::string vm_settings_[] = {
 	"upload-cooldown-time",
 	"upload-max-size",
 	"upload-max-filename",
-	"motd"
+	"motd",
+	"vm-password"
 };
 
 static const std::string hypervisor_names_[] {
@@ -1827,7 +1829,7 @@ void CollabVMServer::BroadcastMOTD(VMController& controller, const VMSettings& s
 }
 
 void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
-	if(args.size() != 1 || user->guac_user != nullptr || !user->username) {
+	if(args.size() > 2 || user->guac_user != nullptr || !user->username) {
 		return;
 	}
 
@@ -1847,6 +1849,17 @@ void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& u
 	}
 
 	VMController& controller = *it->second;
+
+	if(!controller.GetSettings().VMPassword.empty())
+	{
+		// Check if the password is valid (or if the password is there at all)
+		if(args.size() != 2 || args[1] != controller.GetSettings().VMPassword) {
+			// Invalid password
+			SendWSMessage(*user, "7.connect,1.3;"); // 2 is used by something(?) in the webapp code, so let's go with 3 instead
+			return;
+		}
+		// Password is correct, continue.
+	}
 
 	// Send cooldown time before action instruction
 	if(user->ip_data.upload_in_progress)
@@ -2263,6 +2276,7 @@ void CollabVMServer::OnListInstruction(const std::shared_ptr<CollabVMUser>& user
 
 		instr += ',';
 
+	if(vm_settings.VMPassword.empty()) {
 		std::string* png = it->second->GetThumbnail();
 		if(png && png->length()) {
 			instr += std::to_string(png->length());
@@ -2270,6 +2284,20 @@ void CollabVMServer::OnListInstruction(const std::shared_ptr<CollabVMUser>& user
 			instr += *png;
 		} else {
 			instr += "0.";
+		}
+	}else{ // this fucking sucks
+		std::string png = "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";
+		instr += std::to_string(png.length());
+		instr += '.';
+		instr += png;
+	}
+
+		instr += ",";
+
+		if(!vm_settings.VMPassword.empty()) {
+			instr += "1.1"; // A password is required to connect to this VM
+		}else{
+			instr += "1.0"; // A password isn't required to connect to this VM
 		}
 	}
 	instr += ';';
@@ -3173,6 +3201,14 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 							valid = false;
 						}
 						break;
+					case kVMPassword:
+						if(value.IsString()) {
+							vm.VMPassword = std::string(value.GetString(), value.GetStringLength());
+						} else {
+							WriteJSONObject(writer, vm_settings_[kVMPassword], invalid_object_);
+							valid = false;
+						}
+						break;
 				}
 				break;
 			}
@@ -3536,6 +3572,10 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 				case kMOTD:
 					writer.String(vm_settings_[kMOTD].c_str());
 					writer.String(vm->MOTD.c_str());
+					break;
+				case kVMPassword:
+					writer.String(vm_settings_[kVMPassword].c_str());
+					writer.String(vm->VMPassword.c_str());
 					break;
 			}
 		}

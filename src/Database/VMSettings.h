@@ -34,6 +34,7 @@ struct VMSettings {
 
 	std::string DisplayName;
 	std::string MOTD;
+	std::string VMPassword;
 	std::string Description;
 
 	bool RestoreOnShutdown = false;

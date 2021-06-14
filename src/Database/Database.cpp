@@ -68,7 +68,8 @@ namespace CollabVM {
 									   make_column("QMPAddress", &VMSettings::QMPAddress),
 									   make_column("QMPPort", &VMSettings::QMPPort),
 									   make_column("QEMUCmd", &VMSettings::QEMUCmd),
-									   make_column("QEMUSnapshotMode", &VMSettings::QEMUSnapshotMode))
+									   make_column("QEMUSnapshotMode", &VMSettings::QEMUSnapshotMode),
+									   make_column("VMPassword", &VMSettings::VMPassword))
 							);
 	}
 
