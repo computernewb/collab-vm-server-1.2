@@ -33,6 +33,7 @@ Please email rightowner@gmail.com for any assistance.
 
 #include "CollabVM.h"
 #include "GuacInstructionParser.h"
+#include "BinaryResources.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -198,7 +199,8 @@ enum VM_SETTINGS {
 	kUploadCooldownTime,
 	kUploadMaxSize,
 	kUploadMaxFilename,
-	kMOTD
+	kMOTD,
+	kVMPassword
 };
 
 static const std::string vm_settings_[] = {
@@ -235,7 +237,8 @@ static const std::string vm_settings_[] = {
 	"upload-cooldown-time",
 	"upload-max-size",
 	"upload-max-filename",
-	"motd"
+	"motd",
+	"vm-password"
 };
 
 static const std::string hypervisor_names_[] {
@@ -1801,7 +1804,7 @@ void CollabVMServer::BroadcastMOTD(VMController& controller, const VMSettings& s
 }
 
 void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
-	if(args.size() != 1 || user->guac_user != nullptr || !user->username) {
+	if(args.size() > 2 || user->guac_user != nullptr || !user->username) {
 		return;
 	}
 
@@ -1821,6 +1824,16 @@ void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& u
 	}
 
 	VMController& controller = *it->second;
+
+	if(!controller.GetSettings().VMPassword.empty()) {
+		// Check if the password is valid (or if the password is there at all)
+		if(args.size() != 2 || args[1] != controller.GetSettings().VMPassword) {
+			// Invalid password
+			SendWSMessage(*user, "7.connect,1.3;");
+			return;
+		}
+		// Password is correct, continue.
+	}
 
 	// Send cooldown time before action instruction
 	if(user->ip_data.upload_in_progress)
@@ -2237,13 +2250,28 @@ void CollabVMServer::OnListInstruction(const std::shared_ptr<CollabVMUser>& user
 
 		instr += ',';
 
-		std::string* png = it->second->GetThumbnail();
-		if(png && png->length()) {
-			instr += std::to_string(png->length());
-			instr += '.';
-			instr += *png;
+		if(vm_settings.VMPassword.empty()) {
+			std::string* png = it->second->GetThumbnail();
+			if(png && png->length()) {
+				instr += std::to_string(png->length());
+				instr += '.';
+				instr += *png;
+			} else {
+				instr += "0.";
+			}
 		} else {
-			instr += "0.";
+			std::string png = VM_PASSWORD_PREVIEW_IMAGE;
+			instr += std::to_string(png.length());
+			instr += '.';
+			instr += png;
+		}
+
+		instr += ",";
+
+		if(!vm_settings.VMPassword.empty()) {
+			instr += "1.1"; // A password is required to connect to this VM
+		} else {
+			instr += "1.0"; // A password isn't required to connect to this VM
 		}
 	}
 	instr += ';';
@@ -3147,6 +3175,14 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 							valid = false;
 						}
 						break;
+					case kVMPassword:
+						if(value.IsString()) {
+							vm.VMPassword = std::string(value.GetString(), value.GetStringLength());
+						} else {
+							WriteJSONObject(writer, vm_settings_[kVMPassword], invalid_object_);
+							valid = false;
+						}
+						break;
 				}
 				break;
 			}
@@ -3510,6 +3546,10 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 				case kMOTD:
 					writer.String(vm_settings_[kMOTD].c_str());
 					writer.String(vm->MOTD.c_str());
+					break;
+				case kVMPassword:
+					writer.String(vm_settings_[kVMPassword].c_str());
+					writer.String(vm->VMPassword.c_str());
 					break;
 			}
 		}
