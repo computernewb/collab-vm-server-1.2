@@ -59,7 +59,9 @@ namespace websocketmm {
 		upgrade_request_ = upgrade;
 
 		// Set suggested timeout settings for the websocket
-		ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
+		// this apparently needs to be done *after* the handshake
+		// go figure
+		//ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
 
 		// some fancy useragent stuffs
 		ws_.set_option(websocket::stream_base::decorator([&](websocket::response_type& res) {
@@ -122,40 +124,30 @@ namespace websocketmm {
 		boost::ignore_unused(bytes_transferred);
 
 		if(ec) {
-#ifdef WEBSOCKETMM_HMM
-			net::post(ws_.get_executor(), [self = shared_from_this()]() {
-				// Close the connection if a error occurs
-				self->server_->close(self->weak_from_this());
-				self->close();
-			});
-#endif
+			// Close the connection if a error occurs.
+			server_->close(weak_from_this());
+			close();
 			return;
 		}
 
 		// In most cases since we're on the strand already this should be a non-issue,
 		// but just in case we aren't, we post the work to avoid any issues
 
-		net::post(ws_.get_executor(), [self = shared_from_this()]() {
+		//net::post(ws_.get_executor(), [self = shared_from_this()]() {
 
 			auto type = websocket_message::type::text;
 
-			if(self->ws_.binary())
+			if(ws_.binary())
 				type = websocket_message::type::binary;
 
-			auto buffer_size = self->buffer_.size();
+			// Call the server's message handler.
+			// BuildWebsocketMessage is used to return a temporary copied buffer which the server code can make last longer if it needs to.
 
-			// This is a bit of a hack but it seems to work			
-			if(buffer_size) {
-				// Call the server's message handler
-				// with a temporary built websocket message from our data buffer (The handler can increase lifetime of this data, we don't care once we post it).
-				// Once the message handler returns, we consume the buffer as buildwebsocketmessage copies it.
-				self->server_->message(self->weak_from_this(), BuildWebsocketMessage(type, (std::uint8_t*)self->buffer_.data().data(), buffer_size));
-				self->buffer_.consume(buffer_size);
-			}
+			server_->message(weak_from_this(), BuildWebsocketMessage(type, (std::uint8_t*)buffer_.data().data(), buffer_.size()));
+			buffer_.clear();
 
 			// Queue up another read operation.
-			self->ws_.async_read(self->buffer_, beast::bind_front_handler(&websocket_user::on_read, self->shared_from_this()));
-		});
+			ws_.async_read(buffer_, beast::bind_front_handler(&websocket_user::on_read, shared_from_this()));
 	}
 
 	void websocket_user::Send(const std::shared_ptr<const websocket_message>& message) {
@@ -210,10 +202,9 @@ namespace websocketmm {
 
 	void websocket_user::close() {
 		net::post(ws_.get_executor(), [self = shared_from_this()]() {
-			self->ws_.async_close(websocket::close_reason(websocket::close_code::normal), beast::bind_front_handler(&websocket_user::on_close, self->shared_from_this()));
-
 			// Indicate that we are closing the connection.
 			self->closing_ = true;
+			self->ws_.async_close(websocket::close_reason(websocket::close_code::normal), beast::bind_front_handler(&websocket_user::on_close, self->shared_from_this()));
 		});
 	}
 
