@@ -161,6 +161,34 @@ struct IPv6Data : IPData {
 };
 
 /**
+* This is a handy little thing to make bitflag enums nicer.
+*/
+template <class Enum, std::underlying_type_t<Enum> bit_to_set>
+constexpr std::underlying_type_t<Enum> bit() {
+	// It'd be nice if the bit to set was a regular param...
+	// clang complains about a "non const read" in the static_assert for some reason though.
+	using Type = std::underlying_type_t<Enum>;
+	using BitCount = std::integral_constant<std::size_t, (sizeof(Type) * CHAR_BIT)>;
+
+	// Idiot check beforehand that the bit to set can be held
+	// inside of the underlying type of the enum
+	static_assert(bit_to_set <= BitCount(),
+		"Invalid bit index for the underlying type of this enum.");
+
+	return static_cast<Type>(1 << bit_to_set);
+}
+enum class Version : std::uint8_t {
+	Invalid = 0,
+	VersionAck = bit<Version, 0>(),
+	PasswordVMs = bit<Version, 1>(),
+	BinaryDisplay = bit<Version, 2>()
+};
+template<class Enum> // since enum class is a bit too strongly typed
+constexpr auto UnderVal(Enum e) {
+	return static_cast<std::underlying_type_t<Enum>>(e);
+}
+
+/**
  * Connection data associated with a websocket connection.
  */
 class CollabVMUser : public std::enable_shared_from_this<CollabVMUser> {
@@ -181,7 +209,8 @@ class CollabVMUser : public std::enable_shared_from_this<CollabVMUser> {
 		  upload_info(nullptr),
 		  waiting_for_upload(false),
 		  voted_amount(0),
-		  voted_limit(false) {
+		  voted_limit(false),
+		  version(0) {
 	}
 
 	// Intrusive list for all of the connections viewing a VM
@@ -257,4 +286,11 @@ class CollabVMUser : public std::enable_shared_from_this<CollabVMUser> {
 	 */
 	int voted_amount;
 	bool voted_limit;
+
+	/**
+	 * Client's version for backwards compatibility. Initially 0, gets set to 1
+	 * after the client sends anything other than nop or version, or to the value
+	 * specified by the client when it sends a version instruction after connecting.
+	 */
+	uint8_t version;
 };

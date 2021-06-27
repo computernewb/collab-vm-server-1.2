@@ -7,6 +7,7 @@ class GuacSocket {
    public:
 	virtual void InstructionBegin() = 0;
 	virtual void InstructionEnd() = 0;
+	virtual void InstructionEnd(bool binary) = 0;
 
 	size_t Write(const void* buf, size_t count);
 	size_t WriteInt(int64_t i);
@@ -35,6 +36,11 @@ class GuacSocket {
 	 * Mutex for stringstream.
 	 */
 	std::mutex mutex_;
+
+	/**
+	 * Whether we should send png data in binary.
+	 */
+	bool binary_;
 
    protected:
 	GuacSocket();

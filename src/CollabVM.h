@@ -125,6 +125,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 * Sends a message from a Guacamole client to WebSocket connection.
 	 */
 	void SendGuacMessage(std::weak_ptr<websocketmm::websocket_user> ptr, const std::string& str);
+	void SendGuacMessage(std::weak_ptr<websocketmm::websocket_user> ptr, std::uint8_t* data, std::size_t size);
 
 	void ExecuteCommandAsync(std::string command);
 	void MuteUser(const std::shared_ptr<CollabVMUser>& user, bool permanent);
@@ -147,6 +148,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	GuacamoleInstruction(Turn)
 	GuacamoleInstruction(Vote)
 	GuacamoleInstruction(File)
+	GuacamoleInstruction(Version)
 
 #undef GuacamoleInstruction
 
@@ -354,6 +356,7 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 
 	void OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> handle, std::shared_ptr<const websocketmm::websocket_message> msg);
 	void SendWSMessage(CollabVMUser& user, const std::string& str);
+	void SendWSMessage(CollabVMUser& user, std::uint8_t* data, std::size_t size);
 
 	/**
 	 * The main loop for the processing thread.

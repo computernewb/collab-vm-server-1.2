@@ -1,7 +1,8 @@
 #include "GuacSocket.h"
 
 GuacSocket::GuacSocket()
-	: base64_(ss_) {
+	: base64_(ss_),
+	  binary_(false) {
 }
 
 size_t GuacSocket::Write(const void* buf, size_t count) {

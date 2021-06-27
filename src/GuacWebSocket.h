@@ -19,6 +19,7 @@ class GuacWebSocket : public GuacSocket {
 
 	void InstructionBegin() override;
 	void InstructionEnd() override;
+	void InstructionEnd(bool binary) override;
 
 	CollabVMServer* server_;
 	std::weak_ptr<websocketmm::websocket_user> websocket_handle_;

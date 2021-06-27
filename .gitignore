@@ -3,6 +3,8 @@
 /**/obj/
 /**/cvmlib/
 /**/cvmlib32/
+/**/cvmlib_src/
+/**/ossp-uuid/
 
 # Ignore the http binary dir, sometimes it gets left in the source root
 http/

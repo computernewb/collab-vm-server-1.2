@@ -25,7 +25,8 @@ namespace GuacInstructionParser {
 		{ "nop", &CollabVMServer::OnNopInstruction },
 		{ "list", &CollabVMServer::OnListInstruction },
 		{ "vote", &CollabVMServer::OnVoteInstruction },
-		{ "file", &CollabVMServer::OnFileInstruction }
+		{ "file", &CollabVMServer::OnFileInstruction },
+		{ "version", &CollabVMServer::OnVersionInstruction }
 	};
 
 	//constexpr size_t instruction_count = sizeof(instructions)/sizeof(Instruction);
@@ -33,23 +34,25 @@ namespace GuacInstructionParser {
 	/**
 	 * Max element size of a Guacamole element.
 	 */
-	constexpr std::uint64_t MAX_GUAC_ELEMENT_LENGTH = 3450;
+	//constexpr std::uint64_t MAX_GUAC_ELEMENT_LENGTH = 3450;
 
 	/**
 	 * Max size of a Guacamole frame.
 	 */
-	constexpr std::uint64_t MAX_GUAC_FRAME_LENGTH = 6144;
+	//constexpr std::uint64_t MAX_GUAC_FRAME_LENGTH = 6144;
 
 	/**
 	 * Decode an instruction from a string.
 	 * \param[in] input input guacamole string to decode
 	 */
-	static std::vector<std::string> DecodeInstruction(const std::string& input) {
+	std::vector<std::string> DecodeInstruction(const std::string& input,
+											   std::uint64_t max_frame_length,
+											   std::uint64_t max_element_length) {
 		std::vector<std::string> output;
 		if(input.back() != ';')
 			return output;
 
-		if(input.empty() || input.length() >= MAX_GUAC_FRAME_LENGTH)
+		if(input.empty() || input.length() >= max_frame_length)
 			return output;
 
 		std::istringstream iss { input };
@@ -62,7 +65,7 @@ namespace GuacInstructionParser {
 				return std::vector<std::string>();
 
 			// Ignore weird elements that could be an attempt to crash the server
-			if(length >= MAX_GUAC_ELEMENT_LENGTH || length >= input.length())
+			if(length >= max_element_length || length >= input.length())
 				return std::vector<std::string>();
 
 			// Ignore if there is no period separating data.
@@ -115,6 +118,13 @@ namespace GuacInstructionParser {
 					for(size_t j = 0; j < decoded.size() - 1; ++j)
 						argument_conv[j] = argument_begin[j].data();
 				}
+
+				// if instruction is not nop or version, and version is 0, set it to 1,
+				// so the client can't arbitrarily change its version later
+				if (user->version == 0 &&
+					(std::strncmp("nop", decoded[0].data(), decoded[0].length()) != 0) &&
+					(std::strncmp("version", decoded[0].data(), decoded[0].length()) != 0))
+					user->version = 1;
 
 				// Call the instruction handler
 				(server.*(inst.handler))(user, argument_conv);

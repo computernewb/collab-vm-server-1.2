@@ -29,3 +29,22 @@ void GuacWebSocket::InstructionEnd() {
 		server_->SendGuacMessage(websocket_handle_, str);
 	}
 }
+
+void GuacWebSocket::InstructionEnd(bool binary) {
+	if(!binary) {
+		InstructionEnd();
+		return;
+	}
+	std::string str = ss_.str();
+
+	// Clear stringstream
+	ss_.str("");
+
+	// Unlock stringstream
+	mutex_.unlock();
+
+	// Check that the message ends with a semicolon
+	if(str.length() && str[str.length() - 1] == ';') {
+		server_->SendGuacMessage(websocket_handle_, (std::uint8_t*)&str[0], (size_t)str.length());
+	}
+}

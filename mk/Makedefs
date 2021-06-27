@@ -105,7 +105,8 @@ OBJS = $(OBJDIR)/Main.o                          \
        $(OBJDIR)/UriRecompose.o			 \
        $(OBJDIR)/server.o                        \
        $(OBJDIR)/websocket_user.o                \
-       $(OBJDIR)/listener.o
+       $(OBJDIR)/listener.o                      \
+       $(OBJDIR)/base64.o
 
 # websocketmm
 
@@ -125,7 +126,8 @@ VPATH := src/             \
         src/VMControllers \
         src/guacamole     \
         src/guacamole/vnc \
-        src/websocketmm
+        src/websocketmm   \
+        src/base64
 
 all: $(BINDIR)/ $(OBJDIR)/ $(BINDIR)/collab-vm-server
 

@@ -14,6 +14,7 @@ class GuacBroadcastSocket : public GuacSocket {
 
 	void InstructionBegin() override;
 	void InstructionEnd() override;
+	void InstructionEnd(bool binary) override;
 
    private:
 	CollabVMServer& server_;

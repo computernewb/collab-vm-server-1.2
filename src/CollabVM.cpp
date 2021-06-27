@@ -34,6 +34,7 @@ Please email rightowner@gmail.com for any assistance.
 #include "CollabVM.h"
 #include "GuacInstructionParser.h"
 #include "BinaryResources.h"
+#include "base64/base64.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -526,6 +527,15 @@ void CollabVMServer::OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> 
 
 void CollabVMServer::SendWSMessage(CollabVMUser& user, const std::string& str) {
 	if(!server_->send_message(user.handle, websocketmm::BuildWebsocketMessage(str))) {
+		if(user.connected) {
+			// Disconnect the client if an error occurs
+			PostAction<UserAction>(user, ActionType::kRemoveConnection);
+		}
+	}
+}
+
+void CollabVMServer::SendWSMessage(CollabVMUser& user, std::uint8_t* data, std::size_t size) {
+	if(!server_->send_message(user.handle, websocketmm::BuildWebsocketMessage(websocketmm::websocket_message::type::binary, data, size))) {
 		if(user.connected) {
 			// Disconnect the client if an error occurs
 			PostAction<UserAction>(user, ActionType::kRemoveConnection);
@@ -1366,6 +1376,17 @@ void CollabVMServer::SendGuacMessage(std::weak_ptr<websocketmm::websocket_user> 
 	}
 }
 
+void CollabVMServer::SendGuacMessage(std::weak_ptr<websocketmm::websocket_user> handle, std::uint8_t* data, std::size_t size) {
+	if(!server_->send_message(handle, websocketmm::BuildWebsocketMessage(websocketmm::websocket_message::type::binary, data, size))) {
+		if(auto handle_sp = handle.lock()) {
+			auto user = handle_sp->GetUserData().user;
+
+			// Disconnect the client if an error occurs
+			PostAction<UserAction>(*user, ActionType::kRemoveConnection);
+		}
+	}
+}
+
 void CollabVMServer::AppendChatMessage(std::ostringstream& ss, ChatMessage* chat_msg) {
 	ss << ',' << chat_msg->username->length() << '.' << *chat_msg->username << ',' << chat_msg->message.length() << '.' << chat_msg->message;
 }
@@ -1865,6 +1886,11 @@ void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& u
 	}
 
 	user->guac_user = new GuacUser(this, user->handle);
+	bool understands_binary = user->version & UnderVal(Version::BinaryDisplay); // client understands binary messages
+	//std::cout << "understands_binary: " << (std::to_string(*((uint8_t*)&understands_binary))) << std::endl;//DEBUG
+	//std::cout << "user->version: " << (std::to_string(user->version)) << std::endl;//DEBUG
+	user->guac_user->socket_.binary_ = understands_binary;
+	//std::cout << "user->guac_user->socket_.binary_ = " << (std::to_string(*((uint8_t*)&user->guac_user->socket_.binary_))) << std::endl;//DEBUG
 	controller.AddUser(user);
 }
 
@@ -2237,6 +2263,8 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 
 void CollabVMServer::OnListInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
 	std::string instr("4.list");
+	bool understands_passwords = user->version & UnderVal(Version::PasswordVMs); // client understands passwords
+	bool understands_binary = user->version & UnderVal(Version::BinaryDisplay); // client understands binary messages
 	for(auto it = vm_controllers_.begin(); it != vm_controllers_.end(); it++) {
 		instr += ',';
 		const VMSettings& vm_settings = it->second->GetSettings();
@@ -2244,38 +2272,65 @@ void CollabVMServer::OnListInstruction(const std::shared_ptr<CollabVMUser>& user
 		instr += '.';
 		instr += vm_settings.Name;
 		instr += ',';
-		instr += std::to_string(vm_settings.DisplayName.length());
+		std::string dispname = vm_settings.DisplayName;
+		if (!understands_passwords && !vm_settings.VMPassword.empty())
+			dispname = "[PASSWORDED: UPGRADE YOUR CLIENT]<br/>\n" + dispname;
+		instr += std::to_string(dispname.length());
 		instr += '.';
-		instr += vm_settings.DisplayName;
+		instr += dispname;
 
 		instr += ',';
 
-		if(vm_settings.VMPassword.empty()) {
-			std::string* png = it->second->GetThumbnail();
-			if(png && png->length()) {
-				instr += std::to_string(png->length());
-				instr += '.';
-				instr += *png;
+		if(understands_binary) {
+			if(vm_settings.VMPassword.empty()) {
+				std::string* png = it->second->GetThumbnail();
+				if(png && png->length()) {
+					std::string decoded = base64_decode(*png);
+					instr += std::to_string(decoded.length());
+					instr += '.';
+					instr += decoded;
+				} else {
+					instr += "0.";
+				}
 			} else {
-				instr += "0.";
+				std::string decoded = base64_decode(VM_PASSWORD_PREVIEW_IMAGE);
+				instr += std::to_string(decoded.length());
+				instr += '.';
+				instr += decoded;
 			}
-		} else {
-			std::string png = VM_PASSWORD_PREVIEW_IMAGE;
-			instr += std::to_string(png.length());
-			instr += '.';
-			instr += png;
+		} else { // old clients
+			if(vm_settings.VMPassword.empty()) {
+				std::string* png = it->second->GetThumbnail();
+				if(png && png->length()) {
+					instr += std::to_string(png->length());
+					instr += '.';
+					instr += *png;
+				} else {
+					instr += "0.";
+				}
+			} else {
+				std::string png = VM_PASSWORD_PREVIEW_IMAGE;
+				instr += std::to_string(png.length());
+				instr += '.';
+				instr += png;
+			}
 		}
 
-		instr += ",";
+		if(understands_passwords) {
+			instr += ",";
 
-		if(!vm_settings.VMPassword.empty()) {
-			instr += "1.1"; // A password is required to connect to this VM
-		} else {
-			instr += "1.0"; // A password isn't required to connect to this VM
+			if(!vm_settings.VMPassword.empty()) {
+				instr += "1.1"; // A password is required to connect to this VM
+			} else {
+				instr += "1.0"; // A password isn't required to connect to this VM
+			}
 		}
 	}
 	instr += ';';
-	SendWSMessage(*user, instr);
+	if(understands_binary)
+		SendWSMessage(*user, (std::uint8_t*)&instr[0], (size_t)instr.length());
+	else
+		SendWSMessage(*user, instr);
 }
 
 void CollabVMServer::OnNopInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
@@ -2468,6 +2523,31 @@ void CollabVMServer::OnFileInstruction(const std::shared_ptr<CollabVMUser>& user
 			}
 			SendWSMessage(*user, "4.file,1.5;");
 			break;
+	}
+}
+
+void CollabVMServer::OnVersionInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
+	if(args.size() == 0 || user->version != 0) // ignore if we already know version
+		return;
+
+	uint32_t value;
+	try {
+		value = std::stoi(args[0]);
+	} catch(...) {
+		return;
+	}
+
+	//std::cout << "Received client version: " << *args[0] << std::endl; //DEBUG
+
+	if(value >= 0 && value <= 0xff) {
+		user->version = *reinterpret_cast<std::uint8_t*>(&value);
+		/**
+		 * 0b00000111
+		 *        ||\-- version acknowledged
+		 *        |\-- understands passworded vms (list increment = 4, rather than 3)
+		 *        \-- understands binary list & png
+		 */
+		SendWSMessage(*user, "7.version,1.7;"); // 7 = 0b111
 	}
 }
 

@@ -29,7 +29,7 @@
 #include "GuacSocket.h"
 #include "stream.h"
 #include "unicode.h"
-
+//#include <iostream> //DEBUG
 
 #ifdef USE_JPEG
 extern "C" {
@@ -163,7 +163,6 @@ cairo_status_t __guac_socket_write_png_cairo(void* closure, const unsigned char*
 int __guac_socket_write_length_png_cairo(GuacSocket& socket, cairo_surface_t* surface)
 {
     __guac_socket_write_png_data png_data(socket, 8192, 0);
-    int base64_length;
 
     /* Write surface */
 	cairo_status_t status;
@@ -174,17 +173,30 @@ int __guac_socket_write_length_png_cairo(GuacSocket& socket, cairo_surface_t* su
         guac_error_message = "Cairo PNG backend failed";
         return -1;
 	}
-    base64_length = (png_data.data_size + 2) / 3 * 4;
 
     /* Write length and data */
-    if (socket.WriteInt(base64_length)
-        || socket.WriteString(".")
-        || socket.WriteBase64(png_data.buffer, png_data.data_size)
-        || socket.FlushBase64())
-	{
-        free(png_data.buffer);
-        return -1;
-	}
+    if (!socket.binary_)
+    { // old clients, base64
+        int base64_length = (png_data.data_size + 2) / 3 * 4;
+        if (socket.WriteInt(base64_length)
+            || socket.WriteString(".")
+            || socket.WriteBase64(png_data.buffer, png_data.data_size)
+            || socket.FlushBase64())
+        {
+            free(png_data.buffer);
+            return -1;
+	    }
+    }
+    else
+    { // new clients, binary ws
+        if (socket.WriteInt(png_data.data_size)
+            || socket.WriteString(".")
+            || socket.Write(png_data.buffer, png_data.data_size))
+	    {
+            free(png_data.buffer);
+            return -1;
+	    }
+    }
 
     free(png_data.buffer);
     return 0;
@@ -194,7 +206,7 @@ int __guac_socket_write_length_png_cairo(GuacSocket& socket, cairo_surface_t* su
 int __guac_socket_write_length_jpeg(GuacSocket& socket, cairo_surface_t* surface)
 {
     __guac_socket_write_png_data png_data(socket, 8192, 0);
-    int base64_length;
+    //int base64_length;
 
 	// Write JPEG surface
 	cairo_status_t status;
@@ -205,17 +217,31 @@ int __guac_socket_write_length_jpeg(GuacSocket& socket, cairo_surface_t* surface
 	        guac_error_message = "Cairo JPEG backend failed";
         	return -1;
 	}
-    base64_length = (png_data.data_size + 2) / 3 * 4;
+    //base64_length = (png_data.data_size + 2) / 3 * 4;
 
     /* Write length and data */
-    if (socket.WriteInt(base64_length)
-        || socket.WriteString(".")
-        || socket.WriteBase64(png_data.buffer, png_data.data_size)
-        || socket.FlushBase64())
-	{
-        free(png_data.buffer);
-        return -1;
-	}
+    if (!socket.binary_)
+    { // old clients, base64
+        int base64_length = (png_data.data_size + 2) / 3 * 4;
+        if (socket.WriteInt(base64_length)
+            || socket.WriteString(".")
+            || socket.WriteBase64(png_data.buffer, png_data.data_size)
+            || socket.FlushBase64())
+        {
+            free(png_data.buffer);
+            return -1;
+	    }
+    }
+    else
+    { // new clients, binary ws
+        if (socket.WriteInt(png_data.data_size)
+            || socket.WriteString(".")
+            || socket.Write(png_data.buffer, png_data.data_size))
+	    {
+            free(png_data.buffer);
+            return -1;
+	    }
+    }
 
     free(png_data.buffer);
     return 0;
@@ -384,16 +410,31 @@ int __guac_socket_write_length_png(GuacSocket& socket, cairo_surface_t* surface)
         free(png_rows[y]);
     free(png_rows);
 
-    base64_length = (png_data.data_size + 2) / 3 * 4;
     /* Write length and data */
-    if (socket.WriteInt(base64_length)
-        || socket.WriteString(".")
-        || socket.WriteBase64(png_data.buffer, png_data.data_size)
-        || socket.FlushBase64())
-	{
-        free(png_data.buffer);
-        return -1;
-	}
+    //printf("socket.binary_ = %u\n", *((uint8_t*)&socket.binary_));//DEBUG
+    //std::cout << "socket.binary_ = " << std::to_string(*((uint8_t*)&socket.binary_)) << std::endl;//DEBUG
+    if (!socket.binary_)
+    { // old clients, base64
+        int base64_length = (png_data.data_size + 2) / 3 * 4;
+        if (socket.WriteInt(base64_length)
+            || socket.WriteString(".")
+            || socket.WriteBase64(png_data.buffer, png_data.data_size)
+            || socket.FlushBase64())
+        {
+            free(png_data.buffer);
+            return -1;
+	    }
+    }
+    else
+    { // new clients, binary ws
+        if (socket.WriteInt(png_data.data_size)
+            || socket.WriteString(".")
+            || socket.Write(png_data.buffer, png_data.data_size))
+	    {
+            free(png_data.buffer);
+            return -1;
+	    }
+    }
 
 	free(png_data.buffer);
 	return 0;
@@ -1088,7 +1129,7 @@ int guac_protocol_send_png(GuacSocket& socket, guac_composite_mode mode,
 			|| __guac_socket_write_length_png(socket, surface)
 			|| socket.WriteString(";");
 #endif
-    socket.InstructionEnd();
+    socket.InstructionEnd(socket.binary_);
     return ret_val;
 }
 
