@@ -11,6 +11,13 @@
 	#include <wordexp.h>
 	#include <system_error>
 	#include <signal.h>
+
+	#include <dirent.h>
+	#include <sys/resource.h>
+
+	// This will probably hamper compatibility on non-Linux for a bit
+	// but whatever
+	#include <sys/prctl.h>
 #endif
 #include <boost/asio.hpp>
 #include <boost/system/error_code.hpp>
@@ -36,6 +43,66 @@ static int qmp_count_ = 0;
 static std::thread qmp_thread_;
 static boost::asio::io_service::work* qmp_work_;
 static boost::asio::io_service* qmp_service_;
+
+#ifndef _WIN32
+/**
+ * Gets all tasks for a given PID, using Linux /proc filesystem
+ */
+std::vector<pid_t> GetProcessTasks(pid_t process) {
+	DIR* tasks = nullptr;
+	char buf[40];
+	snprintf(&buf[0], sizeof(buf), "/proc/%d/tasks", process);
+	tasks = opendir(&buf[0]);
+
+	if(tasks) {
+		std::vector<pid_t> ret;
+
+		struct dirent* entry;
+		while((entry = readdir(tasks)) != nullptr) {
+			// Catch . and .. immediately
+			if(entry->d_name[0] == '.')
+				continue;
+
+			char* end = nullptr;
+			auto tid = static_cast<pid_t>(strtol(entry->d_name, &end, 10));
+
+			// If strtol() failed on the string (it set end to the start pointer)
+			// continue on.
+			if(end == &entry->d_name[0])
+				continue;
+
+			ret.push_back(tid);
+		}
+
+		closedir(tasks);
+		return ret;
+	} else {
+		// fail, so let's just return a vector with just the process "task"
+		return { process };
+	}
+}
+
+/**
+ * Renice a task.
+ */
+void ReniceTask(pid_t pid, int nice) {
+	// only set the nice level if we *need* to
+	if(getpriority(PRIO_PROCESS, pid) != nice) {
+		std::cout << "[QEMU] Setting task " << pid << " nice level to " << nice << "\n";
+		if(setpriority(PRIO_PROCESS, pid, nice) == -1) {
+			std::cout << "[QEMU] setpriority(PRIO_PROCESS, " << pid << ", " << nice << ") returned -1..?\n";
+		}
+	}
+}
+
+/**
+ * Helper to renice all tasks of a process
+ */
+void ReniceAllTasks(pid_t process, int nice) {
+	for(auto pid : GetProcessTasks(process))
+		ReniceTask(pid, nice);
+}
+#endif
 
 QEMUController::QEMUController(CollabVMServer& server, boost::asio::io_service& service, const std::shared_ptr<VMSettings>& settings)
 	: VMController(server, service, settings),
@@ -262,7 +329,7 @@ void QEMUController::Start() {
 
 void QEMUController::SetCommand(const std::string& command) {
 	// Free all arguments
-
+	
 	//for(auto & it : qemu_command_)
 	//	delete[] it;
 
@@ -299,6 +366,7 @@ void QEMUController::InitQMP() {
 			qmp_address_ += settings_->Name;
 		} else
 			qmp_address_ = settings_->QMPAddress;
+
 
 		qmp_ = std::make_shared<QMPLocalClient>(*qmp_service_, qmp_address_);
 	}
@@ -437,7 +505,11 @@ void QEMUController::StartQEMU() {
 	// free the mutable buffer to avoid a memleak
 	free((char*)QemuCmdLineMutable);
 #else
+
+	// pid of the child before forking
+	pid_t parent_before_fork = getpid();
 	pid_t pId = fork();
+
 	if(pId == 0) {
 		// TODO: Should a new process group or session be created for QEMU?
 		// Creating a new process group causes QEMU to freeze when the -nographic
@@ -445,6 +517,19 @@ void QEMUController::StartQEMU() {
 		// Change process group
 		/*if (setpgid(0, 0))
 			std::cout << "setpgid failed. errorno: " << errno << std::endl;*/
+
+		// If the collab-vm-server dies, we need to be terminated as well
+		// so the server can restart alright.
+		int prctl_result = prctl(PR_SET_PDEATHSIG, SIGTERM);
+		if (prctl_result == -1) {
+			perror(0);
+			exit(1);
+		}
+
+		// Test in case the original parent exited just before the prctl() call. 
+		// If it did, then we exit on our own accord.
+		if (getppid() != parent_before_fork)
+			exit(1);
 
 		// The qemu_command_ vector is only modified inside of the child process
 		if(settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kVMSnapshots && !snapshot_.empty()) {
@@ -470,6 +555,11 @@ void QEMUController::StartQEMU() {
 			qmp_arg += qmp_address_;
 			qmp_arg += ",server";
 			qemu_command_.push_back(qmp_arg.c_str());
+		}
+
+		if(access(qmp_address_.c_str(), F_OK) == 0) {
+			std::cout << "[QEMU] Deleting old " << qmp_address_ << " socket so the VM will work\n";
+			unlink(qmp_address_.c_str());
 		}
 
 		std::string arg;
@@ -524,7 +614,7 @@ void QEMUController::StartQEMU() {
 		qemu_command_.push_back(nullptr);
 		std::cout << "Starting QEMU with command:\n";
 
-		for(auto& it : qemu_command_) {
+		for(auto & it : qemu_command_) {
 			if(it != nullptr)
 				std::cout << it << ' ';
 		}
@@ -735,6 +825,12 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {
 		case QMPClient::QMPState::kConnected:
 			if(internal_state_ == InternalState::kQMPConnecting) {
 				std::cout << "Connected to QMP" << std::endl;
+#ifndef _WIN32
+				// Now that we know the QEMU process has started, let's renice it and all its threads.
+				constexpr auto NICE_LEVEL = 19;
+				ReniceAllTasks(qemu_pid_, NICE_LEVEL);
+#endif
+
 				// It's possible for the VNC client to already be connected
 				// if the QMP client disconnected after the VNC client was connected
 				if(guac_client_.GetState() != GuacClient::ClientState::kConnected) {
@@ -812,7 +908,7 @@ std::vector<const char*> QEMUController::SplitCommandLine(const char* command) {
 
 		return cmdList;
 	}
-#else  // WIN32
+#else // WIN32
 	{
 		// Windows has CommandLineToArgvW but not CommandLineToArgvA
 		// so the command must be converted to unicode first
