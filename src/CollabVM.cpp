@@ -39,8 +39,6 @@ Please email rightowner@gmail.com for any assistance.
 #include <websocketmm/server.h>
 #include <websocketmm/websocket_user.h>
 
-#include "cpr/cpr.h"
-
 #include <memory>
 #include <iostream>
 #include <fstream>

@@ -59,23 +59,26 @@ namespace websocketmm {
 			close_handler(user);
 	}
 
-	bool server::send_message(std::weak_ptr<websocketmm::websocket_user>& user,const std::shared_ptr<const websocket_message>& message) {
+	bool server::send_message(std::weak_ptr<websocketmm::websocket_user>& user, const std::shared_ptr<const websocket_message>& message) {
+		try {
+			// If the user is expired,
+			// don't bother.
+			if(user.expired())
+				return false;
 
-		// If the user is expired,
-		// don't bother.
-		if(user.expired())
+			// Similar if the message is null.
+			if(!message)
+				return false;
+
+			if(auto user_sp = user.lock()) {
+				user_sp->Send(message);
+				return true;
+			}
+		} catch(std::exception& ex) {
+			// the Websocket++
 			return false;
-
-		// Similar if the message is null.
-		if(!message)
-			return false;
-
-		if(auto user_sp = user.lock()) {
-			user_sp->Send(message);
-			return true;
 		}
 
-		// If the user shared-ptr somehow
 		return false;
 	}
 

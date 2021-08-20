@@ -5,6 +5,8 @@
 
 namespace websocketmm {
 
+	// TODO(lily): these should be in another TU
+
 	std::shared_ptr<const websocket_message> BuildWebsocketMessage(websocket_message::type t, std::uint8_t* data, std::size_t size) {
 		auto m = std::make_shared<websocket_message>();
 
@@ -43,7 +45,6 @@ namespace websocketmm {
 		return user_data_;
 	}
 
-
 	std::optional<http::request<http::string_body>>& websocket_user::GetUpgradeRequest() {
 		return upgrade_request_;
 	}
@@ -58,26 +59,31 @@ namespace websocketmm {
 		upgrade_request_ = upgrade;
 
 		// Set suggested timeout settings for the websocket
-		ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
+		// this apparently needs to be done *after* the handshake
+		// go figure
+		//ws_.set_option(websocket::stream_base::timeout::suggested(beast::role_type::server));
 
+		// some fancy useragent stuffs
 		ws_.set_option(websocket::stream_base::decorator([&](websocket::response_type& res) {
 			res.set(http::field::server, "collab-vm-server/1.2.11");
 
 			// If a subprotocol has been negotiated,
 			// we decorate the response with it.
 			// Fixes Chrome, which expects this header to exist in the response..
+			// (which Chrome ironically enough is in the right and follows the spec properly)
 
 			if(selected_subprotocol_.has_value())
 				res.set(http::field::sec_websocket_protocol, selected_subprotocol_.value());
 		}));
 
 		// Enable permessage deflate
-		websocket::permessage_deflate deflate;
-		deflate.server_enable = true;
-		ws_.set_option(deflate);
+		//		websocket::permessage_deflate deflate;
+		//		deflate.server_enable = true;
+		//		ws_.set_option(deflate);
 
 		// We wrap validation and accepting inside of the strand we were given by the
 		// listener object to avoid concurrency issues.
+
 		net::post(ws_.get_executor(), [self = shared_from_this()]() {
 			if(!self->server_->verify(self->weak_from_this())) {
 				// Validation failed.
@@ -91,8 +97,7 @@ namespace websocketmm {
 				return;
 			}
 
-			// Once the verify is finished, we
-			// begin accepting the WebSocket connection.
+			// Once the verify is finished, we begin accepting the WebSocket connection.
 			self->ws_.async_accept(self->upgrade_request_.value(), beast::bind_front_handler(&websocket_user::on_accept, self->shared_from_this()));
 		});
 	}
@@ -101,14 +106,16 @@ namespace websocketmm {
 		if(ec)
 			return;
 
-		// Deallocate the selected subprotocol; Beast internally doesn't care about it once
-		// the accept is finished or errored (i.e: when this completion handler is called)
+		// Deallocate the selected subprotocol; Beast internally doesn't care about it
+		// (and doesn't need to; it's WS-- code) once the accept finishes or errors
+		// (i.e: when this completion handler is called)
 		selected_subprotocol_.reset();
 
 		net::post(ws_.get_executor(), [self = shared_from_this()]() {
+			// Call the defined open callback
 			self->server_->open(self);
 
-			// Start looping by reading a message
+			// Start the asynchronous loop by reading a message
 			self->ws_.async_read(self->buffer_, beast::bind_front_handler(&websocket_user::on_read, self->shared_from_this()));
 		});
 	}
@@ -116,30 +123,31 @@ namespace websocketmm {
 	void websocket_user::on_read(beast::error_code ec, std::size_t bytes_transferred) {
 		boost::ignore_unused(bytes_transferred);
 
-		if(ec == websocket::error::closed) {
-			net::post(ws_.get_executor(), [self = shared_from_this()]() {
-				self->server_->close(self->weak_from_this());
-			});
+		if(ec) {
+			// Close the connection if a error occurs.
+			server_->close(weak_from_this());
+			close();
 			return;
 		}
 
-		net::post(ws_.get_executor(), [self = shared_from_this()]() {
+		// In most cases since we're on the strand already this should be a non-issue,
+		// but just in case we aren't, we post the work to avoid any issues
+
+		//net::post(ws_.get_executor(), [self = shared_from_this()]() {
+
 			auto type = websocket_message::type::text;
 
-			if(self->ws_.binary())
+			if(ws_.binary())
 				type = websocket_message::type::binary;
 
-			auto buffer_size = self->buffer_.size();
+			// Call the server's message handler.
+			// BuildWebsocketMessage is used to return a temporary copied buffer which the server code can make last longer if it needs to.
 
-			// Call the server's message handler
-			// with a temporary built websocket message from our data buffer (The handler can increase lifetime of this data, we don't care once we post it).
-			// Once the message handler returns, we consume the buffer.
-			self->server_->message(self->weak_from_this(), BuildWebsocketMessage(type, (std::uint8_t*)self->buffer_.data().data(), buffer_size));
-			self->buffer_.consume(buffer_size);
+			server_->message(weak_from_this(), BuildWebsocketMessage(type, (std::uint8_t*)buffer_.data().data(), buffer_.size()));
+			buffer_.clear();
 
 			// Queue up another read operation.
-			self->ws_.async_read(self->buffer_, beast::bind_front_handler(&websocket_user::on_read, self->shared_from_this()));
-		});
+			ws_.async_read(buffer_, beast::bind_front_handler(&websocket_user::on_read, shared_from_this()));
 	}
 
 	void websocket_user::Send(const std::shared_ptr<const websocket_message>& message) {
@@ -181,6 +189,7 @@ namespace websocketmm {
 		boost::ignore_unused(bytes_transferred);
 
 		if(ec) {
+			message_queue_.clear();
 			return;
 		}
 
@@ -193,10 +202,9 @@ namespace websocketmm {
 
 	void websocket_user::close() {
 		net::post(ws_.get_executor(), [self = shared_from_this()]() {
-			self->ws_.async_close(websocket::close_reason(websocket::close_code::normal), beast::bind_front_handler(&websocket_user::on_close, self->shared_from_this()));
-
 			// Indicate that we are closing the connection.
 			self->closing_ = true;
+			self->ws_.async_close(websocket::close_reason(websocket::close_code::normal), beast::bind_front_handler(&websocket_user::on_close, self->shared_from_this()));
 		});
 	}
 

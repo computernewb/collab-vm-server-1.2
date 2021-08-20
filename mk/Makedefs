@@ -103,24 +103,8 @@ OBJS = $(OBJDIR)/Main.o                          \
        $(OBJDIR)/UriIp4.o                        \
        $(OBJDIR)/UriParseBase.o                  \
        $(OBJDIR)/UriRecompose.o			 \
-       $(OBJDIR)/response.o			 \
-       $(OBJDIR)/bearer.o			 \
-       $(OBJDIR)/parameters.o			 \
-       $(OBJDIR)/unix_socket.o			 \
-       $(OBJDIR)/cprtypes.o			 \
-       $(OBJDIR)/timeout.o			 \
-       $(OBJDIR)/payload.o			 \
-       $(OBJDIR)/proxies.o			 \
-       $(OBJDIR)/util.o				 \
-       $(OBJDIR)/curlholder.o			 \
-       $(OBJDIR)/cookies.o			 \
-       $(OBJDIR)/cpr_auth.o				 \
-       $(OBJDIR)/multipart.o			 \
-       $(OBJDIR)/cpr_error.o			 \
-       $(OBJDIR)/session.o			 \
-       $(OBJDIR)/curl_container.o \
-       $(OBJDIR)/server.o \
-       $(OBJDIR)/websocket_user.o \
+       $(OBJDIR)/server.o                        \
+       $(OBJDIR)/websocket_user.o                \
        $(OBJDIR)/listener.o
 
 # websocketmm
@@ -141,9 +125,7 @@ VPATH := src/             \
         src/VMControllers \
         src/guacamole     \
         src/guacamole/vnc \
-	    src/cpr           \
-	    src/websocketmm
-
+        src/websocketmm
 
 all: $(BINDIR)/ $(OBJDIR)/ $(BINDIR)/collab-vm-server
 

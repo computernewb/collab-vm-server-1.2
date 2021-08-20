@@ -16,8 +16,8 @@ CollabVM Server is confirmed to build and work in the following environments:
 
 Make flags for the Makeconfig-based build system (soon to be replaced) (To enable, set these using `FLAG=1`):
 
-- JPEG - Controls/enables the JPEG support.
-- DEBUG - Enables debug symbols and doesn't build a optimized binary. Also possibly includes some debug assert code
+- JPEG - Controls/enables the JPEG support. This flag should be enabled for a server facing the internet.
+- DEBUG - Enables debug symbols and doesn't build a optimized binary. Also possibly includes some debug assert code.
 - ASAN - Enables the instrumentation of the binary with AddressSanitizer. Needs DEBUG=1 beforehand.
 - TSAN - Enables the instrumentation of the binary with ThreadSanitizer. Needs DEBUG=1 beforehand, and is not compatiable with ASAN=1.
 - V - Displays compile command lines, useful for debugging errors
@@ -26,8 +26,7 @@ Make flags for the Makeconfig-based build system (soon to be replaced) (To enabl
 
 First and foremost, your version of GCC or clang should be able to compile C++17 programs. If it cannot, you need to install a newer compiler.
 
-* Boost 1.67 or above (1.67 is untested, 1.71 works fine though)
-* GCC 8/Clang 7/MSVC 2019
+* Boost 1.67 or above (1.67 is untested, 1.71 onwards works fine though. 1.75+ reccomendded)
 * libvncserver 
 * libpng
 * libturbojpeg
@@ -71,7 +70,7 @@ pacman -S --noconf mingw-w64-x86_64-toolchain git
 
 make
 
-# Or a Win32 build.
+# For a Win32 build, do:
 make WARCH=w32
 ```
 
