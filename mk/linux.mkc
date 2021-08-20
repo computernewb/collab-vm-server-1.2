@@ -1,7 +1,7 @@
 # CollabVM Server mkconfig for GNU/Linux
 
-CXX = g++
-CC = gcc
+CXX = clang++
+CC = clang
 
 LIBS = -pthread -lturbojpeg -ljpeg -lboost_system -lpng -lz -lvncclient -lcairo -lpixman-1 -ldl -lsqlite3
 
