@@ -1,7 +1,7 @@
 ## collab-vm-server
 This repository contains the source code to the CollabVM Server. The CollabVM Server (obviously) powers CollabVM, and it is what you will use to host a CollabVM UserVM or mirror.
 
-The master branch is unstable. Look at the `release/` branches for branches tracking stable versions of the CollabVM Server.
+The master branch is unstable. Look at the `release/` branches for branches tracking stable versions of the CollabVM Server. Future releases will use tags instead of branches.
 
 You may also look at `feature/` branches for experimental code not merged into the master branch or release code bases.
 
