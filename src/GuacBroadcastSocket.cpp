@@ -3,7 +3,7 @@
 #include "CollabVMUser.h"
 #include <assert.h>
 
-#include <websocketmm/websocket_user.h>
+#include "websocketmm/websocket_user.h"
 
 GuacBroadcastSocket::GuacBroadcastSocket(CollabVMServer& server, UserList& users)
 	: server_(server),

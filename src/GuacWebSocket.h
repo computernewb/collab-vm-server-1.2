@@ -2,7 +2,7 @@
 #include "GuacSocket.h"
 #include <memory>
 
-#include <websocketmm/fwd.h>
+#include "websocketmm/fwd.h"
 
 class CollabVMServer;
 

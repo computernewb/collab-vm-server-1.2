@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include "GuacUser.h"
 
-#include <websocketmm/fwd.h>
+#include "websocketmm/fwd.h"
 
 class VMController;
 struct UploadInfo;
