@@ -61,7 +61,7 @@ target_link_libraries(collab-vm-server
         project_warnings
         project_options
         # TODO: FindPackage
-        -pthread -lturbojpeg -ljpeg -lboost_system -lpng -lz -lvncclient -lcairo -lpixman-1 -ldl -lsqlite3
+        -pthread -lboost_system -lpng -lz -lvncclient -lpixman-1 -ldl -lsqlite3 -lcairo
 )
 
 target_include_directories(collab-vm-server
@@ -76,8 +76,6 @@ target_include_directories(collab-vm-server
         ${CMAKE_SOURCE_DIR}/src
 )
 
-message(AUTHOR_WARNING "${CMAKE_BINARY_DIR}")
-
 set_target_properties(collab-vm-server
     PROPERTIES
         CXX_STANDARD 17
@@ -85,3 +83,26 @@ set_target_properties(collab-vm-server
         # CXX_EXTENSIONS OFF
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+# JPEG support (recommended!)
+option(ENABLE_JPEG "Enable JPEG as a means to encode the VM display" ON)
+
+if(ENABLE_JPEG)
+    target_link_libraries(collab-vm-server
+        PRIVATE
+            -lturbojpeg
+            -ljpeg
+    )
+
+    target_compile_definitions(collab-vm-server
+        PRIVATE
+            -DUSE_JPEG
+    )
+
+    target_sources(collab-vm-server
+        PRIVATE
+            ./cairo_jpg.c
+    )
+endif()
+
+target_compile_definitions(collab-vm-server PUBLIC -DRAPIDJSON_HAS_CXX11_RVALUE_REFS)

@@ -30,6 +30,9 @@ int main(int argc, char* argv[]) {
 #ifdef DEBUG
     std::cout << "[Debug build]" << '\n';
 #endif
+#ifdef USE_JPEG
+    std::cout << "[JPEG enabled]" << '\n';
+#endif
 	try {
 		if(argc < 2 || argc > 3) {
 			std::cout << "Usage: [Port] [HTTP dir]\n";

@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 3.15)
-project(collab-vm-server CXX)
+project(collab-vm-server
+    LANGUAGES
+        CXX C
+    HOMEPAGE_URL
+        "http://computernewb.com/collab-vm"
+    VERSION
+        1.2.11
+    DESCRIPTION
+        "CollabVM is a website where you can control a computer (virtual machine) from your web browser with strangers. Everybody can click on the screen and request an 18 second turn."
+)
 
 include(cmake/StandardProjectSettings.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
