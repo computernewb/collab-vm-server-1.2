@@ -98,7 +98,7 @@ void GuacVNCClient::CleanUp() {
 }
 
 void GuacVNCClient::guac_vnc_update(rfbClient* client, int x, int y, int w, int h) {
-	GuacVNCClient* vnc_client = (GuacVNCClient*)rfbClientGetClientData(client, GUAC_VNC_CLIENT_KEY);
+	GuacVNCClient* vnc_client = (GuacVNCClient*)rfbClientGetClientData(client, const_cast<char*>(GUAC_VNC_CLIENT_KEY));
 
 	int dx, dy;
 
@@ -184,7 +184,7 @@ void GuacVNCClient::guac_vnc_update(rfbClient* client, int x, int y, int w, int 
 }
 
 void GuacVNCClient::guac_vnc_copyrect(rfbClient* client, int src_x, int src_y, int w, int h, int dest_x, int dest_y) {
-	GuacVNCClient* vnc_client = (GuacVNCClient*)rfbClientGetClientData(client, GUAC_VNC_CLIENT_KEY);
+	GuacVNCClient* vnc_client = (GuacVNCClient*)rfbClientGetClientData(client, const_cast<char*>(GUAC_VNC_CLIENT_KEY));
 
 	/* For now, only use default layer */
 	guac_common_surface_copy(vnc_client->default_surface_, src_x, src_y, w, h,
@@ -232,7 +232,7 @@ void GuacVNCClient::guac_vnc_set_pixel_format(rfbClient* client, int color_depth
 }
 
 rfbBool GuacVNCClient::guac_vnc_malloc_framebuffer(rfbClient* rfb_client) {
-	GuacVNCClient* client = (GuacVNCClient*)rfbClientGetClientData(rfb_client, GUAC_VNC_CLIENT_KEY);
+	GuacVNCClient* client = (GuacVNCClient*)rfbClientGetClientData(rfb_client, const_cast<char*>(GUAC_VNC_CLIENT_KEY));
 
 	/* Resize surface */
 	if(client->default_surface_ != NULL)
@@ -243,12 +243,12 @@ rfbBool GuacVNCClient::guac_vnc_malloc_framebuffer(rfbClient* rfb_client) {
 }
 
 char* GuacVNCClient::guac_vnc_get_password(rfbClient* rfb_client) {
-	GuacVNCClient* client = (GuacVNCClient*)rfbClientGetClientData(rfb_client, GUAC_VNC_CLIENT_KEY);
+	GuacVNCClient* client = (GuacVNCClient*)rfbClientGetClientData(rfb_client, const_cast<char*>(GUAC_VNC_CLIENT_KEY));
 	return client->password_;
 }
 
 void GuacVNCClient::guac_vnc_cursor(rfbClient* client, int x, int y, int w, int h, int bpp) {
-	GuacVNCClient* vnc_client = (GuacVNCClient*)rfbClientGetClientData(client, GUAC_VNC_CLIENT_KEY);
+	GuacVNCClient* vnc_client = (GuacVNCClient*)rfbClientGetClientData(client, const_cast<char*>(GUAC_VNC_CLIENT_KEY));
 
 	/* Cairo image buffer */
 	int stride = cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, w);
@@ -343,13 +343,13 @@ int GuacVNCClient::GetProcessingLag() {
 	return processing_lag;
 }
 
-char* GuacVNCClient::GUAC_VNC_CLIENT_KEY = "GUAC_VNC";
+const char* GuacVNCClient::GUAC_VNC_CLIENT_KEY = "GUAC_VNC";
 
 rfbClient* GuacVNCClient::GetVNCClient() {
 	rfbClient* rfb_client = rfbGetClient(8, 3, 4); /* 32-bpp client */
 
 	/* Store Guac client in rfb client */
-	rfbClientSetClientData(rfb_client, GUAC_VNC_CLIENT_KEY, this);
+	rfbClientSetClientData(rfb_client, const_cast<char*>(GUAC_VNC_CLIENT_KEY), this);
 
 	/* Framebuffer update handler */
 	rfb_client->GotFrameBufferUpdate = guac_vnc_update;

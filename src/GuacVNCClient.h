@@ -127,7 +127,7 @@ class GuacVNCClient : public GuacClient {
 
 	char* vnc_settings_[9];
 
-	static char* GUAC_VNC_CLIENT_KEY;
+	static const char* GUAC_VNC_CLIENT_KEY;
 
 	const CollabVMServer& server_;
 };

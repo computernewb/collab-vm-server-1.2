@@ -34,7 +34,7 @@
  * @return A newly-allocated unique identifier with the given prefix, or
  *         NULL if the identifier could not be generated.
  */
-char* guac_generate_id(char prefix);
+const char* guac_generate_id(char prefix);
 
 #endif
 

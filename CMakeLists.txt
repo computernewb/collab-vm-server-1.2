@@ -27,7 +27,7 @@ endif()
 
 # Build-type specific options
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-    target_compile_options(project_options INTERFACE -g -ggdb -O0 -fpermissive)
+    target_compile_options(project_options INTERFACE -g -ggdb -O0)
     target_compile_definitions(project_options INTERFACE -D_DEBUG -DDEBUG)
 elseif(CMAKE_BUILD_TYPE MATCHES "Release")
     target_compile_options(project_options INTERFACE -O3 -ffast-math -march=native -mtune=native)
@@ -43,6 +43,9 @@ elseif(CMAKE_BUILD_TYPE MATCHES "MinSizeRel")
     # TODO: Other size optimizations?
     # LTO is a thing but it's up to the user to use via a CMake option
 endif()
+
+# Use this for all build types- enforce strict ISO C++ compliance for portability
+target_compile_options(project_options INTERFACE -pedantic-errors)
 
 # Link this 'library' to use the warnings specified in CompilerWarnings.cmake
 add_library(project_warnings INTERFACE)

@@ -29,7 +29,7 @@
 
 #include <stdlib.h>
 
-char* guac_generate_id(char prefix) {
+const char* guac_generate_id(char prefix) {
 	// Unused
 	return "yes very unique very id";
 }

@@ -80,7 +80,7 @@ set_target_properties(collab-vm-server
     PROPERTIES
         CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
-        # CXX_EXTENSIONS OFF
+        CXX_EXTENSIONS OFF
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
