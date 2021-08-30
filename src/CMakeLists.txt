@@ -15,51 +15,40 @@ add_executable(collab-vm-server
     ./VMControllers/QMP.cpp
     ./VMControllers/VMController.cpp
     ./VMControllers/QEMUController.cpp
-    #./guacamole/client.cpp
-    ./guacamole/error.cpp
-    ./guacamole/guac_clipboard.cpp
-    ./guacamole/guac_cursor.cpp
-    ./guacamole/guac_display.cpp
-    ./guacamole/guac_dot_cursor.cpp
-    ./guacamole/guac_iconv.cpp
-    ./guacamole/guac_list.cpp
-    ./guacamole/guac_pointer_cursor.cpp
-    ./guacamole/guac_rect.cpp
-    ./guacamole/guac_string.cpp
-    ./guacamole/guac_surface.cpp
-    ./guacamole/hash.cpp
-    ./guacamole/id.cpp
-    ./guacamole/palette.cpp
-    #./guacamole/parser.cpp
-    ./guacamole/pool.cpp
-    ./guacamole/protocol.cpp
-    #./guacamole/socket-nest.cpp
-    #./guacamole/socket.cpp
-    ./guacamole/timestamp.cpp
-    ./guacamole/unicode.cpp
-    #./guacamole/user-handlers.cpp
-    #./guacamole/user.cpp
-    #./guacamole/vnc/auth.cpp
-    #./guacamole/vnc/client.cpp
-    #./guacamole/vnc/clipboard.cpp
-    #./guacamole/vnc/cursor.cpp
-    #./guacamole/vnc/display.cpp
-    #./guacamole/vnc/input.cpp
-    #./guacamole/vnc/log.cpp
-    #./guacamole/vnc/settings.cpp
-    #./guacamole/vnc/user.cpp
-    #./guacamole/vnc/vnc.cpp
-    ./websocketmm/listener.cpp
-    ./websocketmm/server.cpp
-    ./websocketmm/websocket_user.cpp
     ./GuacInstructionParser.cpp
     ./CollabVM.cpp
 )
+
+# JPEG support (recommended!)
+option(ENABLE_JPEG "Enable JPEG as a means to encode the VM display" ON)
+
+if(ENABLE_JPEG)
+    target_link_libraries(collab-vm-server
+        PRIVATE
+            -lturbojpeg
+            -ljpeg
+    )
+
+    target_compile_definitions(collab-vm-server
+        PUBLIC
+            -DUSE_JPEG
+    )
+
+    target_sources(collab-vm-server
+        PRIVATE
+            ./cairo_jpg.c
+    )
+endif()
+
+add_subdirectory(websocketmm)
+add_subdirectory(guacamole)
 
 target_link_libraries(collab-vm-server
     PRIVATE
         project_warnings
         project_options
+        websocketmm
+        guacamole
         # TODO: FindPackage
         -pthread -lboost_system -lpng -lz -lvncclient -lpixman-1 -ldl -lsqlite3 -lcairo
 )
@@ -84,25 +73,5 @@ set_target_properties(collab-vm-server
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-# JPEG support (recommended!)
-option(ENABLE_JPEG "Enable JPEG as a means to encode the VM display" ON)
-
-if(ENABLE_JPEG)
-    target_link_libraries(collab-vm-server
-        PRIVATE
-            -lturbojpeg
-            -ljpeg
-    )
-
-    target_compile_definitions(collab-vm-server
-        PRIVATE
-            -DUSE_JPEG
-    )
-
-    target_sources(collab-vm-server
-        PRIVATE
-            ./cairo_jpg.c
-    )
-endif()
 
 target_compile_definitions(collab-vm-server PUBLIC -DRAPIDJSON_HAS_CXX11_RVALUE_REFS)

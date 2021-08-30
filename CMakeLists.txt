@@ -45,7 +45,7 @@ elseif(CMAKE_BUILD_TYPE MATCHES "MinSizeRel")
 endif()
 
 # Use this for all build types- enforce strict ISO C++ compliance for portability
-target_compile_options(project_options INTERFACE -pedantic-errors)
+#target_compile_options(project_options INTERFACE -pedantic-errors)
 
 # Link this 'library' to use the warnings specified in CompilerWarnings.cmake
 add_library(project_warnings INTERFACE)
