@@ -23,10 +23,16 @@ add_executable(collab-vm-server
 option(ENABLE_JPEG "Enable JPEG as a means to encode the VM display" ON)
 
 if(ENABLE_JPEG)
+    find_package(libjpeg-turbo CONFIG REQUIRED)
+
+    target_sources(collab-vm-server
+        PRIVATE
+            ./cairo_jpg.c
+    )
     target_link_libraries(collab-vm-server
         PRIVATE
-            -lturbojpeg
-            -ljpeg
+            libjpeg-turbo::turbojpeg
+            libjpeg-turbo::jpeg
     )
 
     target_compile_definitions(collab-vm-server
