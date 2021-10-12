@@ -73,6 +73,10 @@ all:
 	@./scripts/build_site.sh $(ARCH)
 	-@ if [ -d "$(BINDIR)/http" ]; then rm -rf $(BINDIR)/http; fi;
 	-@mv -f http/ $(BINDIR)
+	@echo "\"compiling\" manpage for collab-vm-server"
+	@gzip doc/collab-vm-server.1 -kf
+	@mv doc/collab-vm-server.1.gz ${BINDIR}
+	
 ifeq ($(OS), Windows_NT)
 
 ifeq ($(CYGWIN), 1)
@@ -86,8 +90,6 @@ else
 endif
 
 endif
-
-	-@cp ./doc/collab-vm-server.1 $(BINDIR)
 
 clean:
 	@$(MAKE) -f $(MKCONFIG) clean
