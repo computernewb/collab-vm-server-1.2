@@ -1,17 +1,19 @@
-## collab-vm-server 1.2.11
+## collab-vm-server 1.3.0
 This repository contains the source code to the CollabVM Server. The CollabVM Server (obviously) powers CollabVM, and it is what you will use to host a CollabVM UserVM or mirror.
 
 You can either download already compiled binaries, or compile the CollabVM Server yourself. Compilation instructions are provided in the BUILDING.md file. 
 
-CollabVM was coded and written by Cosmic Sans, Dartz, Geodude, and modeco80.
+CollabVM was coded and written by Cosmic Sans, Dartz, Geodude, and modeco80... And maybe a [few others.](https://github.com/computernewb/collab-vm-server/graphs/contributors)
 
 ### License
-CollabVM Server, as well as the Web App and Admin Web App are licensed under the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
+CollabVM Server, as well as the Web App and Admin Web App are licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ### How to use
-To start the server, first make sure it has executable permissions and then type ./collab-vm-server (port) (HTTP Directory (optional)). 
+`man doc/collab-vm-server.1`, but here's an overview:
 
-For example, to start CollabVM Server on port 6004 with the directory for the HTML files served from a folder called "collabvm", type `./collab-vm-server 6004 collabvm`.
+To start the server, first make sure it (the binary) has executable permissions, and you can write to the directory which you'll run collab-vm-server in (for the settings database) and then type ./collab-vm-server -p (port) -r (HTTP Directory (optional)). 
+
+For example, to start CollabVM Server on TCP port 6004 with the directory for the HTML files served from a folder called "collabvm", type `./collab-vm-server -p 6004 -r collabvm`.
 
 The HTTP Directory is optional, if not provided it looks for a folder called "http".
 
