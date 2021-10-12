@@ -4,6 +4,12 @@
 /**/cvmlib/
 /**/cvmlib32/
 
+# Usually leftovers by yellows111
+*.patch
+*.orig
+*.log
+
+
 # Ignore the http binary dir, sometimes it gets left in the source root
 http/
 
