@@ -105,7 +105,8 @@ OBJS = $(OBJDIR)/Main.o                          \
        $(OBJDIR)/UriRecompose.o			 \
        $(OBJDIR)/server.o                        \
        $(OBJDIR)/websocket_user.o                \
-       $(OBJDIR)/listener.o
+       $(OBJDIR)/listener.o                      \
+       $(OBJDIR)/http_util.o
 
 # websocketmm
 

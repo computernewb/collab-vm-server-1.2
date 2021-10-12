@@ -1,9 +1,13 @@
 #include <websocketmm/listener.h>
 #include <websocketmm/server.h>
 #include <websocketmm/websocket_user.h>
+#include <websocketmm/http_util.h>
+#include <iostream>
 
 #include <utility>
-
+#ifdef _WIN32
+#include <sys/stat.h>
+#endif
 namespace websocketmm {
 
 	// TODO: Move this to a seperate file, and make it work with POSTs
@@ -50,19 +54,75 @@ namespace websocketmm {
 				return do_close();
 
 			// Spawn a websocket connection,
-			// or close
+			// or process request
 			if(websocket::is_upgrade(req_)) {
 				std::make_shared<websocket_user>(server_, std::move(stream_.release_socket()))->run(req_);
 			} else {
-				// TODO: process request in this case, for either static server or POST callback
-				return do_close();
+				std::cout << "[websocketmm] Processing HTTP request for " << req_.target() << std::endl;
+				if(req_.target().empty() || req_.target()[0] != '/' || req_.target().find("..") != beast::string_view::npos) {
+					// alright sorry you can relax it
+					return do_close();
+				}
+
+				switch(req_.method()) {
+					case http::verb::get: {
+						std::string path = path_cat("http", req_.target()); // TODO: figure out how to grab argv[2] if it exists
+						if(req_.target().back() == '/')
+							path.append("index.html");
+
+						struct stat s;
+						int st = stat(path.c_str(), &s);
+						if(st == 0) {
+							if(s.st_mode & S_IFDIR) {
+								http::response<http::dynamic_body> response_;
+								response_.version(req_.version());
+								response_.keep_alive(false);
+								response_.set(http::field::server, "collab-vm-server/1.2.11");
+								response_.result(http::status::permanent_redirect);
+								response_.set(http::field::location, req_.target().to_string() + "/index.html");
+								http::write(stream_, response_);
+							} else {
+								http::file_body::value_type body;
+								body.open(path.c_str(), beast::file_mode::scan, ec);
+								if(ec) {
+									http::response<http::dynamic_body> response_;
+									response_.version(req_.version());
+									response_.keep_alive(false);
+									response_.set(http::field::server, "collab-vm-server/1.2.11");
+									response_.result(http::status::internal_server_error);
+									beast::ostream(response_.body()) << "Internal server error\r\n";
+									response_.content_length(response_.body().size());
+									response_.set(http::field::content_type, "text/plain");
+									http::write(stream_, response_);
+								} else {
+									http::response<http::file_body> response_ {
+										std::piecewise_construct,
+										std::make_tuple(std::move(body)),
+										std::make_tuple(http::status::ok, req_.version())
+									};
+									response_.set(http::field::content_type, mime_type(path));
+									response_.result(http::status::ok);
+									response_.content_length(response_.body().size());
+									http::write(stream_, response_);
+								}
+							}
+						} else {
+							http::response<http::dynamic_body> response_;
+							response_.version(req_.version());
+							response_.keep_alive(false);
+							response_.set(http::field::server, "collab-vm-server/1.2.11");
+							response_.result(http::status::not_found);
+							beast::ostream(response_.body()) << "The resource requested was not found\r\n";
+							response_.content_length(response_.body().size());
+							response_.set(http::field::content_type, "text/plain");
+							http::write(stream_, response_);
+						}
+						break;
+					}
+					default:
+						return do_close();
+				}
 			}
-
-			//if(ec)
-			//   return fail(ec, "read");
-
-			// Send the response
-			//handle_request(*doc_root_, std::move(req_), lambda_);
 		}
 
 		void on_write(bool close, beast::error_code ec, std::size_t bytes_transferred) {

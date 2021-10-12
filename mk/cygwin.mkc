@@ -5,7 +5,7 @@ CXX = g++
 CC = gcc
 ODB = $(CVM_HOME)/cvmlib/odb-2.4.0-i686-windows/bin/odb.exe
 
-LIBS = -Wl,--allow-multiple-definition -static-libstdc++ -pthread -lturbojpeg -ljpeg -lboost_system -lpng -lz -lvncclient -lcairo -lpixman-1 -ldl -lsqlite3 -Lcvmlib/lib -lodb-sqlite -lodb -luuid
+LIBS = -Wl,--allow-multiple-definition -static-libstdc++ -pthread -lturbojpeg -ljpeg -lboost_system -lboost_program_options -lpng -lz -lvncclient -pthread -lcairo -lpixman-1 -ldl -lsqlite3 -Lcvmlib/lib -lodb-sqlite -lodb -luuid
 
 OBJDIR = obj
 BINDIR = bin

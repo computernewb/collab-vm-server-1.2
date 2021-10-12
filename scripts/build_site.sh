@@ -9,12 +9,13 @@ log(){
 build(){
 	log "Build of webpage started on $(date +"%x %I:%M %p").";
 	DATE=$(date +"%x %I:%M %p")
+	BRANCH=$(git rev-parse --abbrev-ref HEAD)
 	UNAME_ARCH=$1
 	UNAME_KERN=$(uname -srv)
-	CVM_VERSION="v1.2.11"
-	if [ -e ./.git/refs/heads/master ]
+	CVM_VERSION="v1.3.0"
+	if [ -e ./.git/refs/heads/$BRANCH ]
 	then
-		UGIT_COMMIT_ID=$(git rev-parse head >/dev/null 2>&1 && git rev-parse head || git rev-parse master)
+		UGIT_COMMIT_ID=$(git rev-parse head >/dev/null 2>&1 && git rev-parse head || git rev-parse $BRANCH)
 		UGIT_FORKNAME=$(git remote get-url origin)
 		UGIT_FORKURL=$UGIT_FORKNAME
 	else
@@ -61,6 +62,7 @@ build(){
 	INSRC=${INSRC//"[GIT_FORK_NAME]"/$UGIT_FORKNAME}
 	INSRC=${INSRC//"[GIT_FORK_URL]"/$UGIT_FORKURL}
 	INSRC=${INSRC//"[CVM_VERSION]"/$CVM_VERSION}
+	INSRC=${INSRC//"[GIT_BRANCH]"/$BRANCH}
 
 	log "Writing preprocessed page(s)..."
 	echo $INSRC > http/index.html.in
