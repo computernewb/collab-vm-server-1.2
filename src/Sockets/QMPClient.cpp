@@ -222,7 +222,7 @@ void QMPClient::OnReadLine(const boost::system::error_code& ec, size_t size, std
 				}
 				break;
 			}
-			case ConnectionState::kConnected:
+			case ConnectionState::kConnected: {
 				e = d.FindMember("event");
 				if(e != d.MemberEnd() && e->value.IsString()) {
 					Value& v = e->value;
@@ -246,6 +246,13 @@ void QMPClient::OnReadLine(const boost::system::error_code& ec, size_t size, std
 				buf_.consume(size);
 				DoReadLine(ctx);
 				break;
+				}
+				case ConnectionState::kConnecting: {
+					break; // What should this do?
+				}
+				case ConnectionState::kDisconnected: {
+					break; // implode()? murder() death() kill()? i feel like this should restart the VM
+				}
 		}
 		delete[] buf;
 	}

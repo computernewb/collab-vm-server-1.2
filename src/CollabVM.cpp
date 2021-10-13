@@ -68,11 +68,11 @@ using rapidjson::GenericMemberIterator;
 const uint8_t CollabVMServer::kIPDataTimerInterval = 1;
 
 enum class ClientFileOp : char {
-	kBegin = '0',
-	kMiddle = '1',
-	kEnd = '2',
-	kStop = '3'
-};
+	kBegin = '0'//,
+//	kMiddle = '1',
+//	kEnd = '2',
+//	kStop = '3'
+}; // commented those out due to the switch not handling them
 
 /*
 enum class ServerFileOp : char
@@ -813,6 +813,9 @@ void CollabVMServer::ProcessingThread() {
 
 				SendActionInstructions(*controller, controller->GetSettings());
 				break;
+			}
+			case ActionType::kUploadEnded: {
+				break; // shut your mouth look at my wad
 			}
 			/*
 		case ActionType::kHttpUploadTimedout:
@@ -2997,7 +3000,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 							//	BroadcastTurnInfo();
 							//}
 						} else {
-							WriteJSONObject(writer, server_settings_[kTurnsEnabled], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kTurnsEnabled], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3005,7 +3008,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.TurnTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, server_settings_[kTurnTime], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kTurnTime], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3013,7 +3016,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsBool()) {
 							vm.VotesEnabled = value.GetBool();
 						} else {
-							WriteJSONObject(writer, server_settings_[kVotesEnabled], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kVotesEnabled], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3021,7 +3024,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.VoteTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, server_settings_[kVoteTime], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kVoteTime], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3029,7 +3032,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.VoteCooldownTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, server_settings_[kVoteCooldownTime], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kVoteCooldownTime], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3037,7 +3040,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsBool()) {
 							vm.AgentEnabled = value.GetBool();
 						} else {
-							WriteJSONObject(writer, server_settings_[kAgentEnabled], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kAgentEnabled], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3061,7 +3064,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsBool()) {
 							vm.AgentUseVirtio = value.GetBool();
 						} else {
-							WriteJSONObject(writer, server_settings_[kAgentUseVirtio], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kAgentUseVirtio], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3090,7 +3093,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsBool()) {
 							vm.RestoreHeartbeat = value.GetBool();
 						} else {
-							WriteJSONObject(writer, server_settings_[kRestoreHeartbeat], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kRestoreHeartbeat], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3098,7 +3101,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							//vm.HeartbeatTimeout = value.GetUint();
 						} else {
-							WriteJSONObject(writer, server_settings_[kHeartbeatTimeout], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kHeartbeatTimeout], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3106,7 +3109,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsBool()) {
 							vm.UploadsEnabled = value.GetBool();
 						} else {
-							WriteJSONObject(writer, server_settings_[kUploadsEnabled], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kUploadsEnabled], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3114,7 +3117,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.UploadCooldownTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, server_settings_[kUploadCooldownTime], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kUploadCooldownTime], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3122,7 +3125,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.MaxUploadSize = value.GetUint();
 						} else {
-							WriteJSONObject(writer, server_settings_[kUploadMaxSize], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kUploadMaxSize], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -3135,7 +3138,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 								valid = false;
 							}
 						} else {
-							WriteJSONObject(writer, server_settings_[kUploadMaxFilename], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kUploadMaxFilename], invalid_object_);
 							valid = false;
 						}
 						break;

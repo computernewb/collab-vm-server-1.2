@@ -31,20 +31,17 @@ void IgnorePipe() {
 bool process_arguments(int argc, char** argv, std::int16_t& port, std::string& httpDir) {
         int iport;
 
+		po::options_description desc("CollabVM Server - Options");
+		po::variables_map vm;
+		
         try {
-				po::options_description desc("CollabVM Server - Options");
 				desc.add_options()
 					("port,p", po::value<int>(&iport)->required(), "The port to listen on")
-					("root,r", po::value<std::string>(&httpDir), "The root folder to serve HTTP files from (default: http). Currently useless, as there is no HTTP werb server (yet!)")
+					("root,r", po::value<std::string>(&httpDir), "The root folder to serve HTTP files from (default: http). Currently useless, as the implementation doesn't support it! (Yet)")
 					("version,v", "Display server & library versions")
 					("help,h", "Show this help screen");
 
-				po::variables_map vm;
 				po::store(po::parse_command_line(argc, argv, desc), vm);
-
-				if (vm.count("help") || argc == 1) {
-					std::cout << desc << "\n";
-				}
 
 				if (vm.count("version")) {
 					std::cout << "CollabVM Server 1.3.0 - AlphaBetas Edition" << "\n"
@@ -61,7 +58,20 @@ bool process_arguments(int argc, char** argv, std::int16_t& port, std::string& h
 				po::notify(vm);
         }
 
-
+		catch (boost::program_options::required_option::error& e) {
+			if (!vm.count("version")) {
+				std::cerr << "You didn't specify the TCP port to listen to!" << "\n";
+				if (vm.count("help") || argc == 1) {
+						std::cout << desc << "\n";
+						return 1;
+					} else {
+						return false;
+					} // because dartzcode:tm: stroke back
+			} else {
+				return false;
+			}
+		} // this double if abomination is because dartzcode:tm: did a real dartzcode moment
+		
 		catch (std::exception& e) {
 			std::cerr << e.what() << "\n";
 		}
@@ -88,11 +98,13 @@ int main(int argc, char** argv) {
 
         bool result = process_arguments(argc, argv, port, httpDir);
 
-        if (!result)
+        if (!result) {
                 return 1;
+		}
 
-        if (!port)
+        if (!port) {
                 return 1;
+		}
 
         std::cout << "CollabVM Server Started" << std::endl;
 
