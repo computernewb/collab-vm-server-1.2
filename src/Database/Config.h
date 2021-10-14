@@ -24,7 +24,6 @@ struct Config {
 		  NameRateTime(3),
 		  NameMuteTime(10),
 		  ChatMsgHistory(10),
-		  MaxUploadTime(120),
 		  BanCommand(""),
 #ifdef USE_JPEG
 		  JPEGQuality(75),
@@ -56,8 +55,6 @@ struct Config {
 	uint8_t NameRateCount;
 	uint8_t NameRateTime;
 	uint8_t NameMuteTime;
-
-	uint16_t MaxUploadTime;
 
 	std::string BanCommand;
 

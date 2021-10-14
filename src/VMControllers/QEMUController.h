@@ -159,9 +159,6 @@ class QEMUController : public VMController, public QMPCallback {
 	 */
 	void IsStopped();
 
-
-	void OnAgentDisconnect(bool protocol_error) override;
-
 	enum class InternalState {
 		kInactive, // The controller hasn't been started
 		//kQEMUStarting,	// The QEMU hypervisor is starting

@@ -78,7 +78,6 @@ OBJS = $(OBJDIR)/Main.o                          \
        $(OBJDIR)/QEMUController.o                \
        $(OBJDIR)/VMController.o                  \
        $(OBJDIR)/QMPClient.o                     \
-       $(OBJDIR)/AgentClient.o                   \
        $(OBJDIR)/unicode.o                       \
        $(OBJDIR)/error.o                         \
        $(OBJDIR)/guac_clipboard.o                \

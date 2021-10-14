@@ -29,15 +29,12 @@
 #include "Database/VMSettings.h"
 #include "GuacUser.h"
 #include "CollabVMUser.h"
-#include "UploadInfo.h"
 
 #include "Chat.h"
 
 #ifdef _WIN32
 	#define strncasecmp _strnicmp
 	#define strcasecmp _stricmp
-#else
-	#include "StackTrace.hpp"
 #endif
 
 class GuacClient;
@@ -78,14 +75,6 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 */
 	void OnVMControllerTurnChange(const std::shared_ptr<VMController>& controller);
 
-	void OnAgentConnect(const std::shared_ptr<VMController>& controller,
-						const std::string& os_name, const std::string& service_pack,
-						const std::string& pc_name, const std::string& username, uint32_t max_filename);
-	void OnAgentDisconnect(const std::shared_ptr<VMController>& controller);
-	//void OnAgentHeartbeatTimeout(const std::shared_ptr<VMController>& controller);
-	void OnFileUploadFailed(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info /*, Reason*/);
-	void OnFileUploadFinished(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info);
-	void OnFileUploadExecFinished(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info, bool exec_success);
 
 	/**
 	 * Updates the preview for the VM.
@@ -173,13 +162,6 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 		kRemoveConnection, // Remove connection from map
 		kTurnChange,	   // Next turn
 		kVoteEnded,		   // Vote ended
-		kAgentConnect,	   // Agent connected
-		kAgentDisconnect,  // Agent disconnected
-		//kHttpUploadFinished,
-		//kHttpUploadFailed,
-		//kHttpUploadTimedout,
-		kUploadEnded, // Agent upload ended
-		//kHeartbeatTimedout,	// Heartbeat timed out
 		kKeepAlive,		   // Broadcast keep-alive message
 		kVMStateChange,	   // VM controller state changed
 		kVMCleanUp,		   // Free a VM controller's resources
@@ -256,51 +238,6 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 		}
 	};
 
-	struct FileUploadAction : public Action {
-		// why not just define the enum here?
-		enum class UploadResult;
-
-		FileUploadAction(const std::shared_ptr<UploadInfo>& upload_info, UploadResult result)
-			: Action(ActionType::kUploadEnded),
-			  upload_result(result),
-			  upload_info(upload_info) {
-		}
-
-		enum class UploadResult {
-			kFailed,
-			kSuccess,
-			kSuccessNoExec
-		} upload_result;
-
-		std::shared_ptr<UploadInfo> upload_info;
-	};
-
-	struct HttpAction : public Action {
-		HttpAction(ActionType action, const std::shared_ptr<UploadInfo>& info)
-			: Action(action),
-			  upload_info(info) {
-		}
-
-		std::shared_ptr<UploadInfo> upload_info;
-	};
-
-	struct AgentConnectAction : public VMAction {
-		std::string os_name;
-		std::string service_pack;
-		std::string pc_name;
-		std::string username;
-		uint32_t max_filename;
-		AgentConnectAction(const std::shared_ptr<VMController>& controller,
-						   const std::string& os_name, const std::string& service_pack,
-						   const std::string& pc_name, const std::string& username, uint32_t max_filename)
-			: VMAction(controller, ActionType::kAgentConnect),
-			  os_name(os_name),
-			  service_pack(service_pack),
-			  pc_name(pc_name),
-			  username(username),
-			  max_filename(max_filename) {
-		}
-	};
 
 	/**
 	 * Boilerplate-condensing function to post an action into the processing queue.
@@ -406,37 +343,6 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 */
 	void SendActionInstructions(VMController& controller, const VMSettings& settings);
 
-
-	bool IsFilenameValid(const std::string& filename);
-
-
-	void OnUploadTimeout(const boost::system::error_code ec, std::shared_ptr<UploadInfo> upload_info);
-	void StartFileUpload(CollabVMUser& user);
-	void SendUploadResultToIP(IPData& ip_data, const CollabVMUser& user, const std::string& instr);
-
-	enum class FileUploadResult {
-		kUserDisconnected,
-		kHttpUploadTimedOut,
-		kHttpUploadFailed,
-		kAgentUploadSucceeded,
-		kAgentUploadFailed
-	};
-
-	/**
-	 * Deletes the temporary file used for the upload, sets the cooldown time for the IPData,
-	 * and sends a success or fail message to the user.
-	 */
-	void FileUploadEnded(const std::shared_ptr<UploadInfo>& upload_info, const std::shared_ptr<CollabVMUser>* user, FileUploadResult result);
-
-	void StartNextUpload();
-
-	void CancelFileUpload(CollabVMUser& user);
-
-	void SetUploadCooldownTime(IPData& ip_data, uint32_t time);
-
-	bool SendUploadCooldownTime(CollabVMUser& user, const VMController& vm_controller);
-
-	void BroadcastUploadedFileInfo(UploadInfo& upload_info, VMController& vm_controller);
 
 	/**
 	 * Generate a random username for a user who does not have one.
@@ -610,6 +516,8 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	const size_t kMinUsernameLen = 3;
 	const size_t kMaxUsernameLen = 20;
 
+	// TODO: these should be reused
+
 	/**
 	 * Maximum number of login attempts before the IP is blocked.
 	 */
@@ -621,36 +529,4 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 */
 	static const size_t kLoginIPBlockTime = 60;
 
-	/**
-	 * The maximum number of file uploads that can occur simultaneously.
-	 */
-	const size_t kMaxFileUploads = 10;
-
-	/**
-	 * The amount of time a user has to begin an upload in seconds.
-	 */
-	const size_t kUploadStartTimeout = 10;
-
-	/**
-	 * The current number of file uploads in progress.
-	 */
-	size_t upload_count_;
-
-	const size_t kMaxChunkSize = 4096;
-
-	/**
-	 * The max string length of a base64 encoded file chunk.
-	 */
-	const size_t kMaxBase64ChunkSize = ((kMaxChunkSize + 2) / 3) * 4;
-
-	/**
-	 * After the maximum number of simultaneous uploads has been reached
-	 * users will be added to this queue to wait until their file upload can begin.
-	 */
-	std::deque<std::shared_ptr<CollabVMUser>> upload_queue_;
-
-	const std::string kFileUploadPath = "uploads/";
-
-	std::mutex upload_lock_;
-	std::map<std::string, std::shared_ptr<UploadInfo>, case_insensitive_cmp> upload_ids_;
 };

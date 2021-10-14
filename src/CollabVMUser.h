@@ -78,13 +78,6 @@ struct IPData {
 
 	std::map<const VMController*, VoteDecision> votes;
 
-	/*
-	 * The time point when the user will be allowed to upload another file.
-	 */
-	std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> next_upload_time;
-
-	bool upload_in_progress;
-
 	/**
 	 * The number of failed login attempts to the admin panel.
 	 */
@@ -109,7 +102,6 @@ struct IPData {
 		  name_chg_count(0),
 		  chat_muted(kUnmuted),
 		  //has_voted(false),
-		  upload_in_progress(false),
 		  failed_logins(0) {
 	}
 };
@@ -178,8 +170,6 @@ class CollabVMUser : public std::enable_shared_from_this<CollabVMUser> {
 		  admin_connected(false),
 		  last_nop_instr(std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now())),
 		  ip_data(ip_data),
-		  upload_info(nullptr),
-		  waiting_for_upload(false),
 		  voted_amount(0),
 		  voted_limit(false) {
 	}
@@ -243,13 +233,6 @@ class CollabVMUser : public std::enable_shared_from_this<CollabVMUser> {
 	std::chrono::time_point<std::chrono::steady_clock, std::chrono::seconds> last_nop_instr;
 
 	IPData& ip_data;
-
-	std::shared_ptr<UploadInfo> upload_info;
-
-	/**
-	 * True when the user is waiting in the upload_queue_.
-	 */
-	bool waiting_for_upload;
 
 	/**
 	 * How many times the user has voted during a vote.

@@ -20,7 +20,7 @@ static const std::string kErrorMessages[] = {
 };
 
 /**
- * A single thread is created for all QMPClient and AgentClient instances
+ * A single thread is created for all QMPClient instances
  * to use.
  */
 static std::mutex qmp_thread_mutex_;
@@ -59,8 +59,6 @@ QEMUController::QEMUController(CollabVMServer& server, boost::asio::io_service& 
 	}
 
 	InitQMP();
-
-	InitAgent(*settings, *qmp_service_);
 }
 
 void QEMUController::ChangeSettings(const std::shared_ptr<VMSettings>& settings) {
@@ -84,16 +82,6 @@ void QEMUController::ChangeSettings(const std::shared_ptr<VMSettings>& settings)
 		// TODO:
 		// InitQMP();
 		restart = true;
-	}
-
-	if(settings->AgentEnabled) {
-		if(!settings_->AgentEnabled) {
-			InitAgent(*settings, *qmp_service_);
-		}
-	} else {
-		if(settings_->AgentEnabled) {
-			InitAgent(*settings, *qmp_service_);
-		}
 	}
 
 	VMController::ChangeSettings(settings);
@@ -343,6 +331,8 @@ void QEMUController::StartQEMU() {
 		args_copy.push_back(qmp_arg);
 	}
 
+// this'll still be okay to keep around
+#if 0
 	std::string arg;
 	if(settings_->AgentEnabled) {
 		if(settings_->AgentUseVirtio) {
@@ -384,6 +374,7 @@ void QEMUController::StartQEMU() {
 			args_copy.push_back(arg.c_str());
 		}
 	}
+#endif
 
 	// Append VNC argument
 
@@ -590,9 +581,8 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {
 					internal_state_ = InternalState::kVNCConnecting;
 					StartGuacClient();
 				}
-				if(agent_) {
-					agent_->Connect(std::weak_ptr<AgentCallback>(std::static_pointer_cast<AgentCallback>(shared_from_this())));
-				}
+				
+				// 
 			} else
 				qmp_->Disconnect();
 			break;
@@ -627,24 +617,6 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {
 				retry_count_ = 0;
 				StartQMP();
 			}
-	}
-}
-
-void QEMUController::OnAgentDisconnect(bool protocol_error) {
-	// Do not try to reconnect if we are shutting down or if
-	// the agent was already successfully connected
-	if((internal_state_ == InternalState::kVNCConnecting || internal_state_ == InternalState::kConnected) && !protocol_error) {
-		boost::system::error_code ec;
-		agent_timer_.expires_from_now(std::chrono::seconds(1), ec);
-		auto self = shared_from_this();
-		agent_timer_.async_wait([this, self](const boost::system::error_code& ec) {
-			// a+ cosmic code right here
-			// pretty sure this is why the 
-			if(!ec && (internal_state_ == InternalState::kVNCConnecting | internal_state_ == InternalState::kConnected))
-				agent_->Connect(std::weak_ptr<AgentCallback>(std::static_pointer_cast<AgentCallback>(shared_from_this())));
-		});
-	} else {
-		VMController::OnAgentDisconnect(protocol_error);
 	}
 }
 
