@@ -1,5 +1,5 @@
 #pragma once
-#include <boost/asio.hpp>
+#include <boost/asio/io_service.hpp>
 
 /**
  * A simple structure containing a boolean that indicates

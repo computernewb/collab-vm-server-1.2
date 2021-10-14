@@ -4,7 +4,7 @@ CXX = clang++
 CC = clang
 ODB = odb
 
-LIBS = -pthread -lturbojpeg -ljpeg -lboost_system -lboost_program_options -lpng -lz -lvncclient -lcairo -lpixman-1 -ldl -lsqlite3
+LIBS = -pthread -lturbojpeg -ljpeg -lboost_system -lboost_program_options -lboost_filesystem -lpng -lz -lvncclient -lcairo -lpixman-1 -ldl -lsqlite3
 
 OBJDIR = obj
 BINDIR = bin

@@ -39,14 +39,6 @@ struct VMSettings {
 	bool RestoreOnShutdown = false;
 	bool RestoreOnTimeout = false;
 
-	bool RestoreHeartbeat = false;
-	bool AgentEnabled = false;
-	uint8_t AgentSocketType { SocketType::kLocal };
-	bool AgentUseVirtio = false;
-
-	std::string AgentAddress;
-	uint16_t AgentPort;
-
 	bool TurnsEnabled = false;
 	uint16_t TurnTime = 20;
 
@@ -57,11 +49,6 @@ struct VMSettings {
 	uint16_t VoteCooldownTime = 600;
 
 	uint8_t MaxAttempts = 5;
-
-	bool UploadsEnabled = false;
-	uint32_t UploadCooldownTime {};
-	uint32_t MaxUploadSize {};
-	uint8_t UploadMaxFilename {};
 
 	std::string Snapshot;
 	std::string VNCAddress;

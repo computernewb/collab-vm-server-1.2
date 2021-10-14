@@ -54,7 +54,6 @@ Please email rightowner@gmail.com for any assistance.
 	#include "guacamole/protocol.h"
 #endif
 
-//#include <ossp/uuid.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/reader.h>
 #include <rapidjson/stringbuffer.h>
@@ -66,27 +65,6 @@ using rapidjson::Value;
 using rapidjson::GenericMemberIterator;
 
 const uint8_t CollabVMServer::kIPDataTimerInterval = 1;
-
-enum class ClientFileOp : char {
-	kBegin = '0'//,
-//	kMiddle = '1',
-//	kEnd = '2',
-//	kStop = '3'
-}; // commented those out due to the switch not handling them
-
-/*
-enum class ServerFileOp : char
-{
-	kBegin = '0',
-	kAck = '1',
-	kFinished = '2',
-	kStop = '3',
-	kWaitTime = '4',
-	kFailed = '5',
-	kUploadInProgress = '6',
-	kTimedOut = '7'
-};
-*/
 
 // TODO constexpr string view
 
@@ -143,7 +121,6 @@ enum SERVER_SETTINGS {
 	kChatRateTime,
 	kChatMuteTime,
 	kMaxConnections,
-	kMaxUploadTime,
 	kBanCommand,
 	kJPEGQuality,
 	kModEnabled,
@@ -156,7 +133,6 @@ const static std::string server_settings_[] = {
 	"chat-rate-time",
 	"chat-mute-time",
 	"max-cons",
-	"max-upload-time",
 	"ban-cmd",
 	"jpeg-quality",
 	"mod-enabled",
@@ -187,17 +163,6 @@ enum VM_SETTINGS {
 	kVotesEnabled,
 	kVoteTime,
 	kVoteCooldownTime,
-	kAgentEnabled,
-	kAgentSocketType,
-	kAgentUseVirtio,
-	kAgentAddress,
-	kAgentPort,
-	kRestoreHeartbeat,
-	kHeartbeatTimeout,
-	kUploadsEnabled,
-	kUploadCooldownTime,
-	kUploadMaxSize,
-	kUploadMaxFilename,
 	kMOTD
 };
 
@@ -224,17 +189,6 @@ static const std::string vm_settings_[] = {
 	"votes-enabled",
 	"vote-time",
 	"vote-cooldown-time",
-	"agent-enabled",
-	"agent-socket-type",
-	"agent-use-virtio",
-	"agent-address",
-	"agent-port",
-	"restore-heartbeat",
-	"heartbeat-timeout",
-	"uploads-enabled",
-	"upload-cooldown-time",
-	"upload-max-size",
-	"upload-max-filename",
 	"motd"
 };
 
@@ -266,8 +220,8 @@ CollabVMServer::CollabVMServer(net::io_service& service)
 	  chat_history_(new ChatMessage[database_.Configuration.ChatMsgHistory]),
 	  chat_history_begin_(0),
 	  chat_history_end_(0),
-	  chat_history_count_(0),
-	  upload_count_(0) {
+	  chat_history_count_(0) {
+
 	// Create VMControllers for all VMs that will be auto-started
 	for(auto [id, vm] : database_.VirtualMachines) {
 		if(vm->AutoStart) {
@@ -343,9 +297,8 @@ void CollabVMServer::Run(uint16_t port, std::string doc_root) {
 #endif
 
 	// Start all of the VMs that should be auto-started
-	for(auto [id, vm] : vm_controllers_) {
+	for(auto [id, vm] : vm_controllers_)
 		vm->Start();
-	}
 
 	// Start message processing thread
 	process_thread_running_ = true;
@@ -640,9 +593,6 @@ bool CollabVMServer::ShouldCleanUpIPData(IPData& ip_data) const {
 		if(vote.second != IPData::VoteDecision::kNotVoted)
 			return false;
 
-	if(ip_data.upload_in_progress || (ip_data.next_upload_time - now).count() > 0)
-		return false;
-
 	return true;
 }
 
@@ -661,10 +611,6 @@ void CollabVMServer::RemoveConnection(std::shared_ptr<CollabVMUser>& user) {
 		admin_connections_.erase(user);
 		user->admin_connected = false;
 	}
-
-	// CancelFileUpload should be called before setting vm_controller
-	// to a nullptr (which is done by VMController::RemoveUser)
-	CancelFileUpload(*user);
 
 	if(user->vm_controller)
 		user->vm_controller->RemoveUser(user);
@@ -785,137 +731,7 @@ void CollabVMServer::ProcessingThread() {
 				controller->EndVote();
 				break;
 			}
-			case ActionType::kAgentConnect: {
-				AgentConnectAction* agent_action = static_cast<AgentConnectAction*>(action);
-				const std::shared_ptr<VMController>& controller = agent_action->controller;
-				controller->agent_connected_ = true;
-				controller->agent_os_name_ = agent_action->os_name;
-				controller->agent_service_pack_ = agent_action->service_pack;
-				controller->agent_pc_name_ = agent_action->pc_name;
-				controller->agent_username_ = agent_action->username;
-				controller->agent_max_filename_ = std::min(static_cast<uint32_t>(controller->GetSettings().UploadMaxFilename),
-														   agent_action->max_filename);
-				controller->agent_upload_in_progress_ = false;
 
-				std::cout << "Agent Connected, OS: \"" << agent_action->os_name << "\", SP: \"" << agent_action->service_pack << "\", PC: \"" << agent_action->pc_name << "\", Username: \"" << agent_action->username << "\"" << std::endl;
-
-				SendActionInstructions(*controller, controller->GetSettings());
-				break;
-			}
-			case ActionType::kAgentDisconnect: {
-				const std::shared_ptr<VMController>& controller = static_cast<VMAction*>(action)->controller;
-				controller->agent_connected_ = false;
-				controller->agent_os_name_.clear();
-				controller->agent_service_pack_.clear();
-				controller->agent_pc_name_.clear();
-				controller->agent_username_.clear();
-				controller->agent_upload_in_progress_ = false;
-
-				SendActionInstructions(*controller, controller->GetSettings());
-				break;
-			}
-			case ActionType::kUploadEnded: {
-				break; // shut your mouth look at my wad
-			}
-			/*
-		case ActionType::kHttpUploadTimedout:
-		{
-			const std::shared_ptr<UploadInfo>& upload_info = static_cast<HttpAction*>(action)->upload_info;
-			if (upload_info->canceled)
-				break;
-			upload_info->canceled = true;
-
-			unique_lock<std::mutex> lock(upload_lock_);
-			if (upload_info->upload_it != upload_ids_.end())
-			    upload_ids_.erase(upload_info->upload_it);
-			lock.unlock();
-			if (auto user = upload_info->user.lock())
-			{
-				user->upload_info.reset();
-				FileUploadEnded(upload_info, &user, FileUploadResult::kHttpUploadTimedOut);
-			}
-			else
-			{
-				FileUploadEnded(upload_info, nullptr, FileUploadResult::kHttpUploadTimedOut);
-			}
-			break;
-		}
-		case ActionType::kHttpUploadFinished:
-		{
-			const std::shared_ptr<UploadInfo>& upload_info = static_cast<HttpAction*>(action)->upload_info;
-			if (upload_info->canceled)
-				break;
-			upload_info->canceled = true;
-
-			if (boost::asio::steady_timer* timer = upload_info->timeout_timer)
-			{
-				upload_info->timeout_timer = nullptr;
-				boost::system::error_code ec;
-				timer->cancel(ec);
-				delete timer;
-			}
-
-			VMController& vm_controller = *upload_info->vm_controller;
-			if (auto user = upload_info->user.lock())
-			{
-				user->upload_info.reset();
-
-				// Cancel the upload if the user switched to another VM
-				if (user->vm_controller == &vm_controller)
-				{
-					if (vm_controller.agent_upload_in_progress_)
-					{
-						vm_controller.agent_upload_queue_.push_back(upload_info);
-					}
-					else
-					{
-						vm_controller.UploadFile(upload_info);
-						vm_controller.agent_upload_in_progress_ = true;
-					}
-					break;
-				}
-				FileUploadEnded(upload_info, &user, FileUploadResult::kHttpUploadFailed);
-				break;
-			}
-			FileUploadEnded(upload_info, nullptr, FileUploadResult::kHttpUploadFailed);
-			break;
-		}
-		case ActionType::kHttpUploadFailed:
-		{
-			const std::shared_ptr<UploadInfo>& upload_info = static_cast<HttpAction*>(action)->upload_info;
-			if (upload_info->canceled)
-				break;
-			upload_info->canceled = true;
-
-			if (auto user = upload_info->user.lock())
-			{
-				user->upload_info.reset();
-				FileUploadEnded(upload_info, &user, FileUploadResult::kHttpUploadFailed);
-			}
-			else
-			{
-				FileUploadEnded(upload_info, nullptr, FileUploadResult::kHttpUploadFailed);
-			}
-			break;
-		}
-		case ActionType::kUploadEnded:
-		{
-			FileUploadAction& upload_action = *static_cast<FileUploadAction*>(action);
-			FileUploadResult result = upload_action.upload_result == FileUploadAction::UploadResult::kSuccess ||
-										upload_action.upload_result == FileUploadAction::UploadResult::kSuccessNoExec ?
-										FileUploadResult::kAgentUploadSucceeded : FileUploadResult::kAgentUploadFailed;
-			if (auto user = upload_action.upload_info->user.lock())
-			{
-				user->upload_info.reset();
-				FileUploadEnded(upload_action.upload_info, &user, result);
-			}
-			else
-			{
-				FileUploadEnded(upload_action.upload_info, nullptr, result);
-			}
-			break;
-		}
-		 */
 			case ActionType::kKeepAlive:
 				if(!connections_.empty()) {
 					// Disconnect all clients that haven't responded within the timeout period
@@ -1766,21 +1582,7 @@ void CollabVMServer::OnRenameInstruction(const std::shared_ptr<CollabVMUser>& us
 static void AppendVMActions(const VMController& controller, const VMSettings& settings, std::string& instr) {
 	instr += settings.TurnsEnabled ? "1,1." : "0,1.";
 	instr += settings.VotesEnabled ? "1,1." : "0,1.";
-	if(settings.UploadsEnabled && controller.agent_connected_) {
-		instr += "1,";
-		std::string temp = std::to_string(settings.MaxUploadSize);
-		instr += std::to_string(temp.length());
-		instr += '.';
-		instr += temp;
-		instr += ',';
-		temp = std::to_string(controller.agent_max_filename_);
-		instr += std::to_string(temp.length());
-		instr += '.';
-		instr += temp;
-		instr += ';';
-	} else {
-		instr += "0;";
-	}
+	instr += "0;";
 }
 
 void CollabVMServer::SendActionInstructions(VMController& controller, const VMSettings& settings) {
@@ -1824,12 +1626,6 @@ void CollabVMServer::OnConnectInstruction(const std::shared_ptr<CollabVMUser>& u
 	}
 
 	VMController& controller = *it->second;
-
-	// Send cooldown time before action instruction
-	if(user->ip_data.upload_in_progress)
-		SendWSMessage(*user, "4.file,1.6;");
-	else
-		SendUploadCooldownTime(*user, controller);
 
 	if(user->ip_data.name_fixed)
 		return;
@@ -2393,174 +2189,10 @@ void CollabVMServer::OnVoteInstruction(const std::shared_ptr<CollabVMUser>& user
 }
 
 void CollabVMServer::OnFileInstruction(const std::shared_ptr<CollabVMUser>& user, std::vector<char*>& args) {
-	if(!user->vm_controller || args.empty() || args[0][0] == '\0' ||
-	   !user->vm_controller->GetSettings().UploadsEnabled)
-		return;
-
-	switch(static_cast<ClientFileOp>(args[0][0])) {
-		case ClientFileOp::kBegin:
-			if(args.size() == 4 && !user->upload_info && !user->ip_data.upload_in_progress) {
-				if(SendUploadCooldownTime(*user, *user->vm_controller))
-					break;
-
-				std::string filename = args[1];
-				if(!IsFilenameValid(filename))
-					break;
-
-				uint32_t file_size = std::strtoul(args[2], nullptr, 10);
-				bool run_file = args[3][0] == '1';
-				if(user->vm_controller->IsFileUploadValid(user, filename, file_size, run_file)) {
-					bool found = false;
-					std::shared_ptr<VMController> vm;
-					for(auto vm_controller : vm_controllers_) {
-						if(vm_controller.second.get() == user->vm_controller) {
-							vm = vm_controller.second;
-							found = true;
-							break;
-						}
-					}
-					assert(found);
-
-					user->upload_info = std::make_shared<UploadInfo>(user, vm, filename, file_size, run_file,
-																	 user->vm_controller->GetSettings().UploadCooldownTime);
-
-					std::unique_lock<std::mutex> lock(upload_lock_);
-
-					user->upload_info->upload_it = upload_ids_.end();
-
-					lock.unlock();
-
-					user->ip_data.upload_in_progress = true;
-
-					if(upload_count_ != kMaxFileUploads) {
-						StartFileUpload(*user);
-					} else {
-						user->waiting_for_upload = true;
-						upload_queue_.push_back(user);
-					}
-					break;
-				}
-			}
-			SendWSMessage(*user, "4.file,1.5;");
-			break;
-	}
+	// no-op (TODO: remove)
+	return;
 }
 
-void CollabVMServer::OnAgentConnect(const std::shared_ptr<VMController>& controller,
-									const std::string& os_name, const std::string& service_pack,
-									const std::string& pc_name, const std::string& username, uint32_t max_filename) {
-	PostAction<AgentConnectAction>(controller, os_name, service_pack, pc_name, username, max_filename);
-}
-
-void CollabVMServer::OnAgentDisconnect(const std::shared_ptr<VMController>& controller) {
-	PostAction<VMAction>(controller, ActionType::kAgentDisconnect);
-}
-
-// TODO
-
-//void CollabVMServer::OnAgentHeartbeatTimeout(const std::shared_ptr<VMController>& controller) {
-//	PostAction<VMAction>(controller, ActionType::kHeartbeatTimeout);
-//}
-
-bool CollabVMServer::IsFilenameValid(const std::string& filename) {
-	for(char c : filename) {
-		// Only allow printable ASCII characters
-		if(c < ' ' || c > '~')
-			return false;
-		// Characters disallowed by Windows
-		switch(c) {
-			case '<':
-			case '>':
-			case ':':
-			case '"':
-			case '/':
-			case '\\':
-			case '|':
-			case '?':
-			case '*':
-				return false;
-		}
-	}
-	return true;
-}
-
-void CollabVMServer::OnUploadTimeout(const boost::system::error_code ec, std::shared_ptr<UploadInfo> upload_info) {
-	/*
-	if (ec)
-		return;
-
-	UploadInfo::HttpUploadState prev_state =
-		upload_info->http_state.exchange(UploadInfo::HttpUploadState::kCancel);
-	if (prev_state == UploadInfo::HttpUploadState::kNotStarted)
-	{
-		std::unique_lock<std::mutex> lock(process_queue_lock_);
-		process_queue_.push(new HttpAction(ActionType::kHttpUploadTimedout, upload_info));
-		lock.unlock();
-		process_wait_.notify_one();
-	}
-	else if (prev_state == UploadInfo::HttpUploadState::kNotWriting)
-	{
-		std::unique_lock<std::mutex> lock(process_queue_lock_);
-		process_queue_.push(new HttpAction(ActionType::kHttpUploadFailed, upload_info));
-		lock.unlock();
-		process_wait_.notify_one();
-	}
-     */
-}
-
-void CollabVMServer::StartFileUpload(CollabVMUser& user) {
-	/*
-	assert(user.upload_info);
-	const std::shared_ptr<UploadInfo>& upload_info = user.upload_info;
-	std::string file_path = kFileUploadPath;
-	file_path += std::to_string(upload_count_ + 1);
-
-	upload_info->file_stream.open(file_path, std::fstream::in | std::fstream::out | std::fstream::trunc | std::fstream::binary);
-	if (upload_info->file_stream.is_open() && upload_info->file_stream.good())
-	{
-		upload_count_++;
-		upload_info->file_path = file_path;
-
-		boost::asio::steady_timer* timer = new boost::asio::steady_timer(service_);
-		std::string upload_id = GenerateUuid();
-		unique_lock<std::mutex> lock(upload_lock_);
-		auto result = upload_ids_.insert({ upload_id, upload_info });
-		while (!result.second)
-		{
-			upload_id = GenerateUuid();
-			result = upload_ids_.insert({ upload_id, upload_info });
-		}
-		upload_info->upload_it = result.first;
-		upload_info->timeout_timer = timer;
-		lock.unlock();
-
-		std::string instr = "4.file,1.0,";
-		instr += std::to_string(upload_id.length());
-		instr += '.';
-		instr += upload_id;
-		instr += ';';
-		SendWSMessage(user, instr);
-
-		boost::system::error_code ec;
-		timer->expires_from_now(std::chrono::seconds(kUploadStartTimeout), ec);
-		timer->async_wait(std::bind(&CollabVMServer::OnUploadTimeout, shared_from_this(),
-									std::placeholders::_1, upload_info));
-	}
-	else
-	{
-		CancelFileUpload(user);
-		SendWSMessage(user, "4.file,1.5;");
-
-		std::cout << "Error: Failed to create file \"" << file_path << "\" for upload." << std::endl;
-	}
-     */
-}
-
-void CollabVMServer::SendUploadResultToIP(IPData& ip_data, const CollabVMUser& user, const std::string& instr) {
-	for(const std::shared_ptr<CollabVMUser>& connection : connections_)
-		if(&connection->ip_data == &ip_data && connection->vm_controller && connection.get() != &user)
-			SendWSMessage(*connection, instr);
-}
 
 static void AppendCooldownTime(std::string& instr, uint32_t cooldown_time) {
 	std::string temp = std::to_string(cooldown_time * 1000);
@@ -2568,239 +2200,6 @@ static void AppendCooldownTime(std::string& instr, uint32_t cooldown_time) {
 	instr += '.';
 	instr += temp;
 	instr += ';';
-}
-
-void CollabVMServer::FileUploadEnded(const std::shared_ptr<UploadInfo>& upload_info,
-									 const std::shared_ptr<CollabVMUser>* user, FileUploadResult result) {
-	/*
-	if (boost::asio::steady_timer* timer = upload_info->timeout_timer)
-	{
-		upload_info->timeout_timer = nullptr;
-		boost::system::error_code ec;
-		timer->cancel(ec);
-		delete timer;
-	}
-
-	VMController& vm_controller = *upload_info->vm_controller;
-	if (user)
-	{
-		upload_info->file_stream.close();
-		std::remove(upload_info->file_path.c_str());
-
-		uint32_t cooldown_time = vm_controller.GetSettings().UploadCooldownTime;
-		// The IPData has at least one client associated with it so
-		// locking isn't required
-		SetUploadCooldownTime(upload_info->ip_data, cooldown_time);
-
-		std::string uploader_instr;
-		std::string other_instr;
-		switch (result)
-		{
-		case FileUploadResult::kHttpUploadTimedOut:
-			uploader_instr = "4.file,1.7";
-			goto send_message;
-		case FileUploadResult::kHttpUploadFailed:
-			uploader_instr = "4.file,1.5";
-			goto send_message;
-		case FileUploadResult::kAgentUploadSucceeded:
-			uploader_instr = "4.file,1.2";
-		send_message:
-			if (cooldown_time)
-			{
-				std::string cooldown_str;
-				AppendCooldownTime(cooldown_str, cooldown_time);
-
-				uploader_instr += ',';
-				uploader_instr += cooldown_str;
-
-				other_instr = "4.file,1.4,";
-				other_instr += cooldown_str;
-			}
-			else
-			{
-				uploader_instr += ';';
-				other_instr = "4.file,1.4,1.0;";
-			}
-			SendWSMessage(**user, uploader_instr);
-			break;
-		}
-
-		if (upload_info->ip_data.connections > 1)
-			SendUploadResultToIP(upload_info->ip_data, *user->get(), other_instr);
-	}
-	else
-	{
-		// The IPData might not have any clients associated with it so
-		// locking is required
-		unique_lock<std::mutex> lock(ip_lock_);
-		uint32_t cooldown_time = vm_controller.GetSettings().UploadCooldownTime;
-		SetUploadCooldownTime(upload_info->ip_data, cooldown_time);
-		if (upload_info->ip_data.connections > 1)
-		{
-			std::string instr = cooldown_time ? "4.file,1.4," : "4.file,1.4,1.0;";
-			if (cooldown_time)
-				AppendCooldownTime(instr, cooldown_time);
-			SendUploadResultToIP(upload_info->ip_data, *user->get(), instr);
-		}
-		lock.unlock();
-	}
-
-	switch (result)
-	{
-	case FileUploadResult::kHttpUploadTimedOut:
-	case FileUploadResult::kHttpUploadFailed:
-		StartNextUpload();
-		break;
-	case FileUploadResult::kAgentUploadSucceeded:
-		BroadcastUploadedFileInfo(*upload_info, vm_controller);
-		// Fall through
-	case FileUploadResult::kAgentUploadFailed:
-		if (vm_controller.agent_upload_queue_.empty())
-		{
-			vm_controller.agent_upload_in_progress_ = false;
-			StartNextUpload();
-		}
-		else
-		{
-			vm_controller.UploadFile(vm_controller.agent_upload_queue_.front());
-			vm_controller.agent_upload_queue_.pop_front();
-		}
-		break;
-	}
-     */
-}
-
-void CollabVMServer::StartNextUpload() {
-	upload_count_--;
-	if(!upload_queue_.empty()) {
-		CollabVMUser& user = *upload_queue_.front();
-		upload_queue_.pop_front();
-		user.waiting_for_upload = false;
-		StartFileUpload(user);
-	}
-}
-
-void CollabVMServer::CancelFileUpload(CollabVMUser& user) {
-	if(!user.upload_info)
-		return;
-
-	UploadInfo::HttpUploadState prev_state =
-	user.upload_info->http_state.exchange(UploadInfo::HttpUploadState::kCancel);
-	if(prev_state != UploadInfo::HttpUploadState::kNotStarted &&
-	   prev_state != UploadInfo::HttpUploadState::kNotWriting)
-		return;
-
-	if(prev_state == UploadInfo::HttpUploadState::kNotStarted) {
-		std::lock_guard<std::mutex> lock(upload_lock_);
-		if(user.upload_info->upload_it != upload_ids_.end())
-			upload_ids_.erase(user.upload_info->upload_it);
-	}
-
-	if(boost::asio::steady_timer* timer = user.upload_info->timeout_timer) {
-		user.upload_info->timeout_timer = nullptr;
-		boost::system::error_code ec;
-		timer->cancel(ec);
-		delete timer;
-	}
-
-	uint32_t cooldown_time = user.vm_controller->GetSettings().UploadCooldownTime;
-	SetUploadCooldownTime(user.ip_data, cooldown_time);
-
-	if(user.upload_info->ip_data.connections > 1) {
-		std::string instr = cooldown_time ? "4.file,1.4," : "4.file,1.4,1.0;";
-		if(cooldown_time)
-			AppendCooldownTime(instr, cooldown_time);
-		SendUploadResultToIP(user.upload_info->ip_data, user, instr);
-	}
-
-	// Close the fstream first to allow a new one to be opened if there is a pending upload
-	user.upload_info->file_stream.close();
-	user.upload_info.reset();
-
-	if(user.waiting_for_upload) {
-		user.waiting_for_upload = false;
-		bool user_found = false;
-		for(auto it = upload_queue_.begin(); it != upload_queue_.end(); it++) {
-			if((*it).get() == &user) {
-				upload_queue_.erase(it);
-				user_found = true;
-				break;
-			}
-		}
-		assert(user_found);
-	} else {
-		StartNextUpload();
-	}
-}
-
-void CollabVMServer::SetUploadCooldownTime(IPData& ip_data, uint32_t time) {
-	ip_data.upload_in_progress = false;
-	if(time)
-		ip_data.next_upload_time = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now()) + std::chrono::seconds(time);
-}
-
-bool CollabVMServer::SendUploadCooldownTime(CollabVMUser& user, const VMController& vm_controller) {
-	if(vm_controller.GetSettings().UploadCooldownTime) {
-		using namespace std::chrono;
-		int64_t remaining = (user.ip_data.next_upload_time -
-							 time_point_cast<milliseconds>(steady_clock::now()))
-							.count();
-
-		if(remaining > 0) {
-			std::string instr = "4.file,1.4,";
-			std::string temp = std::to_string(remaining);
-			instr += std::to_string(temp.length());
-			instr += '.';
-			instr += temp;
-			instr += ';';
-			SendWSMessage(user, instr);
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void CollabVMServer::BroadcastUploadedFileInfo(UploadInfo& upload_info, VMController& vm_controller) {
-#define UPLOAD_STR " uploaded "
-#define FILE_SIZE_PREFIX " ("
-#define FILE_SIZE_SUFFIX " bytes)"
-	std::string instr = "4.chat,0.,";
-	std::string file_size = std::to_string(upload_info.file_size);
-	std::string escaped_filename = EncodeHTMLString(upload_info.filename.c_str(), upload_info.filename.length());
-	instr += std::to_string(upload_info.username->length() + STR_LEN(UPLOAD_STR) + escaped_filename.length() +
-							STR_LEN(FILE_SIZE_PREFIX) + file_size.length() + STR_LEN(FILE_SIZE_SUFFIX));
-	instr += '.';
-	instr += *upload_info.username;
-	instr += UPLOAD_STR;
-	instr += escaped_filename;
-	instr += FILE_SIZE_PREFIX;
-	instr += file_size;
-	instr += FILE_SIZE_SUFFIX;
-	instr += ';';
-
-	vm_controller.GetUsersList().ForEachUser([&](CollabVMUser& user) {
-		SendWSMessage(user, instr);
-	});
-}
-
-void CollabVMServer::OnFileUploadFailed(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info) {
-	assert(controller == info->vm_controller);
-
-	PostAction<FileUploadAction>(info, FileUploadAction::UploadResult::kFailed);
-}
-
-void CollabVMServer::OnFileUploadFinished(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info) {
-	assert(controller == info->vm_controller);
-
-	PostAction<FileUploadAction>(info, FileUploadAction::UploadResult::kSuccess);
-}
-
-void CollabVMServer::OnFileUploadExecFinished(const std::shared_ptr<VMController>& controller, const std::shared_ptr<UploadInfo>& info, bool exec_success) {
-	assert(controller == info->vm_controller);
-	// TODO: Send exec_success
-
-	PostAction<FileUploadAction>(info, FileUploadAction::UploadResult::kSuccess);
 }
 
 /**
@@ -3036,112 +2435,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 							valid = false;
 						}
 						break;
-					case kAgentEnabled:
-						if(value.IsBool()) {
-							vm.AgentEnabled = value.GetBool();
-						} else {
-							WriteJSONObject(writer, vm_settings_[kAgentEnabled], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kAgentSocketType:
-						if(value.IsString() && value.GetStringLength()) {
-							std::string str(value.GetString(), value.GetStringLength());
-							if(str == "tcp")
-								vm.AgentSocketType = VMSettings::SocketType::kTCP;
-							else if(str == "local")
-								vm.AgentSocketType = VMSettings::SocketType::kLocal;
-							else {
-								WriteJSONObject(writer, vm_settings_[kAgentSocketType], "Invalid socket type");
-								valid = false;
-							}
-						} else {
-							WriteJSONObject(writer, vm_settings_[kAgentSocketType], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kAgentUseVirtio:
-						if(value.IsBool()) {
-							vm.AgentUseVirtio = value.GetBool();
-						} else {
-							WriteJSONObject(writer, vm_settings_[kAgentUseVirtio], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kAgentAddress:
-						if(value.IsString()) {
-							vm.AgentAddress = std::string(value.GetString(), value.GetStringLength());
-						} else {
-							WriteJSONObject(writer, vm_settings_[kAgentAddress], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kAgentPort:
-						if(value.IsUint()) {
-							if(value.GetUint() < std::numeric_limits<uint16_t>::max()) {
-								vm.AgentPort = value.GetUint();
-							} else {
-								WriteJSONObject(writer, vm_settings_[kAgentPort], "Port too large");
-								valid = false;
-							}
-						} else {
-							WriteJSONObject(writer, vm_settings_[kAgentPort], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kRestoreHeartbeat:
-						if(value.IsBool()) {
-							vm.RestoreHeartbeat = value.GetBool();
-						} else {
-							WriteJSONObject(writer, vm_settings_[kRestoreHeartbeat], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kHeartbeatTimeout:
-						if(value.IsUint()) {
-							//vm.HeartbeatTimeout = value.GetUint();
-						} else {
-							WriteJSONObject(writer, vm_settings_[kHeartbeatTimeout], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kUploadsEnabled:
-						if(value.IsBool()) {
-							vm.UploadsEnabled = value.GetBool();
-						} else {
-							WriteJSONObject(writer, vm_settings_[kUploadsEnabled], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kUploadCooldownTime:
-						if(value.IsUint()) {
-							vm.UploadCooldownTime = value.GetUint();
-						} else {
-							WriteJSONObject(writer, vm_settings_[kUploadCooldownTime], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kUploadMaxSize:
-						if(value.IsUint()) {
-							vm.MaxUploadSize = value.GetUint();
-						} else {
-							WriteJSONObject(writer, vm_settings_[kUploadMaxSize], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kUploadMaxFilename:
-						if(value.IsUint()) {
-							if(value.GetUint() < std::numeric_limits<uint8_t>::max()) {
-								vm.UploadMaxFilename = value.GetUint();
-							} else {
-								WriteJSONObject(writer, vm_settings_[kUploadMaxFilename], "Max filename is too long");
-								valid = false;
-							}
-						} else {
-							WriteJSONObject(writer, vm_settings_[kUploadMaxFilename], invalid_object_);
-							valid = false;
-						}
-						break;
+
 					case kMOTD:
 						if(value.IsString()) {
 							vm.MOTD = std::string(value.GetString(), value.GetStringLength());
@@ -3357,9 +2651,6 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 	writer.String(server_settings_[kMaxConnections].c_str());
 	writer.Uint(database_.Configuration.MaxConnections);
 
-	writer.String(server_settings_[kMaxUploadTime].c_str());
-	writer.Uint(database_.Configuration.MaxUploadTime);
-
 	writer.String(server_settings_[kBanCommand].c_str());
 	writer.String(database_.Configuration.BanCommand.c_str());
 
@@ -3465,51 +2756,7 @@ void CollabVMServer::WriteServerSettings(rapidjson::Writer<rapidjson::StringBuff
 					writer.String(vm_settings_[kVoteCooldownTime].c_str());
 					writer.Uint(vm->VoteCooldownTime);
 					break;
-				case kAgentEnabled:
-					writer.String(vm_settings_[kAgentEnabled].c_str());
-					writer.Bool(vm->AgentEnabled);
-					break;
-				case kAgentSocketType:
-					writer.String(vm_settings_[kAgentSocketType].c_str());
-					writer.String(vm->AgentSocketType == VMSettings::SocketType::kLocal ? "local" : "tcp");
-					break;
-				case kAgentUseVirtio:
-					writer.String(vm_settings_[kAgentUseVirtio].c_str());
-					writer.Bool(vm->AgentUseVirtio);
-					break;
-				case kAgentAddress:
-					writer.String(vm_settings_[kAgentAddress].c_str());
-					writer.String(vm->AgentAddress.c_str());
-					break;
-				case kAgentPort:
-					writer.String(vm_settings_[kAgentPort].c_str());
-					writer.Uint(vm->AgentPort);
-					break;
-				case kRestoreHeartbeat:
-					writer.String(vm_settings_[kRestoreHeartbeat].c_str());
-					writer.Bool(vm->RestoreHeartbeat);
-					break;
-				case kHeartbeatTimeout:
-					writer.String(vm_settings_[kHeartbeatTimeout].c_str());
-					//writer.Uint(vm->HeartbeatTimeout);
-					writer.Uint(0);
-					break;
-				case kUploadsEnabled:
-					writer.String(vm_settings_[kUploadsEnabled].c_str());
-					writer.Bool(vm->UploadsEnabled);
-					break;
-				case kUploadCooldownTime:
-					writer.String(vm_settings_[kUploadCooldownTime].c_str());
-					writer.Uint(vm->UploadCooldownTime);
-					break;
-				case kUploadMaxSize:
-					writer.String(vm_settings_[kUploadMaxSize].c_str());
-					writer.Uint(vm->MaxUploadSize);
-					break;
-				case kUploadMaxFilename:
-					writer.String(vm_settings_[kUploadMaxFilename].c_str());
-					writer.Uint(vm->UploadMaxFilename);
-					break;
+
 				case kMOTD:
 					writer.String(vm_settings_[kMOTD].c_str());
 					writer.String(vm->MOTD.c_str());
@@ -3584,19 +2831,6 @@ void CollabVMServer::ParseServerSettings(rapidjson::Value& settings, rapidjson::
 							}
 						} else {
 							WriteJSONObject(writer, server_settings_[kMaxConnections], invalid_object_);
-							valid = false;
-						}
-						break;
-					case kMaxUploadTime:
-						if(value.IsUint()) {
-							if(value.GetUint() <= std::numeric_limits<uint16_t>::max()) {
-								config.MaxUploadTime = value.GetUint();
-							} else {
-								WriteJSONObject(writer, server_settings_[kMaxUploadTime], "Value too big");
-								valid = false;
-							}
-						} else {
-							WriteJSONObject(writer, server_settings_[kMaxUploadTime], invalid_object_);
 							valid = false;
 						}
 						break;

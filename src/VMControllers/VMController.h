@@ -9,10 +9,8 @@
 #include <memory>
 
 #include "CollabVMUser.h"
-#include "UploadInfo.h"
 #include "GuacClient.h"
 #include "UserList.h"
-#include "Sockets/AgentClient.h"
 
 class CollabVMServer;
 struct VMSettings;
@@ -22,7 +20,7 @@ struct VMSettings;
  * creating a Guacamole client, and possibly a guest service controller. Derived
  * classes will implement functionality specific to the hypervisor.
  */
-class VMController : public std::enable_shared_from_this<VMController>, public AgentCallback {
+class VMController : public std::enable_shared_from_this<VMController> {
 	friend GuacBroadcastSocket;
 
    public:
@@ -170,40 +168,12 @@ class VMController : public std::enable_shared_from_this<VMController>, public A
 		return users_;
 	}
 
-	bool IsFileUploadValid(const std::shared_ptr<CollabVMUser>& user, const std::string& filename, size_t file_size, bool run_file);
-
-	void UploadFile(const std::shared_ptr<UploadInfo>& info) {
-		if(agent_)
-			agent_->UploadFile(info);
-	}
-
-	// Only accessed by CollabVMServer from the processing thread
-	std::string agent_os_name_;
-	std::string agent_service_pack_;
-	std::string agent_pc_name_;
-	std::string agent_username_;
-	uint32_t agent_max_filename_;
-	bool agent_connected_;
-	bool agent_upload_in_progress_;
-	std::deque<std::shared_ptr<UploadInfo>> agent_upload_queue_;
-
    protected:
 	VMController(CollabVMServer& server, boost::asio::io_service& service, const std::shared_ptr<VMSettings>& settings);
 
 	virtual void OnAddUser(CollabVMUser& user) = 0;
 
 	virtual void OnRemoveUser(CollabVMUser& user) = 0;
-
-	void InitAgent(const VMSettings& settings, boost::asio::io_service& service);
-
-	void OnAgentConnect(const std::string& os_name, const std::string& service_pack,
-						const std::string& pc_name, const std::string& username, uint32_t max_filename) override;
-	void OnAgentDisconnect(bool protocol_error) override;
-	void OnAgentHeartbeatTimeout() override;
-	void OnFileUploadStarted(const std::shared_ptr<UploadInfo>& info, std::string* filename) override;
-	void OnFileUploadFailed(const std::shared_ptr<UploadInfo>& info /*, Reason*/) override;
-	void OnFileUploadFinished(const std::shared_ptr<UploadInfo>& info) override;
-	void OnFileUploadExecFinished(const std::shared_ptr<UploadInfo>& info, bool exec_success) override;
 
 	CollabVMServer& server_;
 
@@ -221,12 +191,7 @@ class VMController : public std::enable_shared_from_this<VMController>, public A
 
 	size_t connected_users_;
 
-	/**
-	 * Timer used to wait before attempting to reconnect to the agent socket.
-	 */
-	boost::asio::steady_timer agent_timer_;
-	std::shared_ptr<AgentClient> agent_;
-	std::string agent_address_;
+
 
    private:
 	enum class VoteState {

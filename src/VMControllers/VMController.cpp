@@ -15,54 +15,13 @@ VMController::VMController(CollabVMServer& server, boost::asio::io_service& serv
 	  current_turn_(nullptr),
 	  connected_users_(0),
 	  stop_reason_(StopReason::kNormal),
-	  thumbnail_str_(nullptr),
-	  agent_timer_(service),
-	  agent_connected_(false) {
-}
-
-void VMController::InitAgent(const VMSettings& settings, boost::asio::io_service& service) {
-	if(settings.AgentEnabled) {
-		if(settings_->AgentSocketType == VMSettings::SocketType::kTCP) {
-			agent_address_ = settings_->AgentAddress;
-			// Port number doesn't need to be appended because
-			// agent_address_ isn't used by QEMUController for TCP
-			//std::string port = std::to_string(settings_->AgentPort);
-			//agent_address_.reserve(agent_address_.length() + 1 + port.length());
-			//agent_address_ += ':';
-			//agent_address_ += port;
-			agent_ = std::make_shared<AgentTCPClient>(service, settings_->AgentAddress, settings_->AgentPort);
-		} else if(settings_->AgentSocketType == VMSettings::SocketType::kLocal) {
-#ifdef _WIN32
-			agent_address_ = R"(\\.\pipe\collab-vm-agent-)";
-#else
-			// Unix domain sockets need to have a valid file path
-			agent_address_ = P_tmpdir "/collab-vm-agent-";
-#endif
-			agent_address_ += settings.Name;
-			agent_ = std::make_shared<AgentLocalClient>(service, agent_address_);
-		}
-
-#ifndef _WIN32
-		agent_->Init("collab-vm-agent.dll", /*settings.HeartbeatTimeout*/ 5);
-#else
-	#if _DEBUG
-		agent_->Init(R"(..\..\collab-vm-agent\Debug\collab-vm-agent.dll)", /*settings.HeartbeatTimeout*/ 5);
-	#else
-
-	#endif
-#endif
-	} else if(agent_) {
-		agent_.reset();
-	}
+	  thumbnail_str_(nullptr) {
 }
 
 void VMController::ChangeSettings(const std::shared_ptr<VMSettings>& settings) {
-	if(settings->TurnsEnabled != settings_->TurnsEnabled ||
-	   settings->VotesEnabled != settings_->VotesEnabled ||
-	   settings->UploadsEnabled != settings_->UploadsEnabled) {
+	if(settings->TurnsEnabled != settings_->TurnsEnabled || settings->VotesEnabled != settings_->VotesEnabled) {
 		server_.ActionsChanged(*this, *settings);
-	} else if(settings->MOTD != settings_->MOTD &&
-			  !settings->MOTD.empty()) {
+	} else if(settings->MOTD != settings_->MOTD && !settings->MOTD.empty()) {
 		server_.BroadcastMOTD(*this, *settings);
 	}
 }
@@ -71,7 +30,6 @@ void VMController::Stop(StopReason reason) {
 	boost::system::error_code ec;
 	turn_timer_.cancel(ec);
 	vote_timer_.cancel(ec);
-	agent_timer_.cancel(ec);
 
 	if(thumbnail_str_) {
 		delete thumbnail_str_;
@@ -276,38 +234,6 @@ void VMController::TurnTimerCallback(const boost::system::error_code& ec) {
 	server_.OnVMControllerTurnChange(shared_from_this());
 }
 
-void VMController::OnAgentConnect(const std::string& os_name, const std::string& service_pack,
-								  const std::string& pc_name, const std::string& username, uint32_t max_filename) {
-	server_.OnAgentConnect(shared_from_this(), os_name, service_pack, pc_name, username, max_filename);
-}
-
-void VMController::OnAgentDisconnect(bool protocol_error) {
-	server_.OnAgentDisconnect(shared_from_this());
-}
-
-void VMController::OnAgentHeartbeatTimeout() {
-	if(settings_->RestoreHeartbeat)
-		RestoreVMSnapshot();
-	else
-		agent_->Disconnect();
-	//server_.OnAgentHeartbeatTimeout(shared_from_this());
-}
-
-void VMController::OnFileUploadStarted(const std::shared_ptr<UploadInfo>& info, std::string* filename) {
-	// TODO: Report new filename
-}
-
-void VMController::OnFileUploadFailed(const std::shared_ptr<UploadInfo>& info) {
-	server_.OnFileUploadFailed(shared_from_this(), info);
-}
-
-void VMController::OnFileUploadFinished(const std::shared_ptr<UploadInfo>& info) {
-	server_.OnFileUploadFinished(shared_from_this(), info);
-}
-
-void VMController::OnFileUploadExecFinished(const std::shared_ptr<UploadInfo>& info, bool exec_success) {
-	server_.OnFileUploadExecFinished(shared_from_this(), info, exec_success);
-}
 
 void VMController::EndTurn(const std::shared_ptr<CollabVMUser>& user) {
 	bool turn_change = false;
@@ -387,9 +313,4 @@ void VMController::RemoveUser(const std::shared_ptr<CollabVMUser>& user) {
 
 void VMController::NewThumbnail(std::string* str) {
 	server_.OnVMControllerThumbnailUpdate(shared_from_this(), str);
-}
-
-bool VMController::IsFileUploadValid(const std::shared_ptr<CollabVMUser>& user, const std::string& filename, size_t file_size, bool run_file) {
-	return file_size >= 1 && file_size <= settings_->MaxUploadSize &&
-		   AgentClient::IsFilenameValid(agent_max_filename_, filename);
 }
