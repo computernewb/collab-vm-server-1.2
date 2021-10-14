@@ -23,7 +23,6 @@
 #include <boost/asio/steady_timer.hpp>
 
 #include <rapidjson/writer.h>
-#include "uriparser/Uri.h"
 
 #include "VMControllers/VMController.h"
 #include "VMControllers/QEMUController.h"

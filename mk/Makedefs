@@ -2,7 +2,7 @@
 # Common makefile stuff for building the CollabVM Server.
 # Allows easy porting!
 
-CCFLAGS = -Isrc -Isrc/uriparser
+CCFLAGS = -Isrc
 
 # Build type switches
 # debug mode, disable optimizations and note debugging
@@ -45,11 +45,24 @@ endif
 
 TOP := $(PWD)
 
+# TODO: cmake.. cmake... CMAKE... fucking hell use CMAKE
+
+# TODO: we should also allow -DBOOST_ASIO_NO_DEPRECATED=1
+# but that breaks a LOT of code for the time being
+
+BOOST_DEFS = \
+	-DBOOST_ASIO_DISABLE_BOOST_ARRAY=1 \
+	-DBOOST_ASIO_DISABLE_BOOST_BIND=1 \
+	-DBOOST_ASIO_DISABLE_BOOST_DATE_TIME=1 \
+	-DBOOST_ASIO_DISABLE_BOOST_REGEX=1 \
+	-DBOOST_ASIO_SEPARATE_COMPILATION=1 \
+	-DBOOST_BEAST_SEPARATE_COMPILATION=1 \
+
 # TODO: Remove -fpermissive, all -Wno- and enable -Wall + -Wextra.
 CXXFLAGS = $(CCFLAGS) -Wno-deprecated-declarations -Wno-deprecated -Wno-write-strings \
-		-fpermissive -std=c++17 $(EXTRAINCS) \
+		-fpermissive -std=c++20 $(EXTRAINCS) \
 		-I$(TOP)/vendor/rapidjson/include -I$(TOP)/vendor/sqlite_orm/include -Isrc/Database -Isrc/VMControllers \
-		-Isrc/Sockets -Isrc/guacamole -Isrc/cpr -I$(OBJDIR) -DRAPIDJSON_HAS_CXX11_RVALUE_REFS
+		-Isrc/Sockets -Isrc/guacamole -Isrc/util -Isrc/cpr -I$(OBJDIR) -DRAPIDJSON_HAS_CXX11_RVALUE_REFS $(BOOST_DEFS)
 
 # GCC dependency generation
 DEPGEN = -MT $@ -MD -MP -MF $(OBJDIR)/$*.d
@@ -58,6 +71,8 @@ DEPGEN = -MT $@ -MD -MP -MF $(OBJDIR)/$*.d
 
 # All objects
 OBJS = $(OBJDIR)/Main.o                          \
+       $(OBJDIR)/asio_implementation.o		 \
+       $(OBJDIR)/beast_implementation.o		 \
        $(OBJDIR)/CollabVM.o                      \
        $(OBJDIR)/Database.o                      \
        $(OBJDIR)/QEMUController.o                \
@@ -89,20 +104,8 @@ OBJS = $(OBJDIR)/Main.o                          \
        $(OBJDIR)/GuacUser.o                      \
        $(OBJDIR)/GuacVNCClient.o                 \
        $(OBJDIR)/GuacInstructionParser.o         \
-       $(OBJDIR)/UriCommon.o                     \
-       $(OBJDIR)/UriFile.o                       \
-       $(OBJDIR)/UriNormalizeBase.o              \
-       $(OBJDIR)/UriParse.o                      \
-       $(OBJDIR)/UriResolve.o                    \
-       $(OBJDIR)/UriCompare.o                    \
-       $(OBJDIR)/UriIp4Base.o                    \
-       $(OBJDIR)/UriNormalize.o                  \
-       $(OBJDIR)/UriQuery.o                      \
-       $(OBJDIR)/UriShorten.o                    \
-       $(OBJDIR)/UriEscape.o                     \
-       $(OBJDIR)/UriIp4.o                        \
-       $(OBJDIR)/UriParseBase.o                  \
-       $(OBJDIR)/UriRecompose.o			 \
+       $(OBJDIR)/ChildProcess.o			 \
+       $(OBJDIR)/CommandLine.o			 \
        $(OBJDIR)/server.o                        \
        $(OBJDIR)/websocket_user.o                \
        $(OBJDIR)/listener.o
@@ -125,7 +128,8 @@ VPATH := src/             \
         src/VMControllers \
         src/guacamole     \
         src/guacamole/vnc \
-        src/websocketmm
+        src/websocketmm   \
+	src/util
 
 all: $(BINDIR)/ $(OBJDIR)/ $(BINDIR)/collab-vm-server
 

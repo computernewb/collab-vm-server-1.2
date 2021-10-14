@@ -343,9 +343,8 @@ void CollabVMServer::Run(uint16_t port, std::string doc_root) {
 #endif
 
 	// Start all of the VMs that should be auto-started
-	for(auto [id, vm] : vm_controllers_) {
+	for(auto [id, vm] : vm_controllers_)
 		vm->Start();
-	}
 
 	// Start message processing thread
 	process_thread_running_ = true;

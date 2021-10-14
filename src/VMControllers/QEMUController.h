@@ -3,9 +3,14 @@
 #include "Database/VMSettings.h"
 #include "GuacVNCClient.h"
 #include "Sockets/QMPClient.h"
+
+
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/system/error_code.hpp>
+
+#include <util/ChildProcess.h>
+
 #include <atomic>
 #include <thread>
 #include <mutex>
@@ -140,9 +145,10 @@ class QEMUController : public VMController, public QMPCallback {
 	void StartGuacClient();
 
 	/**
-	 * Signal callback used to detect when the QEMU process has terminated.
+	 * Called when the QEMU process has terminated.
 	 */
-	void HandleChildSignal(const boost::system::error_code&, int signal);
+	void OnChildExit(int exitCode, const std::error_code& ec);
+
 
 	void GuacDisconnect();
 
@@ -153,12 +159,6 @@ class QEMUController : public VMController, public QMPCallback {
 	 */
 	void IsStopped();
 
-	/**
-	 * Splits a string into a vector.
-	 * On Unix the wordexp function is used.
-	 * On Windows the CommandLineToArgvW function is used.
-	 */
-	static std::vector<const char*> SplitCommandLine(const char* command);
 
 	void OnAgentDisconnect(bool protocol_error) override;
 
@@ -170,6 +170,11 @@ class QEMUController : public VMController, public QMPCallback {
 		kConnected,		// The QEMU process is running, and the QMP and VNC clients are connected
 		kStopping		// Waiting for QEMU process to terminate and VNC and QMP to close
 	};
+
+	/**
+	 * asio io_service we keep round
+	 */
+	boost::asio::io_service& ioc;
 
 	GuacVNCClient guac_client_;
 
@@ -192,9 +197,9 @@ class QEMUController : public VMController, public QMPCallback {
 	std::string qmp_address_;
 
 	/**
-	 * The command used to start QEMU.
+	 * The split command used to start QEMU.
 	 */
-	std::vector<const char*> qemu_command_;
+	std::vector<std::string> qemu_command_;
 
 	/**
 	 * The name of the VM snapshot to restore when starting QEMU or restarting it.
@@ -225,16 +230,7 @@ class QEMUController : public VMController, public QMPCallback {
 	 */
 	boost::asio::steady_timer timer_;
 
-#ifndef _WIN32
-	/**
-	 * Process ID of QEMU. Only valid when state_ != kInactive.
-	 */
-	pid_t qemu_pid_;
-	boost::asio::signal_set signal_;
-#else
-	/**
-	 * Process information of QEMU on Windows. State message applies here.
-	 */
-	PROCESS_INFORMATION qemu_process_;
-#endif
+
+	boost::process::child qemu_child_;
+	
 };
