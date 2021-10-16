@@ -14,3 +14,9 @@
 # Ignore the http binary dir, sometimes it gets left in the source root
 http/
 
+# git mergetool, I *dare* you. - yellows111
+*.swp
+*_BACKUP_*
+*_BASE_*
+*_LOCAL_*
+*_REMOTE_*
