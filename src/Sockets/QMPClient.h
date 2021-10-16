@@ -19,8 +19,8 @@ class QMPCallback;
  */
 class QMPClient : public std::enable_shared_from_this<QMPClient> {
    public:
-	QMPClient(boost::asio::io_service& service)
-		: timer_(service),
+	QMPClient(boost::asio::io_context& ioc)
+		: timer_(ioc),
 		  state_(ConnectionState::kDisconnected) {
 	}
 
@@ -116,14 +116,12 @@ class QMPClient : public std::enable_shared_from_this<QMPClient> {
 
 	template<typename SocketType>
 	void ReadLine(SocketType& socket, std::shared_ptr<SocketCtx>& ctx) {
-		boost::asio::async_read_until(socket, buf_, "\r\n",
-									  std::bind(&QMPClient::OnReadLine, shared_from_this(), std::placeholders::_1, std::placeholders::_2, ctx));
+		boost::asio::async_read_until(socket, buf_, "\r\n", std::bind(&QMPClient::OnReadLine, shared_from_this(), std::placeholders::_1, std::placeholders::_2, ctx));
 	}
 
 	template<typename SocketType>
 	void WriteData(SocketType& socket, const char data[], size_t len, std::shared_ptr<SocketCtx>& ctx) {
-		boost::asio::async_write(socket, boost::asio::buffer(data, len),
-								 std::bind(&QMPClient::OnWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2, ctx));
+		boost::asio::async_write(socket, boost::asio::buffer(data, len), std::bind(&QMPClient::OnWrite, shared_from_this(), std::placeholders::_1, std::placeholders::_2, ctx));
 	}
 
 	virtual boost::asio::io_service& GetService() = 0;
