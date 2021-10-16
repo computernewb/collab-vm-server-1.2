@@ -79,9 +79,6 @@ namespace collabvm::util {
 				split_line.push_back(str);
 			}
 
-			// the wide argv is no longer needed
-			if(wargv)
-				LocalFree(wargv);
 #endif // WIN32
 
 			return true;
