@@ -30,6 +30,11 @@ class VMController : public std::enable_shared_from_this<VMController> {
 	virtual void ChangeSettings(const std::shared_ptr<VMSettings>& settings);
 
 	/**
+	 * Gets the kind of this VM controller.
+	 */
+	virtual std::uint8_t GetKind() const { return -1; }
+
+	/**
 	 * Starts the hypervisor, runs the VM, and starts the Guacamole client.
 	 */
 	virtual void Start() = 0;
@@ -169,7 +174,7 @@ class VMController : public std::enable_shared_from_this<VMController> {
 	}
 
    protected:
-	VMController(CollabVMServer& server, boost::asio::io_service& service, const std::shared_ptr<VMSettings>& settings);
+	VMController(CollabVMServer& server, const std::shared_ptr<VMSettings>& settings);
 
 	virtual void OnAddUser(CollabVMUser& user) = 0;
 
@@ -181,7 +186,7 @@ class VMController : public std::enable_shared_from_this<VMController> {
 	 * The io_service to use for guest service sockets and
 	 * hypervisor controller sockets.
 	 */
-	boost::asio::io_service& io_service_;
+	boost::asio::io_context& io_context_;
 
 	std::shared_ptr<VMSettings> settings_;
 
@@ -228,8 +233,4 @@ class VMController : public std::enable_shared_from_this<VMController> {
 	boost::asio::steady_timer vote_timer_;
 
 	std::string* thumbnail_str_;
-
-	//std::string turn_list_cache_;
-
-	const uint32_t kMaxFilenameLen = 100;
 };

@@ -30,15 +30,14 @@ static boost::asio::io_service::work* qmp_work_;
 static boost::asio::io_service* qmp_service_;
 
 
-QEMUController::QEMUController(CollabVMServer& server, boost::asio::io_service& service, const std::shared_ptr<VMSettings>& settings)
-	: VMController(server, service, settings),
+QEMUController::QEMUController(CollabVMServer& server, const std::shared_ptr<VMSettings>& settings)
+	: VMController(server, settings),
 	  guac_client_(server, *this, users_, settings->VNCAddress, settings->VNCPort),
 	  internal_state_(InternalState::kInactive),
 	  qemu_running_(false),
-	  timer_(service),
-	  retry_count_(0),
-	  ioc(service)
-{
+	  timer_(io_context_),
+	  retry_count_(0) {
+
 	SetCommand(settings->QEMUCmd);
 
 	std::lock_guard<std::mutex> lock(qmp_thread_mutex_);
@@ -97,9 +96,8 @@ QEMUController::~QEMUController() {
 		delete qmp_work_;
 }
 
-void QEMUController::OnChildExit(int exitCode, const std::error_code& ec) {
-	if(ec)
-		return;
+void QEMUController::OnChildExit() {
+	int exitCode = qemu_child_->ExitCode();
 
 	// maybe pid might work on exit?
 	// unless it fetches it from waitpid
@@ -392,8 +390,16 @@ void QEMUController::StartQEMU() {
 	using namespace std::placeholders;
 
 	// Spawn the QEMU process
-	auto exit_handler = std::bind(&QEMUController::OnChildExit, std::static_pointer_cast<QEMUController>(shared_from_this()), _1, _2);
-	qemu_child_ = collabvm::util::StartChildProcess(ioc, args_copy, std::move(exit_handler));
+
+	if(qemu_child_) {
+		qemu_child_.reset();
+	}
+
+	qemu_child_ = collabvm::util::CreateChildProcess(io_context_);
+
+	// Setup the child process
+	qemu_child_->AssignExitHandler(std::bind(&QEMUController::OnChildExit, std::static_pointer_cast<QEMUController>(shared_from_this())));
+	qemu_child_->Start(args_copy);
 
 	qemu_running_ = true;
 	internal_state_ = InternalState::kQMPConnecting;
@@ -421,8 +427,7 @@ void QEMUController::OnQEMUStop() {
 }
 
 void QEMUController::KillQEMU() {
-	//if(qemu_child_.running())
-	qemu_child_.terminate();
+	qemu_child_->Kill();
 
 	qemu_running_ = false;
 	OnQEMUStop();
@@ -567,6 +572,10 @@ void QEMUController::OnGuacDisconnect(bool cleanup) {
 void QEMUController::SendMonitorCommand(std::string cmd, QMPClient::ResultCallback resultCb) {
 	//if (internal_state_ == InternalState::kConnected)
 	qmp_->SendMonitorCommand(cmd, resultCb);
+}
+
+std::uint8_t QEMUController::GetKind() const {
+	return VMSettings::HypervisorEnum::kQEMU;
 }
 
 void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {

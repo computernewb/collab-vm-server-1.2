@@ -1,5 +1,6 @@
 #include <boost/program_options.hpp>
 #include <boost/version.hpp>
+
 #include <iostream>
 #include "CollabVM.h"
 
@@ -19,67 +20,75 @@ void IgnorePipe() {
 #endif
 }
 
-bool process_arguments(int argc, char** argv, std::int16_t& port, std::string& httpDir) {
-        int iport;
-		
+/**
+ * Helper class for all the arguments
+ */
+struct Arguments {
+
+	bool Process(int argc, char** argv) {
 		po::options_description desc("CollabVM Server - Options");
-		po::variables_map vm;
-        try {
-		
+		po::variables_map vm; // moved these here so we *can* catch missing var errors
+		try {
 			desc.add_options()
-				("port,p", po::value<int>(&iport)->required(), "The port to listen on")
-				("root,r", po::value<std::string>(&httpDir), "The root folder to serve HTTP files from (default: http). Currently useless, as there is no HTTP web server (yet!)")
+				("listen,l", po::value<std::string>(&listen_address)->default_value("0.0.0.0"), "The address to listen on. Defaults to all interfaces.")
+				("port,p", po::value<int>(&port)->required(), "The port to listen on")
+				("root,r", po::value<std::string>(&http_dir)->default_value("http"), "The root folder to serve HTTP files from. Currently useless, as there is no HTTP web server (yet!)")
 				("version,v", "Display server & library versions")
 				("help,h", "Show this help screen");
 
 			po::store(po::parse_command_line(argc, argv, desc), vm);
 
-		if (vm.count("help") || argc == 1) {
-			std::cout << desc << "\n";
-			std::exit(0);
-		}
-
-		if (vm.count("version")) {
-			std::cout << "CollabVM Server 1.3.0 - AlphaBetas Edition" << '\n'
-				<< "Compiled with Boost " << BOOST_VERSION / 100000 << "." << BOOST_VERSION / 100 % 1000 << '\n'
-#ifdef USE_JPEG
-				<< "This server is using JPEG.\n"
-#endif
-#ifdef DEBUG
-				<< "This server is a debug build.\n"
-#endif
-				<< '\n';
-
-			std::exit(0);
-		}
-
-		po::notify(vm);
-		
-        } 
-	catch (boost::program_options::required_option::error& e) {
-		if (!vm.count("version")) {
-			std::cerr << "You didn't specify the TCP port to listen to!" << "\n";
 			if (vm.count("help") || argc == 1) {
 				std::cout << desc << "\n";
-					return 1;
-				} else {
-					return false;
-				} // because dartzcode:tm: stroke back
-		} else {
+				std::exit(0);
+			}
+
+			if (vm.count("version")) {
+				std::cout << "CollabVM Server 1.3.0 - AlphaBetas Edition" << '\n'
+					<< "Compiled with Boost " << BOOST_VERSION / 100000 << "." << BOOST_VERSION / 100 % 1000 << '\n'
+	#ifdef USE_JPEG
+					<< "This server is using JPEG.\n"
+	#endif
+	#ifdef DEBUG
+					<< "This server is a debug build.\n"
+	#endif
+					<< '\n';
+
+				std::exit(0);
+			}
+
+			po::notify(vm);
+			return true;
+		} catch (boost::program_options::required_option::error& e) {
+			std::cerr << "A required parameter was not specified!" << "\n"; // make this less vague
+			return false;
+		} catch (std::exception& e) {
+			std::cerr << e.what() << "\n";
+			return false;
+		} catch(...) {
+			std::cerr << "An unknown error has occurred" << "\n";
 			return false;
 		}
-	} // this double if abomination is because dartzcode:tm: did a real dartzcode moment
-	catch (std::exception& e) {
-		std::cerr << e.what() << "\n";
-	}
-	catch(...) {
-		std::cerr << "An unknown error has occurred" << "\n";
 	}
 
-	port = iport;
-		
-	return true;
-}
+	const std::string& GetListenAddress() const { 
+		return listen_address;
+	} 
+
+	const std::string& GetDocRoot() const { 
+		return http_dir; 
+	} 
+
+	int GetPort() const {
+		return port;
+	}
+
+private:
+	std::string listen_address;
+	std::string http_dir;
+	int port;
+};
+
 
 int main(int argc, char** argv) {
 #if defined(BOOST_MSVC) && defined(_DEBUG)
@@ -89,35 +98,30 @@ int main(int argc, char** argv) {
 		_CrtSetDbgFlag(flags);
 	}
 #endif
-	std::int16_t port;
-	std::string httpDir;
 
-	bool result = process_arguments(argc, argv, port, httpDir);
+	Arguments args;
 
-	if (!result)
-		return 1;
-
-	if (!port)
+	if(!args.Process(argc, argv))
 		return 1;
 
 	std::cout << "CollabVM Server Started" << std::endl;
 
-	boost::asio::io_service service_;
-	std::shared_ptr<CollabVMServer> server_;
+	boost::asio::io_context ioc;
+	std::shared_ptr<CollabVMServer> server;
 
         // Set up Ctrl+C handler
-	boost::asio::signal_set interruptSignal(service_, SIGINT, SIGTERM);
+	boost::asio::signal_set interruptSignal(ioc, SIGINT, SIGTERM);
 	interruptSignal.async_wait([&](boost::system::error_code ec, int sig) {
 		std::cout << "\nShutting down..." << std::endl;
-		//work.reset();
-		server_->Stop();
-		service_.stop();
+		server->Stop();
+		ioc.stop();
 	});
 
 	IgnorePipe();
 
-	server_ = std::make_shared<CollabVMServer>(service_);
-	server_->Run(port, httpDir);
+	server = std::make_shared<CollabVMServer>(ioc);
+	server->Run(args.GetListenAddress(), args.GetPort(), args.GetDocRoot());
+
 #ifdef ENABLE_ASIO_MULTITHREADING
 	std::vector<std::thread> threads;
 
@@ -129,13 +133,13 @@ int main(int argc, char** argv) {
 	std::cout << "Your system will actually run " << N + 1 << " worker threads including main thread\n";
 
 	for(int j = 0; j < N; ++j) {
-		threads.emplace_back([&service_]() {
-			service_.run();
+		threads.emplace_back([&ioc]() {
+			ioc.run();
 		});
 	}
 #endif
 	// Run the io_service on the main thread.
-	service_.run();
+	ioc.run();
 
 #ifdef ENABLE_ASIO_MULTITHREADING
 	// Join ASIO completion handler threads when the server is stopping.

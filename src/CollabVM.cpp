@@ -66,6 +66,7 @@ using rapidjson::GenericMemberIterator;
 
 const uint8_t CollabVMServer::kIPDataTimerInterval = 1;
 
+
 // TODO constexpr string view
 
 /**
@@ -206,21 +207,24 @@ static const std::string snapshot_modes_[] {
 
 void IgnorePipe();
 
-CollabVMServer::CollabVMServer(net::io_service& service)
-	: service_(service),
-	  server_(std::make_shared<CollabVMServer::Server>(service)),
+CollabVMServer::CollabVMServer(boost::asio::io_context& ioc)
+	: ioc_(ioc),
+	  server_(std::make_shared<CollabVMServer::Server>(ioc)),
 	  stopping_(false),
 	  process_thread_running_(false),
-	  keep_alive_timer_(service),
-	  vm_preview_timer_(service),
-	  ip_data_timer(service),
+	  keep_alive_timer_(ioc),
+	  vm_preview_timer_(ioc),
+	  ip_data_timer(ioc),
 	  ip_data_timer_running_(false),
 	  guest_rng_(1000, 99999),
-	  rng_(std::chrono::steady_clock::now().time_since_epoch().count()),
-	  chat_history_(new ChatMessage[database_.Configuration.ChatMsgHistory]),
-	  chat_history_begin_(0),
-	  chat_history_end_(0),
-	  chat_history_count_(0) {
+	  rng_(std::chrono::steady_clock::now().time_since_epoch().count()) {
+
+	// TODO: this probbaly should be a vector<ChatMessage>,
+	// or better yet, a unified CircularBuffer<ChatMessage> type.
+	chat_history_ = new ChatMessage[database_.Configuration.ChatMsgHistory];
+	chat_history_begin_ = 0;
+	chat_history_end_ = 0;
+	chat_history_count_ = 0;
 
 	// Create VMControllers for all VMs that will be auto-started
 	for(auto [id, vm] : database_.VirtualMachines) {
@@ -228,36 +232,37 @@ CollabVMServer::CollabVMServer(net::io_service& service)
 			CreateVMController(vm);
 		}
 	}
-
-	// set up access channels to only log interesting things
-	//server_.clear_access_channels(websocketpp::log::alevel::all);
-	//server_.clear_error_channels(websocketpp::log::elevel::all);
-
-	// Initialize Asio Transport
-	/*
-	try
-	{
-		server_.init_asio(&service);
-	}
-	catch (const websocketpp::exception& ex)
-	{
-		std::cout << "Failed to initialize ASIO" << std::endl;
-		throw ex;
-	}
-	 */
 }
 
 CollabVMServer::~CollabVMServer() {
 	delete[] chat_history_;
 }
 
+boost::asio::io_context& CollabVMServer::GetIOContext() const {
+	return ioc_;
+}
+
 std::shared_ptr<VMController> CollabVMServer::CreateVMController(const std::shared_ptr<VMSettings>& vm) {
 	std::shared_ptr<VMController> controller;
 
+	// this template lambda pretty much makes this code a lot more bearable
+	auto create_controller = [&]<class OtherController>() {
+		static_assert(std::is_base_of_v<VMController, OtherController>, "OtherController must inherit from VMController");
+		controller = std::make_shared<OtherController>(*this, vm);
+	};
+
 	switch(vm->Hypervisor) {
-		case VMSettings::HypervisorEnum::kQEMU: {
-			controller = std::dynamic_pointer_cast<VMController>(std::make_shared<QEMUController>(*this, service_, vm));
-		} break;
+
+	// this macro hides a lot of the pain that calling the generic lambda's
+	// generated operator() requires. It's actually not *too* bad,
+	// but meh. This thing makes it possible for us to have an x-macro file
+	// for better factory codegen as well.
+#define CASE_(enum, T) case VMSettings::HypervisorEnum::enum : \
+				create_controller.template operator()<T>(); \
+				break;
+
+		CASE_(kQEMU, QEMUController)
+#undef CASE_
 		default:
 			throw std::runtime_error("Error: unsupported hypervisor in database");
 	}
@@ -266,14 +271,15 @@ std::shared_ptr<VMController> CollabVMServer::CreateVMController(const std::shar
 	return controller;
 }
 
-void CollabVMServer::Run(uint16_t port, std::string doc_root) {
+void CollabVMServer::Run(const std::string& listen_address, uint16_t port, const std::string& doc_root) {
 	using namespace std::placeholders;
 
 	// The path shouldn't end in a slash
 	char last = doc_root[doc_root.length() - 1];
 	if(last == '/' || last == '\\')
-		doc_root = doc_root.substr(0, doc_root.length() - 1);
-	doc_root_ = doc_root;
+		doc_root_ = doc_root.substr(0, doc_root.length() - 1);
+	else
+		doc_root_ = doc_root;
 
 	server_->set_verify_handler(std::bind(&CollabVMServer::OnValidate, this, _1));
 	server_->set_open_handler(std::bind(&CollabVMServer::OnOpen, this, _1));
@@ -300,13 +306,12 @@ void CollabVMServer::Run(uint16_t port, std::string doc_root) {
 	for(auto [id, vm] : vm_controllers_)
 		vm->Start();
 
-	// Start message processing thread
+	// Start the processing thread
+	// TODO: Replace this with asio dispatching/strands.
+
 	process_thread_running_ = true;
 	process_thread_ = std::thread(std::bind(&CollabVMServer::ProcessingThread, shared_from_this()));
 
-	// Once this function returns,
-	// io_service::run() is called in main()
-	// so we do not bother here.
 }
 
 bool CollabVMServer::FindIPv4Data(const boost::asio::ip::address_v4& addr, IPData*& ip_data) {
@@ -430,39 +435,6 @@ void CollabVMServer::OnClose(std::weak_ptr<websocketmm::websocket_user> handle) 
 		PostAction<UserAction>(*handle_sp->GetUserData().user, ActionType::kRemoveConnection);
 	}
 }
-
-/*
-std::string CollabVMServer::GenerateUuid()
-{
-	char buffer[UUID_LEN_STR + 1];
-
-	uuid_t* uuid;
-
-    // Attempt to create UUID objec
-	if (uuid_create(&uuid) != UUID_RC_OK) {
-		throw std::string("Could not allocate memory for UUID");
-	}
-
-    // Generate random UUID
-	if (uuid_make(uuid, UUID_MAKE_V4) != UUID_RC_OK) {
-		uuid_destroy(uuid);
-		throw std::string("UUID generation failed");
-	}
-
-	char* identifier = buffer;
-	size_t identifier_length = sizeof(buffer);
-
-    // Build connection ID from UUID
-	if (uuid_export(uuid, UUID_FMT_STR, &identifier, &identifier_length) != UUID_RC_OK) {
-		uuid_destroy(uuid);
-		throw std::string("Conversion of UUID to connection ID failed");
-	}
-
-	uuid_destroy(uuid);
-
-	return std::string(buffer, identifier_length-1);
-}
-*/
 
 void CollabVMServer::OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> handle, std::shared_ptr<const websocketmm::websocket_message> msg) {
 	if(auto handle_sp = handle.lock()) {
@@ -710,10 +682,6 @@ void CollabVMServer::ProcessingThread() {
 			case ActionType::kRemoveConnection: {
 				std::shared_ptr<CollabVMUser>& connection = static_cast<UserAction*>(action)->user;
 
-				//			if(!connection) {
-				//			    break;
-				//			}
-
 				if(connection->connected) {
 					connections_.erase(connection);
 					RemoveConnection(connection);
@@ -731,7 +699,6 @@ void CollabVMServer::ProcessingThread() {
 				controller->EndVote();
 				break;
 			}
-
 			case ActionType::kKeepAlive:
 				if(!connections_.empty()) {
 					// Disconnect all clients that haven't responded within the timeout period
@@ -796,8 +763,6 @@ void CollabVMServer::ProcessingThread() {
 						controller.reset();
 
 						if(stopping_ && vm_controllers_.empty()) {
-							// Free the io_service's work so it can stop
-							//asio_work_.reset();
 							delete action;
 							// Exit the processing loop
 							goto stop;
@@ -837,7 +802,6 @@ void CollabVMServer::ProcessingThread() {
 				for(auto [id, vm] : vm_controllers_) {
 					if(vm->IsRunning()) {
 						vm->Stop(VMController::StopReason::kRemove);
-						//vm->~VMController();
 					}
 				}
 
@@ -1816,9 +1780,8 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			if(!strLen)
 				break;
 
-			// TODO: Verify that the VMController is a QEMUController
-			// TODO: Implement ^
-			std::static_pointer_cast<QEMUController>(it->second)->SendMonitorCommand(std::string(args[2], strLen), std::bind(&CollabVMServer::OnQEMUResponse, shared_from_this(), user, std::placeholders::_1));
+			if(it->second->GetKind() == VMSettings::HypervisorEnum::kQEMU)
+				std::static_pointer_cast<QEMUController>(it->second)->SendMonitorCommand(std::string(args[2], strLen), std::bind(&CollabVMServer::OnQEMUResponse, shared_from_this(), user, std::placeholders::_1));
 			break;
 		}
 		case kStartController: {
@@ -2399,7 +2362,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 							//	BroadcastTurnInfo();
 							//}
 						} else {
-							WriteJSONObject(writer, vm_settings_[kTurnsEnabled], invalid_object_);
+							WriteJSONObject(writer, server_settings_[kTurnsEnabled], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -2407,7 +2370,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.TurnTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, vm_settings_[kTurnTime], invalid_object_);
+							WriteJSONObject(writer, server_settings_[kTurnTime], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -2415,7 +2378,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsBool()) {
 							vm.VotesEnabled = value.GetBool();
 						} else {
-							WriteJSONObject(writer, vm_settings_[kVotesEnabled], invalid_object_);
+							WriteJSONObject(writer, server_settings_[kVotesEnabled], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -2423,7 +2386,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.VoteTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, vm_settings_[kVoteTime], invalid_object_);
+							WriteJSONObject(writer, server_settings_[kVoteTime], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -2431,11 +2394,10 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.VoteCooldownTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, vm_settings_[kVoteCooldownTime], invalid_object_);
+							WriteJSONObject(writer, server_settings_[kVoteCooldownTime], invalid_object_);
 							valid = false;
 						}
 						break;
-
 					case kMOTD:
 						if(value.IsString()) {
 							vm.MOTD = std::string(value.GetString(), value.GetStringLength());

@@ -42,16 +42,21 @@ class GuacUser;
 
 class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
    public:
-	explicit CollabVMServer(boost::asio::io_service& service);
+	explicit CollabVMServer(boost::asio::io_context& ioc);
 
 	~CollabVMServer();
+
+	/**
+	 * Get the ASIO io_context the server is using.
+	 */
+	boost::asio::io_context& GetIOContext() const;
 
 	/**
 	 * Start the server.
 	 * @param port The WebSocket server port to listen on.
 	 * @param doc_root The path of the directory to expose via HTTP.
 	 */
-	void Run(uint16_t port, std::string doc_root);
+	void Run(const std::string& listen_address, uint16_t port, const std::string& doc_root);
 
 	/**
 	 * Stop listening for new clients and disconnect all existing ones.
@@ -286,8 +291,6 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	 */
 	void OnQEMUResponse(std::weak_ptr<CollabVMUser> data, rapidjson::Document& d);
 
-	//std::string GenerateUuid();
-
 	void OnMessageFromWS(std::weak_ptr<websocketmm::websocket_user> handle, std::shared_ptr<const websocketmm::websocket_message> msg);
 	void SendWSMessage(CollabVMUser& user, const std::string& str);
 
@@ -386,7 +389,8 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 	IPData* CreateIPData(const boost::asio::ip::address& addr, bool one_connection);
 	void DeleteIPData(IPData& ip_data);
 
-	boost::asio::io_service& service_;
+	boost::asio::io_context& ioc_;
+
 	std::shared_ptr<Server> server_;
 
 	CollabVM::Database database_;
@@ -478,12 +482,6 @@ class CollabVMServer : public std::enable_shared_from_this<CollabVMServer> {
 
 	std::thread process_thread_;
 	std::atomic<bool> process_thread_running_;
-
-	/**
-	 * Prevents the io_service from exiting before all the VM controllers
-	 * are stopped.
-	 */
-	//std::unique_ptr<boost::asio::io_service::work> asio_work_;
 
 	/**
 	 * The RNG used for generating guest usernames.

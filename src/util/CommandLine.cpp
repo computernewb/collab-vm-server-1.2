@@ -8,7 +8,6 @@
 #else
 	#define _WIN32_LEAN_AND_MEAN
 	#include <windows.h>
-	#include <shellapi.h>
 #endif
 
 namespace collabvm::util {
@@ -52,11 +51,7 @@ namespace collabvm::util {
 			// This kind of sucks, tbh.
 
 			int argc;
-			wchar_t** wargv = nullptr;
-			LPCWSTR cmdLineW;
-			cmdLineW = GetCommandLineW();
-			LPWSTR* wargs;
-			wargs = CommandLineToArgvW(cmdLineW, &argc); // What the hell is cmdLineW meant to be?
+			wchar_t** argv = nullptr;
 
 			std::wstring wide_cmdline;
 			wide_cmdline.resize(command.size());
@@ -64,7 +59,7 @@ namespace collabvm::util {
 			if(!MultiByteToWideChar(CP_ACP, 0, command.c_str(), -1, wide_cmdline.data(), command.size()))
 				return false;
 
-			if(!(wargs)) // You can't just specify an identifier and expect it to work like that.
+			if(!(argv = CommandLineToArgvW(wide_cmdline.data(), &argc)))
 				return false;
 
 			split_line.reserve(argc);
@@ -73,13 +68,13 @@ namespace collabvm::util {
 			// and then put it in our split vector.
 			for(int i = 0; i < argc; i++) {
 				// Get the size needed for the target buffer.
-				const size_t targetBufLen = WideCharToMultiByte(CP_ACP, 0, wargs[i], -1, NULL, 0, NULL, NULL);
+				const size_t targetBufLen = WideCharToMultiByte(CP_ACP, 0, argv[i], -1, NULL, 0, NULL, NULL);
 				std::string str;
 
 				str.resize(targetBufLen);
 
 				// Do the conversion.
-				WideCharToMultiByte(CP_ACP, 0, wargs[i], -1, str.data(), targetBufLen, NULL, NULL);
+				WideCharToMultiByte(CP_ACP, 0, argv[i], -1, str.data(), targetBufLen, NULL, NULL);
 
 				split_line.push_back(str);
 			}

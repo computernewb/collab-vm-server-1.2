@@ -3,30 +3,52 @@
 
 #include <string>
 #include <functional>
+#include <memory>
 
 #include <boost/asio/io_context.hpp>
-
-#include <boost/process/child.hpp>
 
 
 namespace collabvm::util {
 
 	/**
-	 * type for the on-exit handler
+	 * Interface for child processes.
 	 */
-	using OnExitHandler = std::function<void(int /* exitcode */, const std::error_code& /* ec */)>;
+	struct ChildProcess {
+
+		/**
+		 * Type for the on-exit handler.
+		 */
+		using OnExitHandler = std::function<void()>;
+
+		virtual ~ChildProcess() = default;
+
+		/**
+		 * Forcibly kill this process.
+		 */
+		virtual void Kill() = 0;
+
+		virtual int ExitCode() const = 0;
+
+		// TODO: virtual int Pid() = 0;
+
+
+		/**
+		 * Assign an exit handler to this process.
+		 *
+		 * \param[in] handler Exit handler function.
+		 */
+		virtual void AssignExitHandler(OnExitHandler&& handler) = 0;
+
+		virtual void Start(const std::string& commandline) = 0;
+
+		virtual void Start(const std::vector<std::string>& command_args) = 0;
+	};
 
 	/**
-	 * Start a child process, with a commandline. Will internally split the command line
+	 * Create a child process.
 	 */
-	boost::process::child StartChildProcess(boost::asio::io_context& ioc, const std::string& commandline, OnExitHandler&& onexit);	
+	std::shared_ptr<ChildProcess> CreateChildProcess(boost::asio::io_context& ioc);
 
-	/**
-	 * Start a child process with a pre-split command line.
-	 */
-	boost::process::child StartChildProcess(boost::asio::io_context& ioc, const std::vector<std::string>& args, OnExitHandler&& onexit);
-
-	// TODO: TimedStop?
 
 } // namespace collabvm::util
 
