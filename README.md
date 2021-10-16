@@ -1,5 +1,5 @@
 ## collab-vm-server 1.3.0
-This repository contains the source code to the CollabVM Server. The CollabVM Server (obviously) powers CollabVM, and it is what you will use to host a CollabVM UserVM or mirror.
+This repository contains the source code to the CollabVM Server. The CollabVM Server powers CollabVM, and it is what you will use to host a CollabVM UserVM or mirror.
 
 You can either download already compiled binaries, or compile the CollabVM Server yourself. Compilation instructions are provided in the BUILDING.md file. 
 
@@ -9,7 +9,7 @@ CollabVM was coded and written by Cosmic Sans, Dartz, Geodude, and modeco80... A
 CollabVM Server, as well as the Web App and Admin Web App are licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ### How to use
-`man doc/collab-vm-server.1`, but here's an overview:
+You can read `man doc/collab-vm-server.1`, for arguments, and setting it up is such as:
 
 To start the server, first make sure it (the binary) has executable permissions, and you can write to the directory which you'll run collab-vm-server in (for the settings database) and then type ./collab-vm-server -p (port) -r (HTTP Directory (optional)). 
 
