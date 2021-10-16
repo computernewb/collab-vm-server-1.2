@@ -147,7 +147,7 @@ class QEMUController : public VMController, public QMPCallback {
 	/**
 	 * Called when the QEMU process has terminated.
 	 */
-	void OnChildExit(int exitCode, const std::error_code& ec);
+	void OnChildExit();
 
 
 	void GuacDisconnect();
@@ -228,6 +228,6 @@ class QEMUController : public VMController, public QMPCallback {
 	boost::asio::steady_timer timer_;
 
 
-	boost::process::child qemu_child_;
+	std::shared_ptr<collabvm::util::ChildProcess> qemu_child_;
 	
 };

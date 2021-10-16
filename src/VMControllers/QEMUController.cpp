@@ -97,9 +97,8 @@ QEMUController::~QEMUController() {
 		delete qmp_work_;
 }
 
-void QEMUController::OnChildExit(int exitCode, const std::error_code& ec) {
-	if(ec)
-		return;
+void QEMUController::OnChildExit() {
+	int exitCode = qemu_child_->ExitCode();
 
 	// maybe pid might work on exit?
 	// unless it fetches it from waitpid
@@ -392,8 +391,16 @@ void QEMUController::StartQEMU() {
 	using namespace std::placeholders;
 
 	// Spawn the QEMU process
-	auto exit_handler = std::bind(&QEMUController::OnChildExit, std::static_pointer_cast<QEMUController>(shared_from_this()), _1, _2);
-	qemu_child_ = collabvm::util::StartChildProcess(ioc, args_copy, std::move(exit_handler));
+
+	if(qemu_child_) {
+		qemu_child_.reset();
+	}
+
+	qemu_child_ = collabvm::util::CreateChildProcess(ioc);
+
+	// Setup the child process
+	qemu_child_->AssignExitHandler(std::bind(&QEMUController::OnChildExit, std::static_pointer_cast<QEMUController>(shared_from_this())));
+	qemu_child_->Start(args_copy);
 
 	qemu_running_ = true;
 	internal_state_ = InternalState::kQMPConnecting;
@@ -421,8 +428,7 @@ void QEMUController::OnQEMUStop() {
 }
 
 void QEMUController::KillQEMU() {
-	//if(qemu_child_.running())
-	qemu_child_.terminate();
+	qemu_child_->Kill();
 
 	qemu_running_ = false;
 	OnQEMUStop();
