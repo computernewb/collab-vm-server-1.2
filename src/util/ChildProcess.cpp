@@ -28,10 +28,16 @@ namespace collabvm::util {
 
 	namespace {
 
+		/**
+		 * Implementation of the ChildProcess interface.
+		 */
 		struct ChildProcessImpl : public std::enable_shared_from_this<ChildProcessImpl>, public ChildProcess {
 
 			explicit ChildProcessImpl(boost::asio::io_context& ioc) 
 				: ioc_(ioc) {
+			}
+
+			~ChildProcessImpl() {
 			}
 
 			void Kill() override {
@@ -69,6 +75,7 @@ namespace collabvm::util {
 			void Start(const std::vector<std::string>& command_args) override {
 				using namespace std::placeholders;
 
+				// bind the exit handler beforehand
 				auto exit_handler = std::bind(&ChildProcessImpl::ExitHandlerInternal, shared_from_this(), _1, _2);
 
 				if(command_args.size() < 2) {	
