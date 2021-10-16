@@ -1,4 +1,7 @@
+#include <iostream>
+
 #include "GuacVNCClient.h"
+
 #include "VMControllers/VMController.h"
 #include "CollabVM.h"
 #include "guacamole/protocol.h"

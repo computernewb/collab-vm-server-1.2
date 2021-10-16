@@ -45,20 +45,20 @@ void QMPClient::OnDisconnect() {
 }
 
 void QMPClient::Disconnect() {
-	auto self = shared_from_this();
-	GetService().dispatch([this, self]() {
-		if(state_ != ConnectionState::kDisconnected)
-			DisconnectSocket();
+	GetService().dispatch([self = shared_from_this()]() {
+		std::cout << "fuck this\n";
+		if(self->state_ != ConnectionState::kDisconnected)
+			self->DisconnectSocket();
 	});
 }
 
 void QMPClient::StartTimeoutTimer() {
 	boost::system::error_code error;
 	timer_.expires_from_now(kReadTimeout, error);
-	auto self = shared_from_this();
-	timer_.async_wait([this, self](const boost::system::error_code& ec) {
+
+	timer_.async_wait([self = shared_from_this()](const boost::system::error_code& ec) {
 		if(!ec)
-			Disconnect();
+			self->Disconnect();
 	});
 }
 

@@ -22,10 +22,11 @@
 
 #include <boost/asio/steady_timer.hpp>
 
+
+#include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 
 #include "VMControllers/VMController.h"
-#include "VMControllers/QEMUController.h"
 #include "Database/VMSettings.h"
 #include "GuacUser.h"
 #include "CollabVMUser.h"
