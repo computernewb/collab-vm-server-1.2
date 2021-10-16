@@ -80,8 +80,8 @@ namespace collabvm::util {
 			}
 
 			// the wide argv is no longer needed
-			if(wargv)
-				LocalFree(wargv);
+			if(argv)
+				LocalFree(argv);
 #endif // WIN32
 
 			return true;
