@@ -248,7 +248,7 @@ std::shared_ptr<VMController> CollabVMServer::CreateVMController(const std::shar
 	// this template lambda pretty much makes this code a lot more bearable
 	auto create_controller = [&]<class OtherController>() {
 		static_assert(std::is_base_of_v<VMController, OtherController>, "OtherController must inherit from VMController");
-		controller = std::make_shared<OtherController>(*this, GetIOContext(), vm);
+		controller = std::make_shared<OtherController>(*this, vm);
 	};
 
 	switch(vm->Hypervisor) {
@@ -256,7 +256,7 @@ std::shared_ptr<VMController> CollabVMServer::CreateVMController(const std::shar
 	// this macro hides a lot of the pain that calling the generic lambda's
 	// generated operator() requires. It's actually not *too* bad,
 	// but meh. This thing makes it possible for us to have an x-macro file
-	// for better factory codegen too
+	// for better factory codegen as well.
 #define CASE_(enum, T) case VMSettings::HypervisorEnum::enum : \
 				create_controller.template operator()<T>(); \
 				break;
@@ -1780,9 +1780,8 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			if(!strLen)
 				break;
 
-			// TODO: Verify that the VMController is a QEMUController
-			// TODO: Implement ^
-			std::static_pointer_cast<QEMUController>(it->second)->SendMonitorCommand(std::string(args[2], strLen), std::bind(&CollabVMServer::OnQEMUResponse, shared_from_this(), user, std::placeholders::_1));
+			if(it->second->GetKind() == VMSettings::HypervisorEnum::kQEMU)
+				std::static_pointer_cast<QEMUController>(it->second)->SendMonitorCommand(std::string(args[2], strLen), std::bind(&CollabVMServer::OnQEMUResponse, shared_from_this(), user, std::placeholders::_1));
 			break;
 		}
 		case kStartController: {

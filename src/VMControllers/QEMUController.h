@@ -4,7 +4,7 @@
 #include "GuacVNCClient.h"
 #include "Sockets/QMPClient.h"
 
-
+// VMController already includes most of this..?
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/system/error_code.hpp>
@@ -18,6 +18,10 @@
 
 class CollabVMServer;
 
+/**
+ * A VM controller which manages a QEMU virtual machine,
+ * using the QMP protocol.
+ */
 class QEMUController : public VMController, public QMPCallback {
    public:
 	enum ErrorCode {
@@ -26,10 +30,7 @@ class QEMUController : public VMController, public QMPCallback {
 		kVNCFailed	// The VNC client failed to connect
 	};
 
-	/**
-	 * Creates a new VM controller for QEMU.
-	 */
-	QEMUController(CollabVMServer& server, boost::asio::io_service& service, const std::shared_ptr<VMSettings>& settings);
+	QEMUController(CollabVMServer& server, const std::shared_ptr<VMSettings>& settings);
 
 	void ChangeSettings(const std::shared_ptr<VMSettings>& settings) override;
 
@@ -64,6 +65,8 @@ class QEMUController : public VMController, public QMPCallback {
 	void OnGuacDisconnect(bool cleanup) override;
 
 	void SendMonitorCommand(std::string cmd, QMPClient::ResultCallback resultCb);
+
+	std::uint8_t GetKind() const override;
 
 	/*
 	 * Set to true when QEMU should be completely restarted
@@ -168,10 +171,6 @@ class QEMUController : public VMController, public QMPCallback {
 		kStopping		// Waiting for QEMU process to terminate and VNC and QMP to close
 	};
 
-	/**
-	 * asio io_service we keep round
-	 */
-	boost::asio::io_service& ioc;
 
 	GuacVNCClient guac_client_;
 
@@ -227,7 +226,9 @@ class QEMUController : public VMController, public QMPCallback {
 	 */
 	boost::asio::steady_timer timer_;
 
-
+	/**
+	 * QEMU child process.
+	 */
 	std::shared_ptr<collabvm::util::ChildProcess> qemu_child_;
 	
 };

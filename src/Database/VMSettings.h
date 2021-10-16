@@ -53,8 +53,12 @@ struct VMSettings {
 	std::string Snapshot;
 	std::string VNCAddress;
 	uint16_t VNCPort {};
+
+	// TODO: These settings will be moved into a controller specific JSON blob.
+
 	uint8_t QMPSocketType { SocketType::kLocal };
 	std::string QMPAddress;
+
 	uint16_t QMPPort {};
 	std::string QEMUCmd;
 	uint8_t QEMUSnapshotMode { SnapshotMode::kOff };

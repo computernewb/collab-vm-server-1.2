@@ -30,15 +30,14 @@ static boost::asio::io_service::work* qmp_work_;
 static boost::asio::io_service* qmp_service_;
 
 
-QEMUController::QEMUController(CollabVMServer& server, boost::asio::io_service& service, const std::shared_ptr<VMSettings>& settings)
-	: VMController(server, service, settings),
+QEMUController::QEMUController(CollabVMServer& server, const std::shared_ptr<VMSettings>& settings)
+	: VMController(server, settings),
 	  guac_client_(server, *this, users_, settings->VNCAddress, settings->VNCPort),
 	  internal_state_(InternalState::kInactive),
 	  qemu_running_(false),
-	  timer_(service),
-	  retry_count_(0),
-	  ioc(service)
-{
+	  timer_(io_context_),
+	  retry_count_(0) {
+
 	SetCommand(settings->QEMUCmd);
 
 	std::lock_guard<std::mutex> lock(qmp_thread_mutex_);
@@ -396,7 +395,7 @@ void QEMUController::StartQEMU() {
 		qemu_child_.reset();
 	}
 
-	qemu_child_ = collabvm::util::CreateChildProcess(ioc);
+	qemu_child_ = collabvm::util::CreateChildProcess(io_context_);
 
 	// Setup the child process
 	qemu_child_->AssignExitHandler(std::bind(&QEMUController::OnChildExit, std::static_pointer_cast<QEMUController>(shared_from_this())));
@@ -573,6 +572,10 @@ void QEMUController::OnGuacDisconnect(bool cleanup) {
 void QEMUController::SendMonitorCommand(std::string cmd, QMPClient::ResultCallback resultCb) {
 	//if (internal_state_ == InternalState::kConnected)
 	qmp_->SendMonitorCommand(cmd, resultCb);
+}
+
+std::uint8_t QEMUController::GetKind() const {
+	return VMSettings::HypervisorEnum::kQEMU;
 }
 
 void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {

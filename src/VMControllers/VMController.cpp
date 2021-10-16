@@ -1,17 +1,16 @@
 #include "VMController.h"
 #include "CollabVM.h"
 #include "Database/VMSettings.h"
-#include <boost/asio.hpp>
 
-VMController::VMController(CollabVMServer& server, boost::asio::io_service& service, const std::shared_ptr<VMSettings>& settings)
+VMController::VMController(CollabVMServer& server, const std::shared_ptr<VMSettings>& settings)
 	: server_(server),
-	  io_service_(service),
+	  io_context_(server.GetIOContext()),
 	  settings_(settings),
-	  turn_timer_(service),
+	  turn_timer_(server.GetIOContext()),
 	  vote_state_(VoteState::kIdle),
 	  vote_count_yes_(0),
 	  vote_count_no_(0),
-	  vote_timer_(service),
+	  vote_timer_(server.GetIOContext()),
 	  current_turn_(nullptr),
 	  connected_users_(0),
 	  stop_reason_(StopReason::kNormal),
