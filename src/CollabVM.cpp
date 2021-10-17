@@ -39,6 +39,9 @@ Please email rightowner@gmail.com for any assistance.
 #include <websocketmm/server.h>
 #include <websocketmm/websocket_user.h>
 
+// needed for some code
+#include "VMControllers/QEMUController.h"
+
 #include <memory>
 #include <iostream>
 #include <fstream>
@@ -1780,8 +1783,10 @@ void CollabVMServer::OnAdminInstruction(const std::shared_ptr<CollabVMUser>& use
 			if(!strLen)
 				break;
 
-			if(it->second->GetKind() == VMSettings::HypervisorEnum::kQEMU)
-				std::static_pointer_cast<QEMUController>(it->second)->SendMonitorCommand(std::string(args[2], strLen), std::bind(&CollabVMServer::OnQEMUResponse, shared_from_this(), user, std::placeholders::_1));
+			if(it->second->GetKind() == VMSettings::HypervisorEnum::kQEMU) {
+				auto ptr = std::static_pointer_cast<QEMUController>(it->second);
+				ptr->SendMonitorCommand(std::string(args[2], strLen), std::bind(&CollabVMServer::OnQEMUResponse, shared_from_this(), user, std::placeholders::_1));
+			}
 			break;
 		}
 		case kStartController: {

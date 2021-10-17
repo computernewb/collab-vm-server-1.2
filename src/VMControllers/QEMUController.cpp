@@ -19,6 +19,7 @@ static const std::string kErrorMessages[] = {
 	"Failed to connect to VNC"
 };
 
+
 /**
  * A single thread is created for all QMPClient instances
  * to use.
@@ -232,14 +233,12 @@ void QEMUController::SetCommand(const std::string& command) {
 }
 
 void QEMUController::InitQMP() {
-#ifdef _WIN32
-	qmp_address_ = settings_->QMPAddress;
-	std::string port = std::to_string(settings_->QMPPort);
-	qmp_address_.reserve(qmp_address_.length() + 1 + port.length());
-	qmp_address_ += ':';
-	qmp_address_ += port;
-	qmp_ = std::make_shared<QMPTCPClient>(*qmp_service_, settings_->QMPAddress, settings_->QMPPort);
-#else
+	// unfortunately for right now the QMP client seems to be keeping
+	// the hacky seperate "QMP service" alive.
+	//
+	// A rewrite might actually be in order for that garbage code anyways
+	// since it's the only other thing which uses rapidjson.
+
 	if(settings_->QMPSocketType == VMSettings::SocketType::kTCP) {
 		qmp_address_ = settings_->QMPAddress;
 		std::string port = std::to_string(settings_->QMPPort);
@@ -248,25 +247,24 @@ void QEMUController::InitQMP() {
 		qmp_address_ += port;
 		qmp_ = std::make_shared<QMPTCPClient>(*qmp_service_, settings_->QMPAddress, settings_->QMPPort);
 	} else if(settings_->QMPSocketType == VMSettings::SocketType::kLocal) {
+#ifndef _WIN32
 		if(settings_->QMPAddress.empty()) {
-	#ifdef _WIN32
-			qmp_address_ = ":5800";
-	#else
 			// Unix domain sockets need to have a valid file path
 
 			// TODO: it might be nice to use /run/collabvm
 			// or /tmp/collabvm/. Cluttering /tmp with qemu sockets is kind of lame
 
 			qmp_address_ = P_tmpdir "/collab-vm-qmp-";
-	#endif
 			qmp_address_ += settings_->Name;
-		} else
+		} else {
 			qmp_address_ = settings_->QMPAddress;
-
+		}
 
 		qmp_ = std::make_shared<QMPLocalClient>(*qmp_service_, qmp_address_);
-	}
+#else
+		std::cout << "Windows doesn't support Local Sockets.\n";
 #endif
+	}
 }
 
 void QEMUController::RestoreVMSnapshot() {
@@ -409,12 +407,7 @@ void QEMUController::StartQEMU() {
 
 void QEMUController::StopQEMU() {
 	// Attempt to stop QEMU with QMP if it's connected
-	if(qmp_->IsConnected()) {
-		// when was this changed??
-		KillQEMU();
-	} else {
-		KillQEMU();
-	}
+	KillQEMU();
 }
 
 void QEMUController::OnQEMUStop() {
@@ -614,8 +607,6 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {
 				} else {
 					std::cout << "Retrying..." << std::endl;
 					// Retry connecting
-					//KillQEMU();
-					//StartQEMU();
 					StartQMP();
 				}
 			} else if(internal_state_ == InternalState::kVNCConnecting ||
