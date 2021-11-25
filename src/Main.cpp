@@ -26,8 +26,9 @@ void IgnorePipe() {
 struct Arguments {
 
 	bool Process(int argc, char** argv) {
+		po::options_description desc("CollabVM Server - Options");
+		po::variables_map vm; // moved these here so we *can* catch missing var errors
 		try {
-			po::options_description desc("CollabVM Server - Options");
 			desc.add_options()
 				("listen,l", po::value<std::string>(&listen_address)->default_value("0.0.0.0"), "The address to listen on. Defaults to all interfaces.")
 				("port,p", po::value<int>(&port)->required(), "The port to listen on")
@@ -35,7 +36,6 @@ struct Arguments {
 				("version,v", "Display server & library versions")
 				("help,h", "Show this help screen");
 
-			po::variables_map vm;
 			po::store(po::parse_command_line(argc, argv, desc), vm);
 
 			if (vm.count("help") || argc == 1) {
@@ -59,6 +59,9 @@ struct Arguments {
 
 			po::notify(vm);
 			return true;
+		} catch (boost::program_options::required_option::error& e) {
+			std::cerr << "A required parameter was not specified!" << "\n"; // make this less vague
+			return false;
 		} catch (std::exception& e) {
 			std::cerr << e.what() << "\n";
 			return false;

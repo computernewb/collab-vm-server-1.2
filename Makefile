@@ -73,6 +73,10 @@ all:
 	@./scripts/build_site.sh $(ARCH)
 	-@ if [ -d "$(BINDIR)/http" ]; then rm -rf $(BINDIR)/http; fi;
 	-@mv -f http/ $(BINDIR)
+	@echo "\"compiling\" manpage for collab-vm-server"
+	@gzip doc/collab-vm-server.1 -kf
+	@mv doc/collab-vm-server.1.gz ${BINDIR}
+	
 ifeq ($(OS), Windows_NT)
 
 ifeq ($(CYGWIN), 1)
@@ -91,7 +95,7 @@ clean:
 	@$(MAKE) -f $(MKCONFIG) clean
 
 help:
-	@echo -e "CollabVM Server 1.2.11 Makefile help:\n"
+	@echo -e "CollabVM Server 1.3.0 Makefile help:\n"
 	@echo "make - Build release"
 	@echo "make DEBUG=1 - Build a debug build (Adds extra trace information and debug symbols)"
 	@echo "make JPEG=1 - Build with JPEG support (Useful for slower internet connections)"

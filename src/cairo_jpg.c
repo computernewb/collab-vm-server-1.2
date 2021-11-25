@@ -220,7 +220,7 @@ static void pix_conv(unsigned char* dst, int dw, const unsigned char* src, int s
  * @return On success the function returns CAIRO_STATUS_SUCCESS. In case of
  * error CAIRO_STATUS_INVALID_FORMAT is returned.
  */
-cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t* sfc, unsigned char** data, size_t* len, int quality) {
+cairo_status_t cairo_image_surface_write_to_jpeg_mem(cairo_surface_t* sfc, unsigned char** data, unsigned long* len, int quality) {
 	struct jpeg_compress_struct cinfo;
 	struct jpeg_error_mgr jerr;
 	JSAMPROW row_pointer[1];
@@ -327,7 +327,7 @@ static cairo_status_t cj_write(void* closure, const unsigned char* data, unsigne
 cairo_status_t cairo_image_surface_write_to_jpeg_stream(cairo_surface_t* sfc, cairo_write_func_t write_func, void* closure, int quality) {
 	cairo_status_t e;
 	unsigned char* data = NULL;
-	size_t len = 0;
+	unsigned long len = 0; // force 32-bit, jpeglib wants it
 
 	// create JPEG data in memory from surface
 	if((e = cairo_image_surface_write_to_jpeg_mem(sfc, &data, &len, quality)) != CAIRO_STATUS_SUCCESS)
@@ -377,7 +377,7 @@ cairo_status_t cairo_image_surface_write_to_jpeg(cairo_surface_t* sfc, const cha
  * @return Returns a pointer to a cairo_surface_t structure. It should be
  * checked with cairo_surface_status() for errors.
  */
-cairo_surface_t* cairo_image_surface_create_from_jpeg_mem(void* data, size_t len) {
+cairo_surface_t* cairo_image_surface_create_from_jpeg_mem(void* data, unsigned long len) {
 	struct jpeg_decompress_struct cinfo;
 	struct jpeg_error_mgr jerr;
 	JSAMPROW row_pointer[1];

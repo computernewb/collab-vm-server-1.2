@@ -6,7 +6,7 @@ log(){
 }
 
 triplet_install(){
-	pacman -S --noconf mingw-w64-i686-$1;
+	pacman -S --noconf mingw-w64-clang-x86_64-$1;
 }
 
 main(){
