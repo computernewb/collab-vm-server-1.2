@@ -1,0 +1,35 @@
+.TH collab-vm-server "1" "October 2021" "for version 1.3.0" "Input Arguments"
+.SH NAME
+collab-vm-server \- Collaborative Virtual Machines Server
+.SH SYNOPSIS
+.B collab-vm-server
+[\fI\,options\/\fR]
+.SH DESCRIPTION
+CollabVM (formally collab-vm) Server is a daemon for managing multiple Virtual Machines (VMs), 
+usually of those on the local machine, to be shown via a 
+WebSocket-based interface based on the Guacamole API, which
+would be exposed to a network using an interface such as
+\fBcollab-vm-web-app\fR.
+.SH OPTIONS
+.TP
+\fB\-p\fR, \fB\-\-port\fR
+specify the TCP port to listen on
+.TP
+\fB\-r\fR, \fB\-\-root\fR
+specify the root directory to serve with the internal HTTPd
+.br
+The unset value for this parameter is \fBhttp\fR.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+output server and library versions
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+display this help and exit
+.SH "REPORTING BUGS"
+Report bugs to the computernewb/collab-vm-server repository on GitHub. <https://github.com/computernewb/collab-vm-server/issues>
+.PP
+If you have obtained \fBcollab-vm-server\fR from another repository, please ask a repository maintainer about bug reporting.
+.SH COPYRIGHT
+Copyright \(co 2015-2021 Computernewb
+.br
+Licensed under Apache License 2.0 <http://www.apache.org/licenses/LICENSE-2.0>.
