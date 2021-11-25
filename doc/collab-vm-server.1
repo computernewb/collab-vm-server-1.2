@@ -1,6 +1,11 @@
-.TH collab-vm-server "1" "October 2021" "for version 1.3.0" "Input Arguments"
+.TH collab-vm-server "1" "November 2021" "for version 1.3.0" "Input Arguments"
 .SH NAME
 collab-vm-server \- Collaborative Virtual Machines Server
+.SH DISCLAIMER
+\fBcollab-vm-server\fR 1.3.0 is currently \fBin development\fR. As such, this manual may change
+in the future to reflect changes made to the relevant software.
+.br
+You have been warned.
 .SH SYNOPSIS
 .B collab-vm-server
 [\fI\,options\/\fR]
@@ -20,6 +25,11 @@ The unset value for this parameter is \fB0.0.0.0\fR, which listens to all interf
 .TP
 \fB\-p\fR, \fB\-\-port\fR
 specify the TCP port to listen on
+.TP
+\fB\-r\fR, \fB\-\-root\fR
+specify the root directory to serve with the internal HTTPd (If available) 
+.br
+The unset value for this parameter is \fBhttp\fR.
 .TP
 \fB\-v\fR, \fB\-\-version\fR
 output server and library versions
