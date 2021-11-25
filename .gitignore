@@ -22,4 +22,4 @@ http/
 *_REMOTE_*
 
 # blatantly ignore this for OBVIOUS reasons
-collab-vm.db
+/**/collab-vm.db
