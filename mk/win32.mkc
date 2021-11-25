@@ -4,7 +4,7 @@
 CXX = i686-w64-mingw32-g++
 CC = i686-w64-mingw32-gcc
 
-LIBS = -lboost_system-mt -lcairo -lfreetype -lvncclient -lnettle -lgnutls -lgmp -lmswsock -lws2_32 -lp11-kit.dll -lharfbuzz -lgraphite2 -ldwrite -lrpcrt4 -lintl -liconv -lbz2 -lz -luser32 -lgdi32 -lpng -lz -luuid -lturbojpeg -ljpeg -lpixman-1 -ldl -lsqlite3 -s
+LIBS = -lboost_system-mt -lboost_program_options-mt -lcairo -lfreetype -lvncclient -lnettle -lgnutls -lgmp -lmswsock -lws2_32 -lp11-kit.dll -lharfbuzz -lgraphite2 -ldwrite -lrpcrt4 -lintl -liconv -lbz2 -lz -luser32 -lgdi32 -lpng -lz -luuid -pthread -lturbojpeg -ljpeg -lpixman-1 -ldl -lsqlite3 -s
 
 # object and binary dir
 OBJDIR = obj/windows32

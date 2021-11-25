@@ -17,7 +17,7 @@
         <center><h1>Collab VM Default Page</h1>
         <b>Congratulations!</b> If you're reading this, that means you did not mess up and you set Collab VM up correctly. This is the default page you see when you first set up Collab VM. You can access the administrator panel by going to /admin/. You can find the default password in the README. <br><br>Please note that you may need to change the IP Address in admin.min.js. Open a text editor, search  "127.0.0.1:6004" and replace the IP with your current one. Alternatively, you can compile collab-vm-admin-webapp to use it or if 127.0.0.1 works for you, you can just leave it as default. As for this page, you can either keep it, modify it, or remove it, its your choice. 
         <h1>Details about this host & Collab VM</h1>
-        <b>Collab VM Version:</b> [CVM_VERSION]<br>
+        <b>Collab VM Version:</b> [CVM_VERSION], in branch <kbd>[GIT_BRANCH]</kbd><br>
 		<b>Commit ID:</b> <kbd>[GIT_ID]</kbd><br>
 		<b>Fork source:</b> <a href="[GIT_FORK_URL]">[GIT_FORK_NAME]</a><br>
         <b>Compilation date:</b> [HOST_DATE]<br>
