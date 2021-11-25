@@ -2367,7 +2367,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 							//	BroadcastTurnInfo();
 							//}
 						} else {
-							WriteJSONObject(writer, server_settings_[kTurnsEnabled], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kTurnsEnabled], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -2375,7 +2375,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.TurnTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, server_settings_[kTurnTime], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kTurnTime], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -2383,7 +2383,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsBool()) {
 							vm.VotesEnabled = value.GetBool();
 						} else {
-							WriteJSONObject(writer, server_settings_[kVotesEnabled], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kVotesEnabled], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -2391,7 +2391,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.VoteTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, server_settings_[kVoteTime], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kVoteTime], invalid_object_);
 							valid = false;
 						}
 						break;
@@ -2399,7 +2399,7 @@ bool CollabVMServer::ParseVMSettings(VMSettings& vm, rapidjson::Value& settings,
 						if(value.IsUint()) {
 							vm.VoteCooldownTime = value.GetUint();
 						} else {
-							WriteJSONObject(writer, server_settings_[kVoteCooldownTime], invalid_object_);
+							WriteJSONObject(writer, vm_settings_[kVoteCooldownTime], invalid_object_);
 							valid = false;
 						}
 						break;
