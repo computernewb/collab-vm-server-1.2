@@ -37,3 +37,5 @@ target_compile_definitions(collabvm_websocket PUBLIC
 )
 
 add_library(collabvm::websocket ALIAS collabvm_websocket)
+
+collabvm_targetize(collabvm_websocket)
