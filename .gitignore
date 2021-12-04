@@ -29,3 +29,9 @@ http/
 
 # blatantly ignore this for OBVIOUS reasons
 /**/collab-vm.db
+
+# cmake will spam files like these for every module.
+/**/CMakeFiles/
+/**/cmake_install.cmake
+/**/Makefile
+CMakeCache.txt
