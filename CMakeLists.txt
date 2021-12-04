@@ -12,5 +12,6 @@ find_package(Boost REQUIRED COMPONENTS system program_options)
 find_package(Threads REQUIRED)
 
 # Include module subdirectories
+add_subdirectory(src/core)
 add_subdirectory(src/websocket)
 add_subdirectory(src/main)

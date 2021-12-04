@@ -1,4 +1,4 @@
-#include <util/CommandLine.h>
+#include <core/util/CommandLine.h>
 
 #include <cstring>
 
@@ -10,12 +10,12 @@
 	#include <windows.h>
 #endif
 
-namespace collabvm::util {
+namespace collabvm::core {
 
 	namespace {
 		bool SplitCommandLineImpl(std::vector<std::string>& split_line, const std::string& command) {
 #ifndef _WIN32
-			// POSIX wordexp() implementation
+			// POSIX implmentation, using wordexp()
 
 			wordexp_t exp;
 
@@ -28,14 +28,10 @@ namespace collabvm::util {
 			split_line.reserve(exp.we_wordc);
 
 			for(int i = 0; i < exp.we_wordc; i++) {
-#ifdef DEBUG
-				// I don't know if this is an actual possibility or not.
-				// if it's not this code could safely be removed
-				if(!exp.we_wordv[i])
-					continue;
-#endif
+				const auto len = std::strlen(exp.we_wordv[i]) + 1;
 
-				const int len = std::strlen(exp.we_wordv[i]) + 1;
+				// won't this always be true?
+				// ah whatever. cosmic code.
 				if(!len)
 					continue;
 
@@ -82,7 +78,7 @@ namespace collabvm::util {
 			// the wide argv is no longer needed
 			if(argv)
 				LocalFree(argv);
-#endif // WIN32
+#endif // _WIN32
 
 			return true;
 		}

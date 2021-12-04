@@ -3,20 +3,19 @@
 #include <string>
 
 
-namespace collabvm::util {
+namespace collabvm::core {
 
 	/**
 	 * Splits a command line into individual arguments,
-	 * (internally) using platform specific functions.
+	 * providing a clean layer over platform specific functions.
 	 *
 	 * On POSIX, this function uses wordexp() and gates
 	 * away command result injection, to avoid any vulnerabilities.
 	 *
-	 * On Windows, this function uses CommandLineToArgvW(), internally for a bit
-	 * converting the input string to a wide string for the picky Windows API.
+	 * On Windows, this function uses CommandLineToArgvW().
 	 *
 	 * \param[in] command Command line to split.
-	 * \returns Optional containing split command line, or empty optional on error.
+	 * \returns Optional containing split command line, or empty optional upon error.
 	 */
 	std::optional<std::vector<std::string>> SplitCommandLine(const std::string& command);
 
