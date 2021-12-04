@@ -3,7 +3,6 @@
 add_executable(collab-vm-server
 		main.cpp
 		Arguments.cpp
-		${PROJECT_SOURCE_DIR}/include/core/PluginAbi.h
 )
 
 target_include_directories(collab-vm-server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

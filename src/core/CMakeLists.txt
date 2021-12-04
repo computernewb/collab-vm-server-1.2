@@ -2,6 +2,7 @@
 
 add_library(collabvm_core
 		util/CommandLine.cpp
+		${PROJECT_SOURCE_DIR}/include/core/PluginAbi.h
 )
 
 target_include_directories(collabvm_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
