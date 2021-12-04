@@ -3,6 +3,9 @@
 
 #include <utility>
 
+// Uncomment if you're going to use Websocket-- under a proxy.
+//#define WEBSOCKETMM_SUPPORT_PROXYING
+
 namespace websocketmm {
 
 	// TODO(lily): these should be in another TU
@@ -53,6 +56,16 @@ namespace websocketmm {
 		selected_subprotocol_ = subprotocol;
 	}
 
+	net::ip::address websocket_user::GetAddress() {
+		// return real IP if it's not a proxy client
+		if(!proxy_address_.has_value()) {
+			const auto address = ws_.next_layer().socket().remote_endpoint().address();
+			return address;
+		}
+
+		return proxy_address_.value();
+	}
+
 	// private API fun
 
 	void websocket_user::run(http::request<http::string_body> upgrade) {
@@ -85,6 +98,43 @@ namespace websocketmm {
 		// listener object to avoid concurrency issues.
 
 		net::post(ws_.get_executor(), [self = shared_from_this()]() {
+
+#ifdef WEBSOCKETMM_SUPPORT_PROXYING
+			// seperate scope because this stuff isn't really needed after
+			{
+				auto& req = self->upgrade_request_.value();
+
+				auto& header_val = req["X-Forwarded-For"];
+
+				if(header_val != "") {
+					boost::system::error_code ec;
+					
+					// X-Forwarded-For is actually a tokenized list, like Sec-Websocket-Protocol.
+					// (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For)
+					//
+					// However, the first element is ALWAYS the client hop/IP address.
+					// All other elements are just the proxy hops the client has been through,
+					// which we don't really need to care about. (We only care about the client hop)
+
+					http::token_list list(header_val);
+					auto& first = *list.begin();
+
+					auto ip = net::ip::make_address(std::string_view(first.data(), first.length()), ec);
+
+					if(ec) {
+						// There was an error parsing the IP, so as to not compromise security,
+						// close the connection.
+						beast::error_code b_ec;
+						self->socket().shutdown(tcp::socket::shutdown_send, b_ec);
+						return;
+					} else {
+						// Well, it works!
+						self->proxy_address_ = ip;
+					}
+				}
+			}
+#endif // WEBSOCKETMM_SUPPORT_PROXYING
+
 			if(!self->server_->verify(self->weak_from_this())) {
 				// Validation failed.
 				// Close the connection and return early.

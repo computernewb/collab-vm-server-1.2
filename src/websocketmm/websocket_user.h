@@ -81,6 +81,8 @@ namespace websocketmm {
 			return ws_.next_layer().socket();
 		}
 
+		net::ip::address GetAddress();
+
 		/**
 		 * Close the WebSocket connection.
 		 * This function also clears the send queue for this connection entirely,
@@ -116,6 +118,11 @@ namespace websocketmm {
 		std::optional<http::request<http::string_body>> upgrade_request_;
 
 		std::optional<std::string> selected_subprotocol_;
+
+		/**
+		 * "Real IP" for this proxy. Returned instead of the "proxy" IP address, if contained
+		 */
+		std::optional<net::ip::address> proxy_address_;
 
 		/**
 		 * Internal value for

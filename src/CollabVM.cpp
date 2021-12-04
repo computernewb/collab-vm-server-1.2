@@ -440,7 +440,7 @@ bool CollabVMServer::OnValidate(std::weak_ptr<websocketmm::websocket_user> handl
 
 		if(do_subprotocol_check(handle_sp->GetSubprotocols())) {
 			// Create new IPData object
-			const boost::asio::ip::address& addr = handle_sp->socket().remote_endpoint().address();
+			boost::asio::ip::address addr = handle_sp->GetAddress();
 
 			std::unique_lock<std::mutex> ip_lock(ip_lock_);
 			IPData* ip_data;
