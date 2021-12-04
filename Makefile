@@ -95,7 +95,7 @@ clean:
 	@$(MAKE) -f $(MKCONFIG) clean
 
 help:
-	@echo -e "CollabVM Server 1.3.0 Makefile help:\n"
+	@echo -e "CollabVM Server 3.0.0 Makefile help:\n"
 	@echo "make - Build release"
 	@echo "make DEBUG=1 - Build a debug build (Adds extra trace information and debug symbols)"
 	@echo "make JPEG=1 - Build with JPEG support (Useful for slower internet connections)"

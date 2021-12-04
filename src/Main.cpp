@@ -44,7 +44,7 @@ struct Arguments {
 			}
 
 			if (vm.count("version")) {
-				std::cout << "CollabVM Server 1.3.0 - AlphaBetas Edition" << '\n'
+				std::cout << "CollabVM Server 3.3.0 - AlphaBetas Edition" << '\n'
 					<< "Compiled with Boost " << BOOST_VERSION / 100000 << "." << BOOST_VERSION / 100 % 1000 << '\n'
 	#ifdef USE_JPEG
 					<< "This server is using JPEG.\n"
