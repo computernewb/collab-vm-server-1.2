@@ -10,6 +10,5 @@ set(CMAKE_CXX_STANDARD 20)
 # Dependencies
 find_package(Boost REQUIRED COMPONENTS system program_options)
 
-# include module subdirectories.
-
+# Include module subdirectories
 add_subdirectory(src/main)

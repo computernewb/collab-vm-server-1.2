@@ -1,8 +1,5 @@
-
-
-#include <iostream>
-
 #include <Arguments.h>
+#include <iostream>
 
 
 // Uncomment this to allow Asio to use multi-threading. WARNING: Might be buggy
@@ -11,16 +8,15 @@
 #if 0
 void IgnorePipe() {
         // Ignores SIGPIPE to prevent LibVNCClient from crashing on Linux
-#ifndef _WIN32
+	#ifndef _WIN32
 	struct sigaction pipe {};
 	pipe.sa_handler = SIG_IGN;
 	pipe.sa_flags = 0;
 	if(sigaction(SIGPIPE, &pipe, nullptr) == -1)
 		std::cout << "Failed to ignore SIGPIPE. Crashes may occur now\n";
-#endif
+	#endif
 }
 #endif
-
 
 int main(int argc, char** argv) {
 	// maybe global instance this so things can access it?

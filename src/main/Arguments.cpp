@@ -15,6 +15,7 @@ namespace collabvm::main {
 		po::options_description desc("CollabVM Server - Options");
 		po::variables_map vm; // moved these here so we *can* catch missing var errors
 		try {
+			// clang-format off
 			desc.add_options()
 				("listen,l", po::value<std::string>(&listen_address)->default_value("0.0.0.0"), "The address to listen on. Defaults to all interfaces.")
 				("port,p", po::value<int>(&port)->required(), "The port to listen on")
@@ -22,9 +23,11 @@ namespace collabvm::main {
 				("version,v", "Display server & library versions")
 				("help,h", "Show this help screen");
 
+			// clang-format on
+
 			po::store(po::parse_command_line(argc, argv, desc), vm);
 
-			if (vm.count("help") || argc == 1) {
+			if(vm.count("help") || argc == 1) {
 				std::cout << desc << "\n";
 				std::exit(0);
 			}
@@ -35,40 +38,40 @@ namespace collabvm::main {
 	#define BUILDSUFFIX_CAT ""
 #endif
 
-			if (vm.count("version")) {
-				// FIXME: This version should probably be derived by something so we don't need to hand-twiddle
-				// it.
+			if(vm.count("version")) {
+				// FIXME: This version should probably be derived by something so we don't need to hand-twiddle it.
 				std::cout << "CollabVM Server 3.0.0" BUILDSUFFIX_CAT " - AlphaBetas Edition\n\n"
-					<< "Compiled with:\n"
-					<< "\t\b\b\b\b- Boost " << BOOST_VERSION / 100000 << "." << BOOST_VERSION / 100 % 1000 << '\n'
-					<< '\n';
+						  << "Compiled with:\n"
+						  << "\t\b\b\b\b- Boost " << BOOST_VERSION / 100000 << "." << BOOST_VERSION / 100 % 1000 << '\n'
+						  << '\n';
 
 				std::exit(0);
 			}
 
 			po::notify(vm);
-		} catch (boost::program_options::required_option::error& e) {
-			std::cerr << "A required parameter was not specified!" << "\n"; // make this less vague
+		} catch(boost::program_options::required_option::error& e) {
+			std::cerr << "Error: " << e.what() << '\n';
 			std::exit(1);
-		} catch (std::exception& e) {
+		} catch(std::exception& e) {
 			std::cerr << e.what() << "\n";
 			std::exit(1);
 		} catch(...) {
-			std::cerr << "An unknown error has occurred" << "\n";
+			std::cerr << "An unknown error has occurred"
+					  << "\n";
 			std::exit(1);
 		}
 	}
 
-	const std::string& Arguments::GetListenAddress() const { 
+	const std::string& Arguments::GetListenAddress() const {
 		return listen_address;
-	} 
+	}
 
-	const std::string& Arguments::GetDocRoot() const { 
-		return http_dir; 
-	} 
+	const std::string& Arguments::GetDocRoot() const {
+		return http_dir;
+	}
 
 	int Arguments::GetPort() const {
 		return port;
 	}
 
-}
+} // namespace collabvm::main
