@@ -33,7 +33,7 @@ endif
 else
 
 # release mode, build with optimizations and strip binaries
-CCFLAGS += -O3 -ffast-math -march=native -mtune=native
+CCFLAGS += -O3 -ffast-math -DNDEBUG
 LDFLAGS = -s
 
 endif
