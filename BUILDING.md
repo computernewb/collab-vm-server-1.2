@@ -7,8 +7,14 @@ Compiling the server is fairly easy.
 GCC 10+ or Clang 11+ are recommended compiler versions.
 
 * Boost 1.75 or above
-* libvncserver 
+* libvncserver
+* fmt
+* spdlog
 
+You can use either system library versions (if preferred) or use vcpkg for the grunt of them.
+
+
+**TODO**: we might vendor libvncserver and pin it ourselves? idk.
 
 ### CMake
 
@@ -20,3 +26,5 @@ $ cmake --build .
 # ...
 # profit?
 ```
+
+To use vcpkg, add `-DCMAKE_TOOLCHAIN_FILE=$VCPKG/scripts/buildsystems/vcpkg.cmake` to the first CMake invocation (clue: the one with `-B build`).
