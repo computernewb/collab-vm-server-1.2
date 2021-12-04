@@ -17,7 +17,6 @@ namespace collabvm::websocket {
 	 * Neat wrapper class for WebSocket messages.
 	 */
 	struct Message {
-
 		enum class Type {
 			Text,
 			Binary
@@ -66,10 +65,10 @@ namespace collabvm::websocket {
 	   private:
 		friend struct Client; // Client can access internal implementation details
 
-		Type type{};
+		Type type {};
 		std::vector<std::uint8_t> data_buffer;
 	};
 
-}
+} // namespace collabvm::websocket
 
 #endif // PIXELBOARD_MESSAGE_H

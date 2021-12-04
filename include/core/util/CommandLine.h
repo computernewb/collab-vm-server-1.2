@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 
-
 namespace collabvm::core {
 
 	/**
@@ -19,4 +18,4 @@ namespace collabvm::core {
 	 */
 	std::optional<std::vector<std::string>> SplitCommandLine(const std::string& command);
 
-} // namespace collabvm::util
+} // namespace collabvm::core

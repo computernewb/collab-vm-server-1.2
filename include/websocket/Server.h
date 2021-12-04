@@ -60,7 +60,6 @@ namespace collabvm::websocket {
 
 		bool SendMessage(std::weak_ptr<Client> client, std::shared_ptr<const Message> message);
 
-
 	   protected:
 		Validate_t validate_handler;
 		Open_t open_handler;

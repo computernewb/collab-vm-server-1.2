@@ -20,7 +20,8 @@ namespace collabvm::main {
 				("listen,l", po::value<std::string>(&listen_address)->default_value("0.0.0.0"), "The address to listen on. Defaults to all interfaces.")
 				("port,p", po::value<int>(&port)->required(), "The port to listen on")
 				("root,r", po::value<std::string>(&http_dir)->default_value("http"), "The root folder to serve HTTP files from. Currently useless, as there is no HTTP web server (yet!)")
-				("version,v", "Display server & library versions")
+				("version,V", "Display server & library versions")
+				("verbose,v", "Enable verbose log messages")
 				("help,h", "Show this help screen");
 
 			// clang-format on
@@ -56,8 +57,7 @@ namespace collabvm::main {
 			std::cerr << e.what() << "\n";
 			std::exit(1);
 		} catch(...) {
-			std::cerr << "An unknown error has occurred"
-					  << "\n";
+			std::cerr << "An unknown error has occurred\n";
 			std::exit(1);
 		}
 	}

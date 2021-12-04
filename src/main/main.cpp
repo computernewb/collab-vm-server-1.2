@@ -4,23 +4,10 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/signal_set.hpp>
 
-#include <websocket/Server.h>
+//#include <core/Server.h>
 
 // Uncomment this to allow Asio to use multi-threading. WARNING: Might be buggy
 //#define ENABLE_ASIO_MULTITHREADING
-
-#if 0
-void IgnorePipe() {
-        // Ignores SIGPIPE to prevent LibVNCClient from crashing on Linux
-	#ifndef _WIN32
-	struct sigaction pipe {};
-	pipe.sa_handler = SIG_IGN;
-	pipe.sa_flags = 0;
-	if(sigaction(SIGPIPE, &pipe, nullptr) == -1)
-		std::cout << "Failed to ignore SIGPIPE. Crashes may occur now\n";
-	#endif
-}
-#endif
 
 int main(int argc, char** argv) {
 	// maybe global instance this so things can access it?
@@ -35,42 +22,6 @@ int main(int argc, char** argv) {
 		std::cout << "Stopping...\n";
 		ioc.stop();
 	});
-
-	auto server = std::make_shared<collabvm::websocket::Server>(ioc);
-
-	// Test echo + user-data server.
-
-	struct MyData {
-		int n {};
-	};
-
-	server->SetOpen([](std::weak_ptr<collabvm::websocket::Client> client) {
-		if(auto sp = client.lock()) {
-			// Assign the given user data type to this connection.
-			// We can now use GetUserData<MyData> to get the instance of MyData for each connection.
-			sp->SetUserData<MyData>();
-			std::cout << "Connection opened from " << sp->GetRemoteAddress().to_string() << '\n';
-		}
-	});
-
-	server->SetMessage([](std::weak_ptr<collabvm::websocket::Client> client, std::shared_ptr<const collabvm::websocket::Message> message) {
-		if(auto sp = client.lock()) {
-			if(message->GetType() == collabvm::websocket::Message::Type::Text) {
-				std::cout << "Message from " << sp->GetRemoteAddress().to_string() << ": " << message->GetString() << '\n';
-				sp->GetUserData<MyData>().n++;
-				sp->Send(message);
-			}
-		}
-	});
-
-	server->SetClose([](std::weak_ptr<collabvm::websocket::Client> client) {
-		if(auto sp = client.lock()) {
-			std::cout << "Connection closed from " << sp->GetRemoteAddress().to_string() << '\n';
-			std::cout << "MyData::n for this connection: " << sp->GetUserData<MyData>().n << '\n';
-		}
-	});
-
-	server->Run(args.GetListenAddress(), args.GetPort());
 
 	// FIXME: If this is re-enabled, maybe default to (nproc() / 2) -1,
 	// 	but add a --threads command-line argument?

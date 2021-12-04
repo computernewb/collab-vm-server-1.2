@@ -18,14 +18,12 @@
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 
-
 namespace collabvm::websocket {
 
 	/**
 	 * A WebSocket client.
 	 */
 	struct Client : public std::enable_shared_from_this<Client> {
-
 		enum class State {
 			Closed,
 			Validating,
@@ -37,14 +35,14 @@ namespace collabvm::websocket {
 
 		~Client();
 
-		template <class T>
+		template<class T>
 		T& GetUserData() noexcept {
 			auto* p = std::any_cast<T>(&userData);
 			assert(p && "user type T isn't actually stored here!");
 			return *p;
 		}
 
-		template <class T>
+		template<class T>
 		const T& GetUserData() const noexcept {
 			auto* p = std::any_cast<T>(&userData);
 			assert(p && "user type T isn't actually stored here!");
@@ -56,7 +54,7 @@ namespace collabvm::websocket {
 		 *
 		 * \tparam T Type. Must be default-constructable. Otherwise I won't like you anymore.
 		 */
-		template <class T>
+		template<class T>
 		void SetUserData() {
 			userData = std::make_any<T>();
 		}
@@ -75,7 +73,6 @@ namespace collabvm::websocket {
 
 		std::string_view GetSelectedSubprotocol();
 
-
 		/**
 		 * Send a message.
 		 */
@@ -86,20 +83,16 @@ namespace collabvm::websocket {
 		 */
 		void Close();
 
-
 		// If you call this I won't like you anymore
 
 		void Run(http::request<http::string_body>&& request);
 
 	   private:
-
 		void OnAccept(const boost::system::error_code& ec);
-
 
 		void ReadMessage();
 
 		void OnRead(const boost::system::error_code& ec, std::size_t bytes_transferred);
-
 
 		/**
 		 * Write a single Message.
@@ -109,7 +102,6 @@ namespace collabvm::websocket {
 		void WriteMessage(std::shared_ptr<const Message> message);
 
 		void OnWrite(const boost::system::error_code& ec, std::size_t bytes_transferred);
-
 
 		/**
 		 * Perform a hard close of the TCP socket.
@@ -122,19 +114,17 @@ namespace collabvm::websocket {
 		 */
 		std::any userData;
 
-
 		beast::websocket::stream<beast::tcp_stream> wsStream;
 		net::ip::address cachedAddress;
 
 		beast::flat_buffer messageBuffer;
 
-		std::atomic<State> state {State::Validating};
+		std::atomic<State> state { State::Validating };
 
 		// basically just random data
 
 		http::request<http::string_body> upgradeRequest;
 		std::optional<std::string> selectedSubprotocol;
-
 
 		// fwd decl - don't want it here!
 		struct MessageQueue;

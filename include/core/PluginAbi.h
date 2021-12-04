@@ -1,5 +1,7 @@
 // Defines and shared support code
-// for a server->plugin (or other way round!) ABI for interfaces.
+// for a server->plugin (or other way round!) ABI for virtual
+// interfaces. Essentially "CollabVM COM", except without
+// a baked in factory pattern or true-baseclass.
 
 #ifndef COLLAB_VM_SERVER_PLUGINABI_H
 #define COLLAB_VM_SERVER_PLUGINABI_H
@@ -17,10 +19,22 @@
 	}
 
 // Assign a vtable function. Should be used to assign functions
-// during the construction of an implementing interface.
-#define COLLABVM_PLUGINABI_ASSIGN_VTFUNC(name, pointer) _COLLABVM_PLUGINABI_NAME_VTFUNC(name) = collabvm::core::detail::_vtfunc_cast<decltype(_COLLABVM_PLUGINABI_NAME_VTFUNC(name))>(pointer)
+// in the constructor of an implementing interface.
+#define COLLABVM_PLUGINABI_ASSIGN_VTFUNC(name, pointer) \
+	_COLLABVM_PLUGINABI_NAME_VTFUNC(name) = collabvm::core::detail::_vtfunc_cast<decltype(_COLLABVM_PLUGINABI_NAME_VTFUNC(name))>(pointer)
+
+// Expected ABI C exports for a CollabVM 3.0 server plugin:
+// int collabvm_plugin_abi_version() - returns ABI version. If not matching the server's PluginAbi header, plugin is unloaded.
 
 namespace collabvm::core {
+
+	/**
+	 * The ABI version of this header.
+	 *
+	 * Bump if you're going to make incompatible changes to the plugin ABI
+	 * which will break existing clients.
+	 */
+	constexpr static auto PLUGIN_ABI_VERSION = 0;
 
 	namespace detail {
 		/**
