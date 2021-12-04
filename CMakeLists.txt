@@ -5,6 +5,9 @@ include(cmake/CollabVM.cmake)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# who the hell wants binaries in /src?
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 # Build toggles?
 
 # Dependencies
