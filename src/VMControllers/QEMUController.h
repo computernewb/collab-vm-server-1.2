@@ -9,8 +9,6 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/system/error_code.hpp>
 
-#include <util/ChildProcess.h>
-
 #include <atomic>
 #include <thread>
 #include <mutex>
@@ -171,6 +169,15 @@ class QEMUController : public VMController, public QMPCallback {
 		kStopping		// Waiting for QEMU process to terminate and VNC and QMP to close
 	};
 
+	
+	void HandleChildSignal(const boost::system::error_code&, int signal);
+
+	/**
+	 * Splits a string into a vector.
+	 * On Unix the wordexp function is used.
+	 * On Windows the CommandLineToArgvW function is used.
+	 */
+	static std::vector<const char*> SplitCommandLine(const char* command);
 
 	GuacVNCClient guac_client_;
 
@@ -195,7 +202,7 @@ class QEMUController : public VMController, public QMPCallback {
 	/**
 	 * The split command used to start QEMU.
 	 */
-	std::vector<std::string> qemu_command_;
+	std::vector<const char*> qemu_command_;
 
 	/**
 	 * The name of the VM snapshot to restore when starting QEMU or restarting it.
@@ -226,9 +233,17 @@ class QEMUController : public VMController, public QMPCallback {
 	 */
 	boost::asio::steady_timer timer_;
 
+#ifndef _WIN32
 	/**
-	 * QEMU child process.
+	 * Process ID of QEMU. Only valid when state_ != kInactive.
 	 */
-	std::shared_ptr<collabvm::util::ChildProcess> qemu_child_;
+	pid_t qemu_pid_;
+	boost::asio::signal_set signal_;
+#else
+	/**
+	 * Process information of QEMU on Windows. State message applies here.
+	 */
+	PROCESS_INFORMATION qemu_process_;
+#endif
 	
 };

@@ -1,11 +1,26 @@
 #include "VMControllers/QEMUController.h"
 #include "CollabVM.h"
+#ifdef _WIN32
+	#include <Windows.h>
+	#include <shellapi.h>
+#else
+	#include <unistd.h>
+	#include <errno.h>
+	#include <sys/types.h>
+	#include <sys/wait.h>
+	#include <wordexp.h>
+	#include <system_error>
+	#include <signal.h>
 
-#include <util/CommandLine.h>
+	#include <dirent.h>
+	#include <sys/resource.h>
 
+	#ifdef __linux__
+		#include <sys/prctl.h>
+	#endif
+#endif
 #include <boost/asio.hpp>
 #include <boost/system/error_code.hpp>
-
 #include <cstdio>
 #include <string>
 #include <iostream>
@@ -19,7 +34,6 @@ static const std::string kErrorMessages[] = {
 	"Failed to connect to VNC"
 };
 
-
 /**
  * A single thread is created for all QMPClient instances
  * to use.
@@ -30,31 +44,89 @@ static std::thread qmp_thread_;
 static boost::asio::io_service::work* qmp_work_;
 static boost::asio::io_service* qmp_service_;
 
+#ifndef _WIN32
+/**
+ * Gets all tasks for a given PID, using Linux /proc filesystem
+ */
+std::vector<pid_t> GetProcessTasks(pid_t process) {
+	DIR* tasks = nullptr;
+	char buf[40];
+	snprintf(&buf[0], sizeof(buf), "/proc/%d/tasks", process);
+	tasks = opendir(&buf[0]);
+
+	if(tasks) {
+		std::vector<pid_t> ret;
+
+		struct dirent* entry;
+		while((entry = readdir(tasks)) != nullptr) {
+			// Catch . and .. immediately
+			if(entry->d_name[0] == '.')
+				continue;
+
+			char* end = nullptr;
+			auto tid = static_cast<pid_t>(strtol(entry->d_name, &end, 10));
+
+			// If strtol() failed on the string (it set end to the start pointer)
+			// continue on.
+			if(end == &entry->d_name[0])
+				continue;
+
+			ret.push_back(tid);
+		}
+
+		closedir(tasks);
+		return ret;
+	} else {
+		// fail, so let's just return a vector with just the process "task"
+		return { process };
+	}
+}
+
+/**
+ * Renice a task.
+ */
+void ReniceTask(pid_t pid, int nice) {
+	// only set the nice level if we *need* to
+	if(getpriority(PRIO_PROCESS, pid) != nice) {
+		std::cout << "[QEMU] Setting task " << pid << " nice level to " << nice << "\n";
+		if(setpriority(PRIO_PROCESS, pid, nice) == -1) {
+			std::cout << "[QEMU] setpriority(PRIO_PROCESS, " << pid << ", " << nice << ") returned -1..?\n";
+		}
+	}
+}
+
+/**
+ * Helper to renice all tasks of a process
+ */
+void ReniceAllTasks(pid_t process, int nice) {
+	for(auto pid : GetProcessTasks(process))
+		ReniceTask(pid, nice);
+}
+#endif
 
 QEMUController::QEMUController(CollabVMServer& server, const std::shared_ptr<VMSettings>& settings)
 	: VMController(server, settings),
 	  guac_client_(server, *this, users_, settings->VNCAddress, settings->VNCPort),
 	  internal_state_(InternalState::kInactive),
 	  qemu_running_(false),
-	  timer_(io_context_),
-	  retry_count_(0) {
-
+	  timer_(server.GetIOContext()),
+	  retry_count_(0)
+#ifndef _WIN32
+	  ,
+	  signal_(server.GetIOContext(), SIGCHLD)
+#endif
+{
 	SetCommand(settings->QEMUCmd);
 
 	std::lock_guard<std::mutex> lock(qmp_thread_mutex_);
 	if(!qmp_count_++) {
-		// TODO: asio::io_service::work is deprecated, and we really 
-		// should do something better.
-		// Also, instead of new/delete, we should use some deferring initalizer type
-
 		qmp_service_ = new boost::asio::io_service();
-
 		qmp_work_ = new boost::asio::io_service::work(*qmp_service_);
 		qmp_thread_ = std::thread([](boost::asio::io_service* service) {
 			service->run();
 			delete service;
-		}, qmp_service_);
-
+		},
+								  qmp_service_);
 		qmp_thread_.detach();
 	}
 
@@ -67,26 +139,22 @@ void QEMUController::ChangeSettings(const std::shared_ptr<VMSettings>& settings)
 		SetCommand(settings_->QEMUCmd);
 		restart = true;
 	}
-
 	if(settings->VNCAddress != settings_->VNCAddress || settings->VNCPort != settings_->VNCPort) {
 		guac_client_.SetEndpoint(settings_->VNCAddress, settings_->VNCPort);
 		restart = true;
 	}
-
 	if(settings->QMPAddress != settings_->QMPAddress || settings->QMPPort != settings_->QMPPort) {
 		//qmp_->SetEndpoint(settings_->QMPAddress, settings_->QMPPort);
 		restart = true;
 	}
-
 	if(settings->QMPSocketType != settings_->QMPSocketType) {
 		// TODO:
 		// InitQMP();
 		restart = true;
 	}
-
+	
 	VMController::ChangeSettings(settings);
 	settings_ = settings;
-
 	if(restart)
 		Stop(StopReason::kRestart);
 }
@@ -97,52 +165,52 @@ QEMUController::~QEMUController() {
 		delete qmp_work_;
 }
 
-void QEMUController::OnChildExit() {
-	int exitCode = qemu_child_->ExitCode();
-
-	// maybe pid might work on exit?
-	// unless it fetches it from waitpid
-
-	std::cout << "QEMU child process exited with status code " << exitCode << '\n';
-
-	qemu_running_ = false;
-
-	// Stop the timer
-	boost::system::error_code boost_ec;
-	timer_.cancel(boost_ec);
-
-	if(internal_state_ == InternalState::kStopping) {
-		IsStopped();
+#ifndef _WIN32
+void QEMUController::HandleChildSignal(const boost::system::error_code& ec, int signal) {
+	if(ec)
 		return;
-	}
+	int status = 0;
+	pid_t pid;
+	while((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+		// Check if the process exited
+		if(WIFEXITED(status)) {
+			qemu_running_ = false;
+			std::cout << "QEMU child process with PID: " << pid << " has terminated with status: " << WEXITSTATUS(status) << std::endl;
 
-	if(internal_state_ != InternalState::kInactive) {
-		// If QEMU's exit code is not zero and QMP is not currently connected,
-		// it probably means that it was never able to connect,
-		// because QEMU was started with invalid arguments.
+			// Stop the timer
+			boost::system::error_code ec;
+			timer_.cancel(ec);
 
-#if 0 // TODO: We should get this code to work again.
-		if(exitCode != 0) {
-			internal_state_ = InternalState::kStopping;
-			error_code_ = ErrorCode::kQEMUError;
-			Stop(StopReason::kError);
-			IsStopped();
+			// If we were expecting QEMU to stop
+			if(internal_state_ == InternalState::kStopping) {
+				IsStopped();
+			} else if(internal_state_ != InternalState::kInactive) {
+				// If QEMU's exit code is not zero and
+				// QMP is not currently connected it probably means
+				// that is was never able to connect because QEMU was
+				// started with invalid arguments
+				if(WEXITSTATUS(status) != 0 /* && !qmp.IsConnected()*/) {
+					internal_state_ = InternalState::kStopping;
+					error_code_ = ErrorCode::kQEMUError;
+					Stop(StopReason::kError);
 
-			std::cout << "QEMU terminated with a non-zero status code which indicates an error. Check the command for any invalid arguments.\n";
-		} else {
-			// Restart QEMU
-			StartQEMU();
+					IsStopped();
+
+					std::cout << "QEMU terminated with a non-zero status code which indicates an error. "
+								 "Check the command for any invalid arguments."
+							  << std::endl;
+				} else {
+					// Restart QEMU
+					StartQEMU();
+				}
+			}
 		}
-#else
-		// just restart for right now
-		// maybe if there are too many bad restarts we stop the VM,
-		// but idk
-
-		StartQEMU();
-#endif
 	}
+	if(qemu_running_ && internal_state_ != InternalState::kStopping && internal_state_ != InternalState::kInactive)
+		signal_.async_wait(std::bind(&QEMUController::HandleChildSignal,
+									 std::static_pointer_cast<QEMUController>(shared_from_this()), std::placeholders::_1, std::placeholders::_2));
 }
-
+#endif
 
 void QEMUController::Start() {
 	if(internal_state_ != InternalState::kInactive)
@@ -151,94 +219,110 @@ void QEMUController::Start() {
 	server_.OnVMControllerStateChange(shared_from_this(), VMController::ControllerState::kStarting);
 
 	std::weak_ptr<QEMUController> con(std::static_pointer_cast<QEMUController>(shared_from_this()));
-
 	// The STOP event will be received after the SHUTDOWN
 	// event when the -no-shutdown argument is provided
-	qmp_->RegisterEventCallback(QMPClient::Events::STOP, [con](rapidjson::Document& d) {
-		auto ptr = con.lock();
-		if(!ptr)
-			return;
+	qmp_->RegisterEventCallback(QMPClient::Events::STOP,
+								[con](rapidjson::Document& d) {
+									auto ptr = con.lock();
+									if(!ptr)
+										return;
 
-		std::cout << "[QEMU] Stop event occurred" << std::endl;
+									std::cout << "[QEMU] Stop event occurred" << std::endl;
 
-		if(ptr->internal_state_ != InternalState::kStopping) {
-			if(ptr->settings_->RestoreOnShutdown && ptr->settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kHDSnapshots /* || (ptr->settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kVMSnapshots && ptr->RestartForSnapshot)*/ ) {
-				// Restart QEMU to restore the snapshot
-				std::cout << "[QEMU] Restarting QEMU..." << std::endl;
+									if(ptr->internal_state_ != InternalState::kStopping) {
+										if(ptr->settings_->RestoreOnShutdown &&
+										   ptr->settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kHDSnapshots /* ||
+				(ptr->settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kVMSnapshots && ptr->RestartForSnapshot)*/
+										) {
+											// Restart QEMU to restore the snapshot
+											std::cout << "[QEMU] Restarting QEMU..." << std::endl;
 
-				ptr->StopQEMU();
-			} else {
-				// Reset QEMU to reboot the VM
-				std::cout << "[QEMU] Resetting QEMU..." << std::endl;
+											ptr->StopQEMU();
+										} else {
+											// Reset QEMU to reboot the VM
+											std::cout << "[QEMU] Resetting QEMU..." << std::endl;
 
-				// If the reset event doesn't occur within five seconds, kill the process
-				// This is a workaround for when communication with QMP has been
-				// lost but the socket is still connected
-				boost::system::error_code ec;
-				ptr->timer_.expires_from_now(std::chrono::seconds(5), ec);
-				ptr->timer_.async_wait(std::bind(&QEMUController::ProcessKillTimeout,  std::static_pointer_cast<QEMUController>(ptr), std::placeholders::_1));
+											// If the reset event doesn't occur within five seconds, kill the process
+											// This is a workaround for when communication with QMP has been
+											// lost but the socket is still connected
+											boost::system::error_code ec;
+											ptr->timer_.expires_from_now(std::chrono::seconds(5), ec);
+											ptr->timer_.async_wait(std::bind(&QEMUController::ProcessKillTimeout,
+																			 std::static_pointer_cast<QEMUController>(ptr), std::placeholders::_1));
 
-				ptr->qmp_->SystemReset();
-			}
-		}
-	});
+											ptr->qmp_->SystemReset();
+										}
+									}
+								});
 
-	qmp_->RegisterEventCallback(QMPClient::Events::RESET, [con](rapidjson::Document& d) {
-		std::cout << "[QEMU] Reset event occurred" << std::endl;
+	qmp_->RegisterEventCallback(QMPClient::Events::RESET,
+								[con](rapidjson::Document& d) {
+									std::cout << "[QEMU] Reset event occurred" << std::endl;
 
-		auto ptr = con.lock();
-		if(!ptr)
-			return;
+									auto ptr = con.lock();
+									if(!ptr)
+										return;
 
-		// Cancel the timeout timer
-		boost::system::error_code ec;
-		ptr->timer_.cancel(ec);
+									// Cancel the timeout timer
+									boost::system::error_code ec;
+									ptr->timer_.cancel(ec);
 
-		// After QEMU has been reset, load the snapshot
-		if(ptr->settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kVMSnapshots && !ptr->snapshot_.empty()) {
-			if(ptr->RestartForSnapshot) {
-				// This shouldn't happen
-				// The QEMU process must be restarted
-				// Restart QEMU to restore the snapshot
-				std::cout << "[QEMU] Restarting QEMU..." << std::endl;
+									// After QEMU has been reset, load the snapshot
+									if(ptr->settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kVMSnapshots &&
+									   !ptr->snapshot_.empty()) {
+										if(ptr->RestartForSnapshot) {
+											// This shouldn't happen
+											// The QEMU process must be restarted
+											// Restart QEMU to restore the snapshot
+											std::cout << "[QEMU] Restarting QEMU..." << std::endl;
 
-				ptr->StopQEMU();
-			} else {
-				// Send the loadvm command to the monitor to restore the snapshot
-				ptr->qmp_->SendMonitorCommand("loadvm " + ptr->snapshot_, [con](rapidjson::Document&) {
-					  if(auto ptr = con.lock()) {
-						  std::cout << "Received result for loadvm command" << std::endl;
-						  // Send the continue command to resume execution
-						  ptr->qmp_->SystemResume();
-					  }
-				});
-			}
-		} else if(ptr->settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kHDSnapshots)
-			ptr->qmp_->SystemResume();
-	});
+											ptr->StopQEMU();
+										} else {
+											// Send the loadvm command to the monitor to restore the snapshot
+											ptr->qmp_->SendMonitorCommand("loadvm " + ptr->snapshot_,
+																		  [con](rapidjson::Document&) {
+																			  if(auto ptr = con.lock()) {
+																				  std::cout << "Received result for loadvm command" << std::endl;
+																				  // Send the continue command to resume execution
+																				  ptr->qmp_->SystemResume();
+																			  }
+																		  });
+										}
+									} else if(ptr->settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kHDSnapshots)
+										ptr->qmp_->SystemResume();
+								});
 
+#ifdef _WIN32
+
+#else
+	signal_.async_wait(bind(&QEMUController::HandleChildSignal,
+							std::static_pointer_cast<QEMUController>(shared_from_this()), std::placeholders::_1, std::placeholders::_2));
+#endif
 
 	StartQEMU();
 }
 
 void QEMUController::SetCommand(const std::string& command) {
-	auto cmdopt = collabvm::util::SplitCommandLine(command);
+	// Free all arguments
+	
+	//for(auto & it : qemu_command_)
+	//	delete[] it;
 
-	if(!cmdopt.has_value()) {
-		std::cout << "I'm not sure what you've done, but you've made collabvm::util::SplitCommandLine return a nullopt. Good job, you get a cookie.\n";
-		return;
-	}
+	qemu_command_.clear();
 
-	qemu_command_ = cmdopt.value();
+	if(!command.empty())
+		qemu_command_ = SplitCommandLine(command.c_str());
 }
 
 void QEMUController::InitQMP() {
-	// unfortunately for right now the QMP client seems to be keeping
-	// the hacky seperate "QMP service" alive.
-	//
-	// A rewrite might actually be in order for that garbage code anyways
-	// since it's the only other thing which uses rapidjson.
-
+#ifdef _WIN32
+	qmp_address_ = settings_->QMPAddress;
+	std::string port = std::to_string(settings_->QMPPort);
+	qmp_address_.reserve(qmp_address_.length() + 1 + port.length());
+	qmp_address_ += ':';
+	qmp_address_ += port;
+	qmp_ = std::make_shared<QMPTCPClient>(*qmp_service_, settings_->QMPAddress, settings_->QMPPort);
+#else
 	if(settings_->QMPSocketType == VMSettings::SocketType::kTCP) {
 		qmp_address_ = settings_->QMPAddress;
 		std::string port = std::to_string(settings_->QMPPort);
@@ -247,24 +331,21 @@ void QEMUController::InitQMP() {
 		qmp_address_ += port;
 		qmp_ = std::make_shared<QMPTCPClient>(*qmp_service_, settings_->QMPAddress, settings_->QMPPort);
 	} else if(settings_->QMPSocketType == VMSettings::SocketType::kLocal) {
-#ifndef _WIN32
 		if(settings_->QMPAddress.empty()) {
+	#ifdef _WIN32
+			qmp_address_ = ":5800";
+	#else
 			// Unix domain sockets need to have a valid file path
-
-			// TODO: it might be nice to use /run/collabvm
-			// or /tmp/collabvm/. Cluttering /tmp with qemu sockets is kind of lame
-
 			qmp_address_ = P_tmpdir "/collab-vm-qmp-";
+	#endif
 			qmp_address_ += settings_->Name;
-		} else {
+		} else
 			qmp_address_ = settings_->QMPAddress;
-		}
+
 
 		qmp_ = std::make_shared<QMPLocalClient>(*qmp_service_, qmp_address_);
-#else
-		std::cout << "Windows doesn't support Local Sockets.\n";
-#endif
 	}
+#endif
 }
 
 void QEMUController::RestoreVMSnapshot() {
@@ -293,112 +374,175 @@ void QEMUController::ResetVM() {
 }
 
 void QEMUController::StartQEMU() {
-
-	// Make an intentional copy of the QEMU command line,
-	// so we can add args to it.
-	auto args_copy = qemu_command_;
+#ifdef _WIN32
 
 	if(settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kVMSnapshots && !snapshot_.empty()) {
 		// Append loadvm command to start with snapshot
-		args_copy.push_back("-loadvm");
-		args_copy.push_back(snapshot_);
-	} else if(settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kHDSnapshots) {
-		args_copy.push_back("-snapshot");
-	}
+		qemu_command_.push_back("-loadvm");
+		qemu_command_.push_back(snapshot_.c_str());
+	} else if(settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kHDSnapshots)
+		qemu_command_.push_back("-snapshot");
 
 	//if (settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::)
-	args_copy.push_back("-no-shutdown");
+	qemu_command_.push_back("-no-shutdown");
 
 	// QMP address
-	args_copy.push_back("-qmp");
-
+	qemu_command_.push_back("-qmp");
 	std::string qmp_arg;
-	if(settings_->QMPSocketType == VMSettings::SocketType::kTCP) {
-		qmp_arg = "tcp:";
-		qmp_arg += qmp_address_;
-		qmp_arg += ",server,nodelay";
 
-		args_copy.push_back(qmp_arg);
-	} else {
-		qmp_arg = "unix:";
+	qmp_arg = "tcp:";
+	qmp_arg += qmp_address_;
+	qmp_arg += ",server,nodelay";
+	qemu_command_.push_back(qmp_arg.c_str());
+
+	/*
+	else
+	{
+		qmp_arg = "pipe:";
 		qmp_arg += qmp_address_;
 		qmp_arg += ",server";
-
-		args_copy.push_back(qmp_arg);
+		qemu_command_.push_back(qmp_arg.c_str());
 	}
-
-// this'll still be okay to keep around
-#if 0
-	std::string arg;
-	if(settings_->AgentEnabled) {
-		if(settings_->AgentUseVirtio) {
-			// -chardev socket,id=agent,host=10.0.2.15,port=5700,nodelay,server,nowait -device virtio-serial -device virtserialport,chardev=agent
-			args_copy.push_back("-chardev");
-			arg = "socket,id=agent,";
-			if(settings_->AgentSocketType == VMSettings::SocketType::kTCP) {
-				arg += "host=";
-				arg += settings_->AgentAddress;
-				arg += ",port=";
-				arg += std::to_string(settings_->AgentPort);
-				arg += ",nodelay";
-			} else {
-				arg += "path=";
-				arg += agent_address_;
-			}
-			arg += ",server,nowait";
-			args_copy.push_back(arg);
-
-			args_copy.push_back("-device");
-			args_copy.push_back("virtio-serial");
-
-			args_copy.push_back("-device");
-			args_copy.push_back("virtserialport,chardev=agent");
-		} else {
-			// Serial address
-			args_copy.push_back("-serial");
-			if(settings_->AgentSocketType == VMSettings::SocketType::kTCP) {
-				arg = "tcp:";
-				arg += agent_address_;
-				// nowait is used because the AgentClient does not connect
-				// until after the VM has been started with QMP
-				arg += ",server,nowait,nodelay";
-			} else {
-				arg = "unix:";
-				arg += agent_address_;
-				arg += ",server,nowait";
-			}
-			args_copy.push_back(arg.c_str());
-		}
-	}
-#endif
+	*/
 
 	// Append VNC argument
-
-	args_copy.push_back("-vnc");
+	qemu_command_.push_back("-vnc");
+	// Subtract 5900 from the port number and append it to the hostname
 	std::string vnc_arg = settings_->VNCAddress + ':' + std::to_string(settings_->VNCPort - 5900);
-	args_copy.push_back(vnc_arg);
+	qemu_command_.push_back(vnc_arg.c_str());
 
 	std::cout << "Starting QEMU with command:\n";
 
-	for(auto& it : args_copy) {
-		std::cout << it << ' ';
+	std::string qemu_cmdline;
+
+	for(auto it = qemu_command_.begin(); it != qemu_command_.end(); it++) {
+		std::cout << *it << ' ';
+		qemu_cmdline += std::string(*it);
+		qemu_cmdline += " ";
 	}
-	std::cout << std::endl;
+	std::cout << "\n";
 
-	using namespace std::placeholders;
+	STARTUPINFO si;
 
-	// Spawn the QEMU process
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&qemu_process_, sizeof(qemu_process_));
 
-	if(qemu_child_) {
-		qemu_child_.reset();
+	char* QemuCmdLineMutable = (char*)calloc(qemu_cmdline.length() + 1, sizeof(char)); // more idomatic
+	strncpy(QemuCmdLineMutable, qemu_cmdline.c_str(), qemu_cmdline.length());
+
+	BOOL ProcessCreateStatus = CreateProcess(NULL, QemuCmdLineMutable, NULL, NULL, FALSE, 0, NULL, NULL, &si, &qemu_process_);
+
+	std::cout << "QEMU PID: " << qemu_process_.dwProcessId << std::endl;
+
+	// free the mutable buffer to avoid a memleak
+	free((char*)QemuCmdLineMutable);
+#else
+
+	// pid of the child before forking
+	pid_t parent_before_fork = getpid();
+	pid_t pId = fork();
+
+	if(pId == 0) {
+		// TODO: Should a new process group or session be created for QEMU?
+		// Creating a new process group causes QEMU to freeze when the -nographic
+		// argument is specified
+		// Change process group
+		/*if (setpgid(0, 0))
+			std::cout << "setpgid failed. errorno: " << errno << std::endl;*/
+
+
+#ifdef __linux__
+		// If the collab-vm-server dies, we need to be terminated as well
+		// so the server can restart alright.
+		int prctl_result = prctl(PR_SET_PDEATHSIG, SIGTERM);
+		if (prctl_result == -1) {
+			perror(0);
+			exit(1);
+		}
+#endif
+
+		// Test in case the original parent exited just before the prctl() call. 
+		// If it did, then we exit on our own accord.
+		if (getppid() != parent_before_fork)
+			exit(1);
+
+		// Close all other FD's other than stdin,
+		// stdout, and stderr, avoiding fd-leak scenarios.
+		// 
+		// This is something cosmic (possibly) considered, but never actually did.
+		// Alas, I had to end up doing it years later, to add to the duct
+		// tape flavoring of this server.
+		//
+		{
+			const int fd_limit = static_cast<int>(sysconf(_SC_OPEN_MAX));
+			for(int i = STDERR_FILENO + 1; i < fd_limit; ++i)
+				close(i);
+		}
+
+		// The qemu_command_ vector is only modified inside of the child process
+		if(settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kVMSnapshots && !snapshot_.empty()) {
+			// Append loadvm command to start with snapshot
+			qemu_command_.push_back("-loadvm");
+			qemu_command_.push_back(snapshot_.c_str());
+		} else if(settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::kHDSnapshots)
+			qemu_command_.push_back("-snapshot");
+
+		//if (settings_->QEMUSnapshotMode == VMSettings::SnapshotMode::)
+		qemu_command_.push_back("-no-shutdown");
+
+		// QMP address
+		qemu_command_.push_back("-qmp");
+		std::string qmp_arg;
+		if(settings_->QMPSocketType == VMSettings::SocketType::kTCP) {
+			qmp_arg = "tcp:";
+			qmp_arg += qmp_address_;
+			qmp_arg += ",server,nodelay";
+			qemu_command_.push_back(qmp_arg.c_str());
+		} else {
+			qmp_arg = "unix:";
+			qmp_arg += qmp_address_;
+			qmp_arg += ",server";
+			qemu_command_.push_back(qmp_arg.c_str());
+		}
+
+		if(access(qmp_address_.c_str(), F_OK) == 0) {
+			std::cout << "[QEMU] Deleting old " << qmp_address_ << " socket so the VM will work\n";
+			unlink(qmp_address_.c_str());
+		}
+
+		// Append VNC argument
+		qemu_command_.push_back("-vnc");
+		// Subtract 5900 from the port number and append it to the hostname
+		std::string vnc_arg = settings_->VNCAddress + ':' + std::to_string(settings_->VNCPort - 5900);
+		qemu_command_.push_back(vnc_arg.c_str());
+
+		// Null terminate the arguments list
+		qemu_command_.push_back(nullptr);
+		std::cout << "Starting QEMU with command:\n";
+
+		for(auto & it : qemu_command_) {
+			if(it != nullptr)
+				std::cout << it << ' ';
+		}
+		std::cout << std::endl;
+
+		/*if (redirect_fd(STDIN_FILENO, O_RDONLY)
+			|| redirect_fd(STDOUT_FILENO, O_WRONLY)
+			|| redirect_fd(STDERR_FILENO, O_WRONLY))
+		{
+			std::cout << "Failed to redirect standard output for QEMU child process" << std::endl;
+		}*/
+
+		exit(execvp(qemu_command_[0], (char* const*)qemu_command_.data()));
+	} else if(pId < 0) {
+		// Failed to fork
+		throw std::system_error(errno, std::system_category(), "fork() failed when trying to start QEMU");
 	}
 
-	qemu_child_ = collabvm::util::CreateChildProcess(io_context_);
-
-	// Setup the child process
-	qemu_child_->AssignExitHandler(std::bind(&QEMUController::OnChildExit, std::static_pointer_cast<QEMUController>(shared_from_this())));
-	qemu_child_->Start(args_copy);
-
+	std::cout << "QEMU process ID: " << pId << std::endl;
+	qemu_pid_ = pId;
+#endif
 	qemu_running_ = true;
 	internal_state_ = InternalState::kQMPConnecting;
 	retry_count_ = 0;
@@ -407,7 +551,11 @@ void QEMUController::StartQEMU() {
 
 void QEMUController::StopQEMU() {
 	// Attempt to stop QEMU with QMP if it's connected
-	KillQEMU();
+	if(qmp_->IsConnected()) {
+		KillQEMU();
+	} else {
+		KillQEMU();
+	}
 }
 
 void QEMUController::OnQEMUStop() {
@@ -420,8 +568,13 @@ void QEMUController::OnQEMUStop() {
 }
 
 void QEMUController::KillQEMU() {
-	qemu_child_->Kill();
-
+#ifndef _WIN32
+	::kill(qemu_pid_, SIGKILL);
+#else
+	// Open a handle to the QEMU process, then terminate it hard.
+	HANDLE hQemuProcess = OpenProcess(PROCESS_TERMINATE, FALSE, qemu_process_.dwProcessId);
+	TerminateProcess(hQemuProcess, 9);
+#endif
 	qemu_running_ = false;
 	OnQEMUStop();
 }
@@ -437,7 +590,8 @@ void QEMUController::StartQMP() {
 	timer_.expires_from_now(std::chrono::seconds(1), ec);
 	// TODO:
 	// if (ec) ...
-	timer_.async_wait(std::bind(&QEMUController::StartQMPCallback, std::static_pointer_cast<QEMUController>(shared_from_this()), std::placeholders::_1));
+	timer_.async_wait(std::bind(&QEMUController::StartQMPCallback,
+								std::static_pointer_cast<QEMUController>(shared_from_this()), std::placeholders::_1));
 }
 
 void QEMUController::StartGuacClientCallback(const boost::system::error_code& ec) {
@@ -450,14 +604,20 @@ void QEMUController::StartGuacClient() {
 	timer_.expires_from_now(std::chrono::seconds(1), ec);
 	// TODO:
 	// if (ec) ...
-	timer_.async_wait(std::bind(&QEMUController::StartGuacClientCallback, std::static_pointer_cast<QEMUController>(shared_from_this()), std::placeholders::_1));
+	timer_.async_wait(std::bind(&QEMUController::StartGuacClientCallback,
+								std::static_pointer_cast<QEMUController>(shared_from_this()), std::placeholders::_1));
 }
 
 void QEMUController::ProcessKillTimeout(const boost::system::error_code& ec) {
 	if(ec)
 		return;
-
 	std::cout << "QEMU did not terminate within 5 seconds. Killing process..." << std::endl;
+#ifndef _WIN32
+	boost::system::error_code err;
+	signal_.cancel(err);
+	// TODO:
+	// if (err) ...
+#endif
 	KillQEMU();
 }
 
@@ -576,6 +736,11 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {
 		case QMPClient::QMPState::kConnected:
 			if(internal_state_ == InternalState::kQMPConnecting) {
 				std::cout << "Connected to QMP" << std::endl;
+#ifndef _WIN32
+				// Now that we know the QEMU process has started, let's renice it and all its threads.
+				constexpr auto NICE_LEVEL = 19;
+				ReniceAllTasks(qemu_pid_, NICE_LEVEL);
+#endif
 
 				// It's possible for the VNC client to already be connected
 				// if the QMP client disconnected after the VNC client was connected
@@ -583,8 +748,6 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {
 					internal_state_ = InternalState::kVNCConnecting;
 					StartGuacClient();
 				}
-				
-				// 
 			} else
 				qmp_->Disconnect();
 			break;
@@ -607,6 +770,8 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {
 				} else {
 					std::cout << "Retrying..." << std::endl;
 					// Retry connecting
+					//KillQEMU();
+					//StartQEMU();
 					StartQMP();
 				}
 			} else if(internal_state_ == InternalState::kVNCConnecting ||
@@ -619,6 +784,81 @@ void QEMUController::OnQMPStateChange(QMPClient::QMPState state) {
 			}
 	}
 }
+
+std::vector<const char*> QEMUController::SplitCommandLine(const char* command) {
+	std::vector<const char*> cmdList;
+	int i;
+
+	// Posix.
+#ifndef _WIN32
+	{
+		wordexp_t p;
+
+		// Note! This expands shell variables.
+		if(wordexp(command, &p, 0)) {
+			return cmdList;
+		}
+
+		cmdList.reserve(p.we_wordc);
+
+		for(i = 0; i < p.we_wordc; i++) {
+			int len = strlen(p.we_wordv[i]) + 1;
+			if(!len)
+				continue;
+			char* arg = new char[len];
+			memcpy(arg, p.we_wordv[i], len);
+
+			cmdList.push_back(arg);
+		}
+
+	fail:
+		wordfree(&p);
+
+		return cmdList;
+	}
+#else // WIN32
+	{
+		// Windows has CommandLineToArgvW but not CommandLineToArgvA
+		// so the command must be converted to unicode first
+		wchar_t** wargs = NULL;
+		size_t needed = 0;
+		size_t len = strlen(command) + 1;
+		wchar_t* cmdLineW = new wchar_t[len];
+
+		if(!MultiByteToWideChar(CP_ACP, 0, command, -1, cmdLineW, len))
+			goto fail;
+
+		int argc;
+		if(!(wargs = CommandLineToArgvW(cmdLineW, &argc)))
+			goto fail;
+
+		cmdList.reserve(argc);
+
+		// Convert from wchar_t * to ANSI char *
+		for(i = 0; i < argc; i++) {
+			// Get the size needed for the target buffer.
+			// CP_ACP = Ansi Codepage.
+			needed = WideCharToMultiByte(CP_ACP, 0, wargs[i], -1,
+										 NULL, 0, NULL, NULL);
+
+			char* arg = new char[needed];
+
+			// Do the conversion.
+			needed = WideCharToMultiByte(CP_ACP, 0, wargs[i], -1,
+										 arg, needed, NULL, NULL);
+
+			cmdList.push_back(arg);
+		}
+	fail:
+		if(wargs)
+			LocalFree(wargs);
+		if(cmdLineW)
+			delete[] cmdLineW;
+		return cmdList;
+	}
+#endif // WIN32
+}
+
 
 const std::string& QEMUController::GetErrorMessage() const {
 	return kErrorMessages[error_code_];

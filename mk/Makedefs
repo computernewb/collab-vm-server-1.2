@@ -103,7 +103,6 @@ OBJS = $(OBJDIR)/Main.o                          \
        $(OBJDIR)/GuacUser.o                      \
        $(OBJDIR)/GuacVNCClient.o                 \
        $(OBJDIR)/GuacInstructionParser.o         \
-       $(OBJDIR)/ChildProcess.o			 \
        $(OBJDIR)/CommandLine.o			 \
        $(OBJDIR)/server.o                        \
        $(OBJDIR)/websocket_user.o                \
