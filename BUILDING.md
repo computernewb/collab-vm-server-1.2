@@ -1,5 +1,7 @@
 ## Building the collab-vm-server 
 
+**TODO**: UPDATE FOR CMAKE!!
+
 Compiling the server is fairly easy. The server is confirmed to work on the i386 (32-bit), amd64 (64-bit), and armhf architectures on both Windows and Linux.
 
 It should also work on Aarch64, PowerPC, and MIPS machines, but note that this isn't tested.
