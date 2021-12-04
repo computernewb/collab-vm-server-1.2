@@ -1,6 +1,10 @@
 #include <Arguments.h>
 #include <iostream>
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/signal_set.hpp>
+
+#include <websocket/Server.h>
 
 // Uncomment this to allow Asio to use multi-threading. WARNING: Might be buggy
 //#define ENABLE_ASIO_MULTITHREADING
@@ -21,25 +25,55 @@ void IgnorePipe() {
 int main(int argc, char** argv) {
 	// maybe global instance this so things can access it?
 	collabvm::main::Arguments args;
+	boost::asio::io_context ioc;
 
 	args.Process(argc, argv);
 
-#if 0
-	boost::asio::io_context ioc;
-
-        // Set up Ctrl+C handler
+	// Set up Ctrl+C handler
 	boost::asio::signal_set interruptSignal(ioc, SIGINT, SIGTERM);
-	interruptSignal.async_wait([&](boost::system::error_code ec, int sig) {
-		std::cout << "\nShutting down..." << std::endl;
-		server->Stop();
+	interruptSignal.async_wait([&](const boost::system::error_code& ec, int sig) {
+		std::cout << "Stopping...\n";
 		ioc.stop();
 	});
-#endif
 
-	//IgnorePipe();
+	auto server = std::make_shared<collabvm::websocket::Server>(ioc);
 
-	// boot new CVM server here
+	// Test echo + user-data server.
 
+	struct MyData {
+		int n {};
+	};
+
+	server->SetOpen([](std::weak_ptr<collabvm::websocket::Client> client) {
+		if(auto sp = client.lock()) {
+			// Assign the given user data type to this connection.
+			// We can now use GetUserData<MyData> to get the instance of MyData for each connection.
+			sp->SetUserData<MyData>();
+			std::cout << "Connection opened from " << sp->GetRemoteAddress().to_string() << '\n';
+		}
+	});
+
+	server->SetMessage([](std::weak_ptr<collabvm::websocket::Client> client, std::shared_ptr<const collabvm::websocket::Message> message) {
+		if(auto sp = client.lock()) {
+			if(message->GetType() == collabvm::websocket::Message::Type::Text) {
+				std::cout << "Message from " << sp->GetRemoteAddress().to_string() << ": " << message->GetString() << '\n';
+				sp->GetUserData<MyData>().n++;
+				sp->Send(message);
+			}
+		}
+	});
+
+	server->SetClose([](std::weak_ptr<collabvm::websocket::Client> client) {
+		if(auto sp = client.lock()) {
+			std::cout << "Connection closed from " << sp->GetRemoteAddress().to_string() << '\n';
+			std::cout << "MyData::n for this connection: " << sp->GetUserData<MyData>().n << '\n';
+		}
+	});
+
+	server->Run(args.GetListenAddress(), args.GetPort());
+
+	// FIXME: If this is re-enabled, maybe default to (nproc() / 2) -1,
+	// 	but add a --threads command-line argument?
 #ifdef ENABLE_ASIO_MULTITHREADING
 	std::vector<std::thread> threads;
 
@@ -58,7 +92,7 @@ int main(int argc, char** argv) {
 #endif
 
 	// Run the io_service on the main thread.
-	//ioc.run();
+	ioc.run();
 
 #ifdef ENABLE_ASIO_MULTITHREADING
 	// Join ASIO completion handler threads when the server is stopping.

@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 # Dependencies
 find_package(Boost REQUIRED COMPONENTS system program_options)
+find_package(Threads REQUIRED)
 
 # Include module subdirectories
+add_subdirectory(src/websocket)
 add_subdirectory(src/main)
