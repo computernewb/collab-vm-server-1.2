@@ -12,7 +12,7 @@ build(){
 	BRANCH=$(git rev-parse --abbrev-ref HEAD)
 	UNAME_ARCH=$1
 	UNAME_KERN=$(uname -srv)
-	CVM_VERSION="v1.3.0"
+	CVM_VERSION="v3.0.0"
 	if [ -e ./.git/refs/heads/$BRANCH ]
 	then
 		UGIT_COMMIT_ID=$(git rev-parse head >/dev/null 2>&1 && git rev-parse head || git rev-parse $BRANCH)

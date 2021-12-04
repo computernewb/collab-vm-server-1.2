@@ -6,7 +6,7 @@ You can either download already compiled binaries, or compile the CollabVM Serve
 CollabVM was coded and written by Cosmic Sans, Dartz, Geodude, and modeco80... And maybe a [few others.](https://github.com/computernewb/collab-vm-server/graphs/contributors)
 
 ### License
-CollabVM Server, as well as the Web App and Admin Web App are licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+CollabVM Server, as well as the Web App and Admin Web App are licensed under the [Lesser GNU Public License 3](https://www.gnu.org/licenses/lgpl-3.0.en.html).
 
 ### How to use
 You can read `man doc/collab-vm-server.1`, for arguments, and setting it up is such as:
