@@ -22,7 +22,8 @@ These example directions are for Linux, but they should work basically everywher
 
 ```bash
 $ cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release
-$ cmake --build .
+$ cd build
+$ cmake --build . # or if you know your generator, use make, ninja, whatever.
 # ...
 # profit?
 ```
