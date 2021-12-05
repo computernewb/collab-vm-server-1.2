@@ -22,7 +22,7 @@ These example directions are for Linux, but they should work basically everywher
 
 ```bash
 $ cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release
-$ cmake --build .
+$ cmake --build build
 # ...
 # profit?
 ```
