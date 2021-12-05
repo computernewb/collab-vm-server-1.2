@@ -1,3 +1,9 @@
+//
+// CollabVM Plugin Supplementary
+//
+// This file is licensed under the GNU Lesser General Public License Version 3
+// for external usage in plugins.
+//
 
 #include <core/PluginAbi.h>
 

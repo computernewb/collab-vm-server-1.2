@@ -1,3 +1,10 @@
+//
+// CollabVM Plugin Supplementary
+//
+// This file is licensed under the GNU Lesser General Public License Version 3
+// for external usage in plugins.
+//
+//
 // Defines and shared support code for a server->plugin (or other way round!) ABI
 // for CollabVM plugin interfaces (basically classes with just vtable members).
 // Essentially "CollabVM COM", except without a baked in factory pattern or true-baseclass pattern.
