@@ -9,7 +9,7 @@
 // Implements core shared ABI functions expected
 // to be implemented by plugins.
 
-#include <core/PluginAbi.h>
+#include "plugin/PluginAbi.h"
 
 extern "C" {
 
