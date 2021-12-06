@@ -15,10 +15,6 @@ include(cmake/CollabVM.cmake)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# Build toggles?
-
-option(COLLABVM_BUILD_SAMPLE_PLUGINS OFF "Build sample CollabVM Server Plugins")
-
 # Dependencies
 find_package(Boost REQUIRED COMPONENTS system filesystem program_options)
 find_package(Threads REQUIRED)
