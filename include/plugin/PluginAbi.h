@@ -16,6 +16,8 @@
 #ifndef COLLAB_VM_SERVER_PLUGINABI_H
 #define COLLAB_VM_SERVER_PLUGINABI_H
 
+#include <utility> // std::forward
+
 // Make a detail name of a vtfunc.
 // Do not use this to call a vtfunc,
 // use the wrapper COLLABVM_PLUGINABI_DEFINE_VTFUNC adds to the interface.
@@ -24,8 +26,9 @@
 
 // Define a vtfunc, and a C++-side wrapper which calls
 // the given vtfunc automatically.
+// "args" is varadic and can be omitted
 #define COLLABVM_PLUGINABI_DEFINE_VTFUNC(This, Retty, name, args...)                  \
-	Retty (*_COLLABVM_PLUGINABI_NAME_VTFUNC(name))(This * _this, ##args);             \
+	Retty (*_COLLABVM_PLUGINABI_NAME_VTFUNC(name))(This*, ##args);             \
 	template<class... Args>                                                           \
 	constexpr Retty name(Args&&... a) {                                               \
 		return _COLLABVM_PLUGINABI_NAME_VTFUNC(name)(this, std::forward<Args>(a)...); \
@@ -34,7 +37,7 @@
 // Assign a vtfunc. Should be used to assign functions to an interface's vtfuncs
 // in the constructor of an implementing class.
 #define COLLABVM_PLUGINABI_ASSIGN_VTFUNC(name, pointer) \
-	_COLLABVM_PLUGINABI_NAME_VTFUNC(name) = collabvm::core::detail::_vtfunc_cast<decltype(_COLLABVM_PLUGINABI_NAME_VTFUNC(name))>(pointer)
+	_COLLABVM_PLUGINABI_NAME_VTFUNC(name) = collabvm::plugin::detail::_vtfunc_cast<decltype(_COLLABVM_PLUGINABI_NAME_VTFUNC(name))>(pointer)
 
 // Expected ABI C exports for a CollabVM 3.0 server plugin:
 // int collabvm_plugin_abi_version() - returns ABI version. If not matching the server's PluginAbi header, plugin is unloaded.
@@ -45,7 +48,7 @@
 	#define COLLABVM_PLUGINABI_EXPORT __attribute__((visibility("default")))
 #endif
 
-namespace collabvm::core {
+namespace collabvm::plugin {
 
 	/**
 	 * The ABI version of this header.

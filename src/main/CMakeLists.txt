@@ -6,7 +6,7 @@ add_executable(collab-vm-server
 )
 
 target_include_directories(collab-vm-server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(collab-vm-server PRIVATE ${CMAKE_THREAD_LIBS_INIT} Boost::program_options collabvm::core collabvm::websocket)
+target_link_libraries(collab-vm-server PRIVATE ${CMAKE_THREAD_LIBS_INIT} Boost::program_options Boost::filesystem ${CMAKE_DL_LIBS} collabvm::core collabvm::websocket)
 
 if(WIN32)
 	# Windows is big stupid
