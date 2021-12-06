@@ -13,7 +13,7 @@ add_library(collabvm_websocket
 		${PROJECT_SOURCE_DIR}/include/websocket/Client.h Client.cpp Message.cpp)
 
 target_include_directories(collabvm_websocket PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(collabvm_websocket PRIVATE Boost::system)
+target_link_libraries(collabvm_websocket PRIVATE Boost::system fmt::fmt spdlog::spdlog)
 
 
 

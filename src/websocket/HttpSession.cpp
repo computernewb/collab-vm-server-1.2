@@ -1,5 +1,6 @@
-#include <websocket/NetworkingTSCompatibility.h>
+#include <spdlog/spdlog.h>
 #include <websocket/ForwardDeclarations.h>
+#include <websocket/NetworkingTSCompatibility.h>
 
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/io_context.hpp>
@@ -64,7 +65,7 @@ namespace collabvm::websocket {
 					res.body() = "WebSocket connection needs to be at /.";
 					queue.Push(std::move(res));
 				} else {
-					//spdlog::info("[IP {}] HTTP {} {}", stream.socket().remote_endpoint().address().to_string(), http::to_string(req.method()), req.target());
+					spdlog::info("[IP {}] HTTP Server: {} {}", stream.socket().remote_endpoint().address().to_string(), http::to_string(req.method()), req.target());
 
 					// TODO: Probably do something interesting.
 
@@ -76,11 +77,11 @@ namespace collabvm::websocket {
 					"<!DOCTYPE html>\r\n"
 					"<html>\r\n"
 					"<head>\r\n"
-					"   <title>Pixelboard backend</title>\r\n"
+					"   <title>CollabVM 3.0 Backend!</title>\r\n"
 					"</head>\r\n"
 					"<body>\r\n"
-					"   <h1>Bruh</h1>\r\n"
-					"   <p>temporary.</p>\r\n"
+					"   <h1>Temporary page</h1>\r\n"
+					"   <p>This page is temporary. Please don't remember it.</p>\r\n"
 					"</body>\r\n"
 					"</html>\r\n";
 

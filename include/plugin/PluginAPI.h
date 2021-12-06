@@ -33,6 +33,9 @@ namespace collabvm::plugin {
 #endif
 
 	struct PluginMetadata {
+		// Plugin ID. This must NOT conflict.
+		const utf8char* PluginId;
+
 		// Fully qualified plugin name
 		const utf8char* PluginName;
 
@@ -66,6 +69,11 @@ namespace collabvm::plugin {
 	struct IPluginApi {
 		// Write a log message.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, WriteLogMessage, const utf8char* message);
+
+		// malloc()/free() which goes into the main CollabVM Server heap.
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void*, Malloc, std::size_t size);
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, Free, void* ptr);
+
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, IVmController*, GetVMControllerById, const utf8char* id);
 	};
 

@@ -1,9 +1,9 @@
 # Clang-Format file for collab-vm-server
 
-# google style is the closest unfortunately
 BasedOnStyle: Google
 
-# Force left pointer alignment.
+# Force left pointer alignment,
+# and don't let it be derived.
 DerivePointerAlignment: false
 PointerAlignment: Left
 
@@ -28,8 +28,6 @@ BinPackParameters: true
 BreakConstructorInitializers: BeforeColon
 BreakStringLiterals: false
 
-# 130 columns is good but causes some weird issues I don't quite like
-# especially in some codebases
 #ColumnLimit: 130
 ColumnLimit: 0
 CompactNamespaces: false
@@ -58,9 +56,8 @@ NamespaceIndentation: All
 # documentation comment and fix it
 ReflowComments: false
 
-# no sorting
-SortIncludes: false
-SortUsingDeclarations: false
+SortIncludes: CaseInsensitive
+SortUsingDeclarations: true
 
 SpaceBeforeParens: Never
 SpacesBeforeTrailingComments: 1
