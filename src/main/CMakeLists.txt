@@ -26,8 +26,6 @@ collabvm_targetize(collab-vm-server)
 
 # Dynamic binaries are SO much fun!
 if (WIN32)
-add_custom_command(TARGET collab-vm-server POST_BUILD
-	COMMAND ${CMAKE_SOURCE_DIR}/scripts/copy_dlls_mw.sh ${CMAKE_HOST_SYSTEM_PROCESSOR} ${CMAKE_BINARY_DIR}
-	COMMENT "Copying required libraries to build directory"
-)
+# this statement is empty because there are NO alternatives that *work* for a grab_dlls alternative
 endif()
+# this should be moved to install.cmake once made
