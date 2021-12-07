@@ -9,7 +9,14 @@ endif()
 
 include(cmake/Policies.cmake)
 
-project(collab-vm-server)
+# example: 3.0.0-0 = Server 3.0.0, plugin interface/protocol version 0? thought this would be useful
+set(COLLABVM_VERSION_MAJOR 3)
+set(COLLABVM_VERSION_MINOR 0)
+set(COLLABVM_VERSION_PATCH 0)
+set(COLLABVM_PINT_VERSION 1)
+set(COLLABVM_VERSION "${COLLABVM_VERSION_MAJOR}.${COLLABVM_VERSION_MINOR}.${COLLABVM_VERSION_PATCH}-${COLLABVM_PINT_VERSION}")
+
+project(collab-vm-server VERSION {COLLABVM_VERSION} LANGUAGES C CXX)
 
 include(cmake/CollabVM.cmake)
 
