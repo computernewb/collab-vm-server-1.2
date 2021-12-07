@@ -4,7 +4,6 @@ add_library(collabvm_core
 		util/CommandLine.cpp
 		VncHack.cpp
 		VncHack.h
-		PluginManager.cpp
 )
 
 target_include_directories(collabvm_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
