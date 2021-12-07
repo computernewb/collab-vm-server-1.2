@@ -5,10 +5,8 @@ You can either download already compiled binaries, or compile the CollabVM Serve
 
 CollabVM was coded and written by Cosmic Sans, Dartz, Geodude, and modeco80... And maybe a [few others.](https://github.com/computernewb/collab-vm-server/graphs/contributors)
 
-### License
-CollabVM Server is licensed under the [GNU Public License 3](https://www.gnu.org/licenses/gpl-3.0.en.html).
-
-The CollabVM Server Plugin Interface "CVMpi" is licensed under the [Lesser GNU Public License 3](https://www.gnu.org/licenses/lgpl-3.0.en.html). 
+### License(s)
+CollabVM Server is dual-licensed under the [GNU Public License 3](https://www.gnu.org/licenses/gpl-3.0.en.html) for the server, and the [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html) license for the plugin interface headers, provided runtime code, and sample plugin code.
 
 Currently, the Web App and Admin Web App are licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
