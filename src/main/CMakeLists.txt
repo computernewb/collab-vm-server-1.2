@@ -8,7 +8,7 @@ add_executable(collab-vm-server
 target_include_directories(collab-vm-server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(collab-vm-server PRIVATE ${CMAKE_THREAD_LIBS_INIT} Boost::program_options Boost::filesystem ${CMAKE_DL_LIBS} spdlog::spdlog fmt::fmt collabvm::core collabvm::websocket)
 
-if(WIN32)
+if(WIN32 OR MSYS OR MINGW)
 	# Windows is big stupid
 	target_link_libraries(collab-vm-server PRIVATE ws2_32 wsock32)
 endif()
@@ -25,7 +25,7 @@ collabvm_targetize(collab-vm-server)
 # 	sans plugin-headers.
 
 # Dynamic binaries are SO much fun!
-if (WIN32)
+if (WIN32 OR MSYS OR MINGW)
 # this statement is empty because there are NO alternatives that *work* for a grab_dlls alternative
 endif()
 # this should be moved to install.cmake once made
