@@ -25,10 +25,17 @@ static IPluginApi pluginApiInstance;
  */
 IPluginApi* g_PluginApi = &pluginApiInstance;
 
+// this should be defined in some source file of your plugin.
+extern bool g_IsCorePlugin;
+
 extern "C" {
 
 COLLABVM_PLUGINABI_EXPORT int collabvm_plugin_abi_version() {
 	return collabvm::plugin::PLUGIN_ABI_VERSION;
+}
+
+COLLABVM_PLUGINABI_EXPORT bool collabvm_plugin_is_coreplugin() {
+	return g_IsCorePlugin;
 }
 
 COLLABVM_PLUGINABI_EXPORT void collabvm_plugin_init_api(IPluginApi* apiPointer) {

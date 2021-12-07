@@ -2,8 +2,9 @@
 
 add_library(collabvm_core
 		util/CommandLine.cpp
-		../../include/plugin/PluginAbi.h
-		VncHack.cpp VncHack.h)
+		VncHack.cpp
+		VncHack.h
+)
 
 target_include_directories(collabvm_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(collabvm_core PRIVATE Boost::system)
