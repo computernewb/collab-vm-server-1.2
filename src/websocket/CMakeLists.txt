@@ -36,6 +36,9 @@ target_compile_definitions(collabvm_websocket PUBLIC
 		-DBOOST_BEAST_SEPARATE_COMPILATION=1
 )
 
+target_include_directories(collabvm_websocket PRIVATE ${PROJECT_BINARY_DIR})
+add_dependencies(collabvm_websocket __collabvm_gittag)
+
 add_library(collabvm::websocket ALIAS collabvm_websocket)
 
 collabvm_targetize(collabvm_websocket)

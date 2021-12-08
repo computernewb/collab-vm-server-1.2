@@ -1,11 +1,17 @@
 #include <Arguments.h>
 
-#include <boost/program_options.hpp>
-#include <boost/version.hpp>
-
 #include <cstdlib>
-
 #include <iostream>
+#include <boost/program_options.hpp>
+
+// Version headers
+#include <boost/version.hpp>
+#include <boost/asio/version.hpp>
+#include <boost/beast/version.hpp>
+
+// Only included to get plugin ABI version
+#include <plugin/PluginAbi.h>
+#include <Version.h>
 
 namespace po = boost::program_options;
 
@@ -13,7 +19,7 @@ namespace collabvm::main {
 
 	void Arguments::Process(int argc, char** argv) {
 		po::options_description desc("CollabVM Server - Options");
-		po::variables_map vm; // moved these here so we *can* catch missing var errors
+		po::variables_map vm;
 		try {
 			// clang-format off
 			desc.add_options()
@@ -40,12 +46,15 @@ namespace collabvm::main {
 #endif
 
 			if(vm.count("version")) {
-				// FIXME: This version should probably be derived by something so we don't need to hand-twiddle it.
-				std::cout << "CollabVM Server 3.0.0" BUILDSUFFIX_CAT " - AlphaBetas Edition\n\n"
+				std::cout << "CollabVM Server " << version::tag << BUILDSUFFIX_CAT " - AlphaBetas Edition \n\n"
 						  << "Compiled with:\n"
-						  << "\t\b\b\b\b- Boost " << BOOST_VERSION / 100000 << "." << BOOST_VERSION / 100 % 1000 << '\n'
-						  << '\n';
-
+						  // library versions
+						  << "\t\b\b\b\b- Boost " << BOOST_VERSION / 100000 << '.' << BOOST_VERSION / 100 % 1000 << '\n'
+						  << "\t\b\b\b\b- Boost.Asio " << BOOST_ASIO_VERSION / 100000 << '.' << BOOST_ASIO_VERSION / 100 % 1000 << '.' << BOOST_ASIO_VERSION % 100 << '\n'
+						  << "\t\b\b\b\b- Boost.Beast v" << BOOST_BEAST_VERSION << '\n'
+						  // internal versions
+						  << "\t\b\b\b\b- CollabVM Plugin ABI v" << reinterpret_cast<int>(plugin::PLUGIN_ABI_VERSION) << '\n';
+						  //<< '\n';
 				std::exit(0);
 			}
 

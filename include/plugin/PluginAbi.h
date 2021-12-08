@@ -73,6 +73,6 @@ namespace collabvm::plugin {
 		}
 	} // namespace detail
 
-} // namespace collabvm::core
+} // namespace collabvm::plugin
 
 #endif //COLLAB_VM_SERVER_PLUGINABI_H

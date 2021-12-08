@@ -16,8 +16,18 @@ void test_plugin_host() {
 			std::cout << "Log message from plugin: " << reinterpret_cast<const char*>(message) << std::endl;
 		}
 
+		void* MallocImpl(std::size_t c) {
+			return malloc(c);
+		}
+
+		void FreeImpl(void* p) {
+			free(p);
+		}
+
 		PluginApiImpl() : IPluginApi() {
 			COLLABVM_PLUGINABI_ASSIGN_VTFUNC(WriteLogMessage, &PluginApiImpl::WriteLogMessageImpl);
+			COLLABVM_PLUGINABI_ASSIGN_VTFUNC(Malloc, &PluginApiImpl::MallocImpl);
+			COLLABVM_PLUGINABI_ASSIGN_VTFUNC(Free, &PluginApiImpl::FreeImpl);
 		}
 
 	} pluginImpl;

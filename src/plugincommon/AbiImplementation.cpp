@@ -28,6 +28,8 @@ IPluginApi* g_PluginApi = &pluginApiInstance;
 // this should be defined in some source file of your plugin.
 extern bool g_IsCorePlugin;
 
+
+// Exported CollabVM APIs
 extern "C" {
 
 COLLABVM_PLUGINABI_EXPORT int collabvm_plugin_abi_version() {

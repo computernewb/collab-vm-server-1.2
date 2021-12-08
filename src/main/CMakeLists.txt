@@ -6,7 +6,20 @@ add_executable(collab-vm-server
 )
 
 target_include_directories(collab-vm-server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(collab-vm-server PRIVATE ${CMAKE_THREAD_LIBS_INIT} Boost::program_options Boost::filesystem ${CMAKE_DL_LIBS} spdlog::spdlog fmt::fmt collabvm::core collabvm::websocket)
+target_link_libraries(collab-vm-server PRIVATE
+		${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS}
+		# Boost
+		Boost::program_options
+		Boost::filesystem
+		# System deps
+		spdlog::spdlog
+		fmt::fmt
+		# CollabVM modules
+		collabvm::core
+		collabvm::websocket)
+
+target_include_directories(collab-vm-server PRIVATE ${PROJECT_BINARY_DIR})
+add_dependencies(collab-vm-server __collabvm_gittag)
 
 if(WIN32)
 	# Windows is big stupid

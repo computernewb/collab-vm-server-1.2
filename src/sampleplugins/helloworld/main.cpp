@@ -52,16 +52,11 @@ COLLABVM_PLUGINABI_EXPORT collabvm::plugin::PluginMetadata* collabvm_plugin_get_
 }
 
 COLLABVM_PLUGINABI_EXPORT collabvm::plugin::IServerPlugin* collabvm_plugin_make_serverplugin() {
-	return new HelloWorld;
+	return g_PluginApi->New<HelloWorld>();
 }
 
 COLLABVM_PLUGINABI_EXPORT void collabvm_plugin_delete_serverplugin(collabvm::plugin::IServerPlugin* plugin) {
-	if(!plugin)
-		return;
-
-	// This makes sure HelloWorld::~HelloWorld() is actually called,
-	// because we're not using classical C++ virtual functions.
-	return delete reinterpret_cast<HelloWorld*>(plugin);
+	g_PluginApi->Delete(reinterpret_cast<HelloWorld*>(plugin));
 }
 
 }
