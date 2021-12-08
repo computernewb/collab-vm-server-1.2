@@ -24,10 +24,10 @@ struct HelloWorld : public collabvm::plugin::IServerPlugin {
 	}
 
 	HelloWorld() : IServerPlugin() {
-		// Assign implementation functions used
+		// Assign implementation functions for this plugin here:
 		COLLABVM_PLUGINABI_ASSIGN_VTFUNC(Init, &HelloWorld::InitImpl);
 
-		// Any pre-initialization your plugin
+		// Any pre-initialization your plugin needs to do can be implemented here.
 	}
 
 	~HelloWorld() {
@@ -40,7 +40,9 @@ struct HelloWorld : public collabvm::plugin::IServerPlugin {
 extern "C" {
 
 COLLABVM_PLUGINABI_EXPORT collabvm::plugin::PluginMetadata* collabvm_plugin_get_metadata() {
-	static collabvm::plugin::PluginMetadata data {
+	// Fill out metadata for your plugin here.
+	// Make sure the ID is unique!
+	static collabvm::plugin::PluginMetadata metadata {
 		.PluginId = u8"helloworld",
 		.PluginName = u8"Hello World",
 		.PluginDescription = u8"A programmer's delight!",
@@ -48,7 +50,7 @@ COLLABVM_PLUGINABI_EXPORT collabvm::plugin::PluginMetadata* collabvm_plugin_get_
 		.PluginLicense = u8"GNU LGPLv3",
 		.PluginVersion = u8"N/A"
 	};
-	return &data;
+	return &metadata;
 }
 
 COLLABVM_PLUGINABI_EXPORT collabvm::plugin::IServerPlugin* collabvm_plugin_make_serverplugin() {

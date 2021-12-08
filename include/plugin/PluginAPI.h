@@ -59,14 +59,17 @@ namespace collabvm::plugin {
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVmController, const utf8char*, GetDescription);
 
 		/**
-		 * Inserts a message into this
+		 * Inserts a message into this VM controll
 		 * \param[in] content Message content
 		 */
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVmController, void, InsertChatMessage, const utf8char* content);
 	};
 
-	// Basic plugin API, consumed for either plugin VM controllers
-	// or IServerPlugin's
+	/**
+	 * Basic plugin interface.
+	 *
+	 * Consumed by coreplugins or regular plugins
+	 */
 	struct IPluginApi {
 		// Write a log message.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, WriteLogMessage, const utf8char* message);
@@ -94,10 +97,26 @@ namespace collabvm::plugin {
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, IVmController*, GetVMControllerById, const utf8char* id);
 	};
 
-	// Interface
+	struct IUser {
+		using snowflake_t = std::uint64_t;
+
+		// Get this user's ID/snowflake.
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, snowflake_t, GetSnowflake);
+
+		// Get username.
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, const utf8char*, GetUsername);
+
+	};
+
+	/**
+	 * Interface for standard plugins.
+	 */
 	struct IServerPlugin {
 		// Called by the server when it initalizes this plugin
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IServerPlugin, void, Init);
+
+		// IUser* LookupUser()
+		//
 	};
 
 } // namespace collabvm::plugin
