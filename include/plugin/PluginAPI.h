@@ -14,6 +14,7 @@
 
 // include ABI header if not included before
 #include "PluginAbi.h"
+#include "DatabasePlugin.h"
 #include <new>
 
 // SOME maybeDOs:
@@ -24,14 +25,6 @@
 
 namespace collabvm::plugin {
 
-#ifdef __cpp_char8_t
-	// Use C++20 char8_t to indicate UTF-8
-	using utf8char = char8_t;
-#else
-	// use uchar then I guess
-	#warning I probably wont be supporting this for long
-	using utf8char = unsigned char;
-#endif
 
 	struct PluginMetadata {
 		// Plugin ID. This must NOT conflict.
@@ -71,6 +64,7 @@ namespace collabvm::plugin {
 	 * Consumed by coreplugins or regular plugins
 	 */
 	struct IPluginApi {
+
 		// Write a log message.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, WriteLogMessage, const utf8char* message);
 
@@ -106,6 +100,9 @@ namespace collabvm::plugin {
 		// Get username.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, const utf8char*, GetUsername);
 
+
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, void, Kick);
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, void, Ban);
 	};
 
 	/**

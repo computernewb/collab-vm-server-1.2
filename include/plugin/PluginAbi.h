@@ -17,6 +17,10 @@
 #define COLLAB_VM_SERVER_PLUGINABI_H
 
 #include <utility> // std::forward
+#include "VtFunction.h"
+
+
+// THE BELOW MACROS ARE DEPRECATED AND WILL BE GOING AWAY SOON
 
 // Make a detail name of a vtfunc.
 // Do not use this to call a vtfunc,
@@ -28,7 +32,7 @@
 // the given vtfunc automatically.
 // "args" is varadic and can be omitted
 #define COLLABVM_PLUGINABI_DEFINE_VTFUNC(This, Retty, name, args...)                  \
-	Retty (*_COLLABVM_PLUGINABI_NAME_VTFUNC(name))(This*, ##args);             \
+	Retty (*_COLLABVM_PLUGINABI_NAME_VTFUNC(name))(This*, ##args) { nullptr };        \
 	template<class... Args>                                                           \
 	constexpr Retty name(Args&&... a) {                                               \
 		return _COLLABVM_PLUGINABI_NAME_VTFUNC(name)(this, std::forward<Args>(a)...); \
@@ -36,8 +40,10 @@
 
 // Assign a vtfunc. Should be used to assign functions to an interface's vtfuncs
 // in the constructor of an implementing class.
+// NOTE: It is UB if you do not completely implement an interface.
 #define COLLABVM_PLUGINABI_ASSIGN_VTFUNC(name, pointer) \
 	_COLLABVM_PLUGINABI_NAME_VTFUNC(name) = collabvm::plugin::detail::_vtfunc_cast<decltype(_COLLABVM_PLUGINABI_NAME_VTFUNC(name))>(pointer)
+
 
 // Expected ABI C exports for a CollabVM 3.0 server plugin:
 // int collabvm_plugin_abi_version() - returns ABI version. If not matching the server's PluginAbi header, plugin is unloaded.
@@ -49,6 +55,15 @@
 #endif
 
 namespace collabvm::plugin {
+
+#ifdef __cpp_char8_t
+	// Use C++20 char8_t to indicate UTF-8
+	using utf8char = char8_t;
+#else
+	// use uchar then I guess
+	#warning I probably wont be supporting this for long
+	using utf8char = unsigned char;
+#endif
 
 	/**
 	 * The ABI version of this header.
