@@ -1,11 +1,21 @@
 //
-// Created by lily on 12/14/21.
+// CollabVM Plugin Supplementary
 //
+// This file is licensed under the GNU Lesser General Public License Version 3
+// for external usage in plugins. Text is provided in LICENSE-PLUGIN.
+// If you cannot access it, https://www.gnu.org/licenses/lgpl-3.0.html
+//
+//
+// An ABI-safe std::function replacement.
+// This file is ABI important. Any breaking changes to the Function class,
+// or to the BaseInvocable class, warrant an ABI version bump.
 
 #ifndef COLLAB_VM_SERVER_VTFUNCTION_H
 #define COLLAB_VM_SERVER_VTFUNCTION_H
 
 #include <new>
+
+#include <cstdio>
 
 namespace collabvm::plugin {
 
@@ -69,6 +79,13 @@ namespace collabvm::plugin {
 
 	template<class R, class... Args>
 	struct VtFunction<R(Args...)> {
+
+		constexpr VtFunction()
+			: using_sso(true) {
+			invokee = nullptr;
+			std::printf("default!\n");
+		}
+
 		// constructor for "bare" functions,
 		// or captureless lambda functions
 		constexpr VtFunction(typename detail::PlainFn<R, Args...>::FuncT barePtr) noexcept
@@ -77,31 +94,43 @@ namespace collabvm::plugin {
 
 		// constructor for binding a member function
 		template<class T>
-		constexpr VtFunction(T& t, typename detail::BoundMemFn<T, R, Args...>::FuncT fn) noexcept
-			: invokee(choose_construct<detail::BoundMemFn<T, R, Args...>>(t, fn)) {
+		constexpr VtFunction(T& t, typename detail::BoundMemFn<T, R, Args...>::FuncT fn) noexcept {
+
+			std::printf("MEMFN!!!\n");
+			invokee = choose_construct<detail::BoundMemFn<T, R, Args...>>(t, fn);
 		}
 
 		// TODO: move and copy.
 
 		~VtFunction() {
-			// not gonna ask, but
-			// we can handle this case too
-			if(!invokee)
+
+			// Don't destroy null invokees
+			if(invokee == nullptr)
 				return;
 
 			// We only need to call the BaseInvocable
 			// d-tor if we're using SSO.
-			if(using_sso)
+			if(using_sso) {
+				std::printf("sso destruct\n");
 				invokee->~BaseInvocable();
-			else
-				delete invokee;
+				return;
+			}
+			//else
+			//	delete invokee;
 		}
 
-		constexpr R operator()(Args&&... args) noexcept {
+		constexpr R operator()(Args... args) noexcept {
 			return invokee->operator()(detail::Forward(args)...);
 		}
 
+		//constexpr R operator()(Args&&... args) noexcept {
+		//	if(!invokee)
+		//		std::printf("ouch\n");
+		//	return invokee->operator()(detail::Forward(args)...);
+		//}
+
 	   private:
+		// the BaseInvocable<> type for this Function template
 		using invoke_t = detail::BaseInvocable<R, Args...>;
 
 		// utilitarian helper to choose to construct either inside of the
@@ -109,19 +138,24 @@ namespace collabvm::plugin {
 		template<class T, class... Args2>
 		constexpr T* choose_construct(Args2&&... args) {
 			if constexpr(sizeof(T) <= sizeof(_sso_storage)) {
+
+				std::printf("yes sso\n");
 				using_sso = true;
 				return new(&_sso_storage[0]) T(detail::Forward<Args2>(args)...);
 			} else {
-				using_sso = false;
-				return new T(detail::Forward<Args2>(args)...);
+				std::printf("no sso\n");
+				//using_sso = false;
+				//return new T(detail::Forward<Args2>(args)...);
 			}
 		}
 
 		// If you change this layout, PLEASE bump
 		// abi version in PluginAbi.h
-		invoke_t* invokee {};
-		bool using_sso {};
-		alignas(invoke_t) unsigned char _sso_storage[16];
+		invoke_t* invokee;
+		bool using_sso;
+
+		// 4 pointers worth of storage.
+		alignas(invoke_t) unsigned char _sso_storage[sizeof(void*) * 4]{0};
 	};
 } // namespace collabvm::plugin
 

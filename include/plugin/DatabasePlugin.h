@@ -84,6 +84,7 @@ namespace collabvm::plugin {
 	struct IUserEntry : public IDbObject {
 		// simple getters
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, snowflake_t, GetSnowflake);
+
 		// Get the hashed password for this user.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, const utf8char*, GetHashedPassword);
 
@@ -91,7 +92,7 @@ namespace collabvm::plugin {
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, void, SetUserName, const utf8char*);
 
 		// Change the password. Server takes care of hashing the password securely,
-		// you just need to store it.
+		// the database plugin just needs to store it.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, void, ChangePassword, const utf8char* newPassword);
 
 		// role management
@@ -136,6 +137,9 @@ namespace collabvm::plugin {
 		// TODO: Getters and setters for this data
 	};
 
+	/**
+	 * Interface for CollabVM Database plugins
+	 */
 	struct IDatabasePlugin {
 
 

@@ -1,25 +1,42 @@
 #ifndef COLLAB_VM_SERVER_PLUGINMANAGER_H
 #define COLLAB_VM_SERVER_PLUGINMANAGER_H
 
+#include <filesystem>
 #include <plugin/PluginAPI.h>
 
 namespace collabvm::core {
 
 	/**
-	 * Manages core plugins and user-defined plugins.
+	 * Manages core CollabVM Server plugins and user-installable plugins.
 	 */
 	struct PluginManager {
 
 		bool Init();
 
-		plugin::IServerPlugin* GetPluginById(const plugin::utf8char* id);
+		/**
+		 * Safely unload all of the plugins.
+		 */
+		void UnloadPlugins();
+
+		plugin::IServerPlugin* GetServerPluginById(const plugin::utf8char* id);
+
+		//plugin::ICorePlugin* GetCorePluginById(const plugin::utf8char* id);
+
+		/**
+		 * Get the currently configured DB Plugin instance.
+		 */
+		plugin::IDatabasePlugin* GetDbPlugin();
 
 
-		void LoadPlugin();
+		/**
+		 * Load a plugin from the path.
+		 * \param[in] path the path to the plugin.
+		 */
+		bool LoadPlugin(const std::filesystem::path& path);
 
 
 	   private:
-
+		// probably leave this pimpl'd.
 	};
 
 

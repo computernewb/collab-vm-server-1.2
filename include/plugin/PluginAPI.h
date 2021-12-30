@@ -46,31 +46,20 @@ namespace collabvm::plugin {
 		const utf8char* PluginVersion;
 	};
 
-	// Interface for VMControllers which is returned by the plugin API
-	struct IVmController {
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVmController, const utf8char*, GetName);
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVmController, const utf8char*, GetDescription);
-
-		/**
-		 * Inserts a message into this VM controll
-		 * \param[in] content Message content
-		 */
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVmController, void, InsertChatMessage, const utf8char* content);
-	};
-
 	/**
 	 * Basic plugin interface.
 	 *
 	 * Consumed by coreplugins or regular plugins
 	 */
 	struct IPluginApi {
-
-		// Write a log message.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, WriteLogMessage, const utf8char* message);
+
 
 		// malloc()/free() which goes into the main CollabVM Server heap.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void*, Malloc, std::size_t size);
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, Free, void* ptr);
+
+		// TODO: more vtfuncs
 
 		// a shoddy hack because global operators do nothing.
 		// Only use these on the plugin side, please.
@@ -87,33 +76,16 @@ namespace collabvm::plugin {
 				Free(ptr);
 			}
 		}
-
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, IVmController*, GetVMControllerById, const utf8char* id);
 	};
 
-	struct IUser {
-		using snowflake_t = std::uint64_t;
 
-		// Get this user's ID/snowflake.
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, snowflake_t, GetSnowflake);
-
-		// Get username.
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, const utf8char*, GetUsername);
-
-
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, void, Kick);
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, void, Ban);
-	};
 
 	/**
-	 * Interface for standard plugins.
+	 * Interface for standard CollabVM server plugins.
 	 */
 	struct IServerPlugin {
-		// Called by the server when it initalizes this plugin
+		// Called by the server when it initializes this plugin.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IServerPlugin, void, Init);
-
-		// IUser* LookupUser()
-		//
 	};
 
 } // namespace collabvm::plugin

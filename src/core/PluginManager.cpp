@@ -1,3 +1,7 @@
-//
-// Created by lily on 12/6/21.
-//
+
+#include <core/PluginManager.h>
+
+namespace collabvm::core {
+
+
+}

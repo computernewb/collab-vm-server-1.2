@@ -7,7 +7,8 @@
 #include <boost/dll.hpp>
 #include <plugin/PluginAPI.h>
 
-// Test plugin hosting with Boost::DLL
+// Test plugin hosting with Boost::DLL.
+// This is only a test hosting thing, and won't be fully adopted (yet)
 void test_plugin_host() {
 
 	struct PluginApiImpl : public collabvm::plugin::IPluginApi {
@@ -31,6 +32,11 @@ void test_plugin_host() {
 		}
 
 	} pluginImpl;
+
+	auto p = pluginImpl.Malloc(1);
+
+	std::cout << "calling IPluginApi::Free\n";
+	pluginImpl.Free(p);
 
 	auto so = boost::dll::shared_library("plugins/helloworld.so");
 

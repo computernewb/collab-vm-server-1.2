@@ -16,11 +16,9 @@
 #ifndef COLLAB_VM_SERVER_PLUGINABI_H
 #define COLLAB_VM_SERVER_PLUGINABI_H
 
+#include <cstdint>
 #include <utility> // std::forward
-#include "VtFunction.h"
-
-
-// THE BELOW MACROS ARE DEPRECATED AND WILL BE GOING AWAY SOON
+//#include "VtFunction.h"
 
 // Make a detail name of a vtfunc.
 // Do not use this to call a vtfunc,
