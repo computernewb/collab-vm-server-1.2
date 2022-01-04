@@ -170,7 +170,7 @@ namespace collabvm::core {
 
 
 		bool PluginManager::LoadPlugin(const std::filesystem::path& path) {
-			//g_PluginSos.emplace_back(boost::dll::shared_library(path.string()));
+			g_PluginSos.emplace_back(boost::dll::shared_library(path.string()));
 
 			auto res = HandlePluginLoad<>(g_PluginSos.back());
 			switch(res) {
