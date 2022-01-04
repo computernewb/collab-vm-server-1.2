@@ -35,8 +35,6 @@ namespace collabvm::core {
 		bool LoadPlugin(const std::filesystem::path& path);
 
 
-	   private:
-		// probably leave this pimpl'd.
 	};
 
 

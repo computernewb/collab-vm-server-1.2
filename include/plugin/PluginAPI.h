@@ -70,7 +70,14 @@ namespace collabvm::plugin {
 	 * Consumed by coreplugins or regular plugins
 	 */
 	struct IPluginApi {
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, WriteLogMessage, const utf8char* message);
+
+		enum class LogLevel {
+			Info,
+			Warning,
+			Error
+		};
+
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, WriteLogMessage, IPluginApi::LogLevel level, const utf8char* format, ...);
 
 
 		// malloc()/free() which goes into the main CollabVM Server heap.

@@ -36,6 +36,8 @@ COLLABVM_PLUGINABI_EXPORT int collabvm_plugin_abi_version() {
 	return collabvm::plugin::PLUGIN_ABI_VERSION;
 }
 
+// TODO: ABI symbol for Boost.ASIO headers
+
 COLLABVM_PLUGINABI_EXPORT bool collabvm_plugin_is_coreplugin() {
 	return g_IsCorePlugin;
 }

@@ -20,7 +20,7 @@ bool g_IsCorePlugin = false;
 struct HelloWorld : public collabvm::plugin::IServerPlugin {
 
 	void InitImpl() {
-		g_PluginApi->WriteLogMessage(u8"Hello, CollabVM World!");
+		g_PluginApi->WriteLogMessage(collabvm::plugin::IPluginApi::LogLevel::Info, u8"Hello, CollabVM World!");
 	}
 
 	HelloWorld() : IServerPlugin() {
@@ -31,13 +31,16 @@ struct HelloWorld : public collabvm::plugin::IServerPlugin {
 	}
 
 	~HelloWorld() {
-		g_PluginApi->WriteLogMessage(u8"Goodbye, CollabVM World!");
+		g_PluginApi->WriteLogMessage(collabvm::plugin::IPluginApi::LogLevel::Info, u8"Goodbye, CollabVM World!");
 		// Your plugin can close any resources it has opened here as well.
 	}
 
 };
 
 extern "C" {
+
+// NOTE: couldn't this be implemented in the ABI impl?
+// just ask for a global metadata symbol there
 
 COLLABVM_PLUGINABI_EXPORT collabvm::plugin::PluginMetadata* collabvm_plugin_get_metadata() {
 	// Fill out metadata for your plugin here.
