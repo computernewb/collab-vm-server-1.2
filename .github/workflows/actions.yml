@@ -13,13 +13,13 @@ jobs:
         id: depends
         run: | 
           mkdir build
-          sudo apt install -y libvncserver-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev cmake ninja-build clang-11
+          sudo apt install -y libvncserver-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev cmake ninja-build clang-12
       - name: Build
         id: build
         run: |
           # Use clang instead of GCC
-          export CC=/usr/bin/clang-11
-          export CXX=/usr/bin/clang++-11
+          export CC=/usr/bin/clang-12
+          export CXX=/usr/bin/clang++-12
           cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release
           cd build
           cmake --build .
