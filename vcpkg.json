@@ -5,6 +5,8 @@
   "dependencies": [
     "boost-asio",
     "boost-beast",
+    "boost-filesystem",
+    "boost-program-options"
     "fmt",
     "spdlog"
   ]
