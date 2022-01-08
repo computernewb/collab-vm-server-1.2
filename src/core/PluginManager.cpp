@@ -151,6 +151,12 @@ namespace collabvm::core {
 		bool PluginManager::Init() {
 			// resize to a sane size
 			g_PluginSos.resize(5);
+			
+			if(!std::filesystem::is_directory(std::filesystem::current_path() / "plugins") || !std::filesystem::exists(std::filesystem::current_path() / "plugins")) {
+				// TODO: Throw error if we don't have write permissions
+				spdlog::info("PluginManager::Init: Plugins folder not found. Creating folder.");
+				std::filesystem::create_directory(std::filesystem::current_path() / "plugins");
+			}
 
 			for(auto& it : std::filesystem::directory_iterator(std::filesystem::current_path() / "plugins")) {
 				spdlog::info("Going to load plugin {}", it.path().string());
