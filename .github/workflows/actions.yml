@@ -1,0 +1,25 @@
+name: CollabVM Server
+
+on: [push, pull_request]
+
+jobs:
+  ubuntu_x64: # Latest version of Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with: 
+          submodules: true
+      - name: Install Dependencies
+        id: depends
+        run: | 
+          mkdir build
+          sudo apt install -y libvncserver-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev cmake ninja-build clang
+      - name: Build
+        id: build
+        run: |
+          # Use clang instead of GCC
+          export CC=/usr/bin/clang
+          export CXX=/usr/bin/clang++
+          cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release
+          cd build
+          cmake --build .
