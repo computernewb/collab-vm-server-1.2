@@ -2,7 +2,7 @@ name: CollabVM Server
 
 on: [push, pull_request]
 
-jobs: 
+jobs:
   windows_x64: # Windows Server 2019 (x64)
     runs-on: windows-2019
     steps:
@@ -13,7 +13,6 @@ jobs:
         id: depends
         shell: bash
         run: |
-          vcpkg update
           # Use vcpkg to install everything we need.
           vcpkg install --triplet x64-windows boost boost-system boost-filesystem boost-program-options spdlog fmt vcpkg-cmake
           echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
@@ -70,7 +69,7 @@ jobs:
       - name: Upload binaries for release
         uses: svenstaro/upload-release-action@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: build/${{ matrix.artificat_name }}
           asset_name: $${ matrix.asset_name }}
           tag: ${{ github.ref }}
