@@ -18,13 +18,13 @@ jobs:
         id: llvm
         run: |
           # We need the latest version of Clang to build the server.
-          bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
       - name: Build
         id: build
         run: |
           # Use clang instead of GCC
-          export CC=/usr/bin/clang-12
-          export CXX=/usr/bin/clang++-12
+          export CC=/usr/bin/clang-13
+          export CXX=/usr/bin/clang++-13
           cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release
           cd build
           cmake --build .
