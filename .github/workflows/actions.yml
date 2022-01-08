@@ -9,21 +9,15 @@ jobs:
       - uses: actions/checkout@v1
         with:
           submodules: true
-      - name: Install Dependencies
-        id: depends
-        shell: bash
-        run: |
-          # Use vcpkg to install everything we need.
-          vcpkg install --triplet x64-windows boost boost-system boost-filesystem boost-program-options spdlog fmt vcpkg-cmake
-          echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
-          mkdir build
       - name: Build
         id: build
         shell: bash
         run: |
+          echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
+          mkdir build
           export CC=C:\msys64\mingw64\bin\clang.exe
           export CXX=C:\msys64\mingw64\bin\clang++.exe
-          cmake -B build -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
           cd build
           cmake --build .
           
@@ -42,7 +36,9 @@ jobs:
         id: llvm
         run: |
           # We need the latest version of Clang to build the server.
-          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 13
       - name: Build
         id: build
         run: |
@@ -53,23 +49,23 @@ jobs:
           cd build
           cmake --build .
           
-  publish: # Publish the artifacts
-    name: Publish for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy: 
-      matrix: 
-        include:
-          - os: ubuntu-latest
-            artifact_name: collab-vm-server
-            asset_name: collab-vm-server-linux-amd64
-          - os: windows-2019
-            artifact_name: collab-vm-server.exe
-            asset_name: collab-vm-server-windows-amd64.exe  
-    steps:
-      - name: Upload binaries for release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/${{ matrix.artificat_name }}
-          asset_name: $${ matrix.asset_name }}
-          tag: ${{ github.ref }}
+  #publish: # Publish the artifacts
+  #  name: Publish for ${{ matrix.os }}
+  #  runs-on: ${{ matrix.os }}
+  #  strategy: 
+  #    matrix: 
+  #      include:
+  #        - os: ubuntu-latest
+  #          artifact_name: collab-vm-server
+  #          asset_name: collab-vm-server-linux-amd64
+  #        - os: windows-2019
+  #          artifact_name: collab-vm-server.exe
+  #          asset_name: collab-vm-server-windows-amd64.exe  
+  #  steps:
+  #    - name: Upload binaries for release
+  #      uses: svenstaro/upload-release-action@v2
+  #      with:
+  #        repo_token: ${{ secrets.GITHUB_TOKEN }}
+  #        file: build/${{ matrix.artificat_name }}
+  #        asset_name: $${ matrix.asset_name }}
+  #        tag: ${{ github.ref }}
