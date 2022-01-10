@@ -4,7 +4,9 @@
 
   "dependencies": [
     "boost-asio",
+    "boost-assert",
     "boost-beast",
+    "boost-dll",
     "boost-system",
     "boost-filesystem",
     "boost-program-options",
