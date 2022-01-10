@@ -12,15 +12,15 @@ jobs:
         shell: bash
         run: | 
           mkdir build
-          C:\msys64\usr\bin\pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang --noconfirm
+          C:\\msys64\\usr\\bin\\pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang --noconfirm
       - name: Build
         id: build
         shell: bash
         run: |
-          echo "PATH=$PATH:C:\msys64\clang64\bin" >> $GITHUB_ENV
-          export CC=C:\msys64\clang64\bin\clang.exe
-          export CXX=C:\msys64\clang64\bin\clang++.exe
-          C:\msys64\clang64\bin\cmake -B build -G"MSYS Makefiles" -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
+          echo "PATH=$PATH:C:\\msys64\\clang64\\bin" >> $GITHUB_ENV
+          export CC=C:\\msys64\\clang64\\bin\\clang.exe
+          export CXX=C:\\msys64\\clang64\\bin\\clang++.exe
+          C:\\msys64\\clang64\\bin\\cmake -B build -G"MSYS Makefiles" -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
           cd build
           cmake --build .
           
@@ -69,6 +69,6 @@ jobs:
   #      uses: svenstaro/upload-release-action@v2
   #      with:
   #        repo_token: ${{ secrets.GITHUB_TOKEN }}
-  #        file: build/${{ matrix.artificat_name }}
+  #        file: build/${{ matrix.artifact_name }}
   #        asset_name: $${ matrix.asset_name }}
   #        tag: ${{ github.ref }}
