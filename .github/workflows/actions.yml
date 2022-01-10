@@ -12,7 +12,7 @@ jobs:
         shell: bash
         run: | 
           mkdir build
-          pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang --noconfirm
+          C:\msys64\usr\bin\pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang --noconfirm
       - name: Build
         id: build
         shell: bash
