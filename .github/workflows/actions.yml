@@ -6,18 +6,24 @@ jobs:
   windows_x64: # Windows Server 2019 (x64)
     runs-on: windows-2019
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@master
       - uses: seanmiddleditch/gha-setup-ninja@master
         with:
           submodules: true
+      - name: Download and Extract Ninja
+        id: ninja
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/ninja-build/ninja/releases/download/v1.10.2/ninja-win.zip" -OutFile "ninja-win.zip"
+          Expand-Archive ninja-win.zip -DestinationPath C:\\msys64\\mingw64\\bin
       - name: Build
         id: build
         shell: bash
         run: |
-          echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
+          echo "PATH=$PATH:C:\\msys64\\mingw64\\bin" >> $GITHUB_ENV
           mkdir build
-          export CC=C:\msys64\mingw64\bin\clang.exe
-          export CXX=C:\msys64\mingw64\bin\clang++.exe
+          export CC=C:\\msys64\\mingw64\\bin\\clang.exe
+          export CXX=C:\\msys64\\mingw64\\bin\\clang++.exe
           cmake -B build -GNinja -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
           cd build
           cmake --build .
@@ -25,7 +31,7 @@ jobs:
   ubuntu_x64: # Latest version of Ubuntu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@master
         with: 
           submodules: true
       - name: Install Dependencies
