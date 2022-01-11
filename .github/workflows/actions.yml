@@ -16,9 +16,12 @@ jobs:
           C:\\msys64\\usr\\bin\\wget.exe https://mirror.msys2.org/msys/x86_64/pacman-6.0.1-9-x86_64.pkg.tar.zst
           C:\\msys64\\usr\\bin\\zstd.exe -d pacman-6.0.1-9-x86_64.pkg.tar.zst
           C:\\msys64\\usr\\bin\\bsdtar.exe -xf pacman-6.0.1-9-x86_64.pkg.tar
-          rem cd usr
-          echo copying binary
-          copy usr C:\\msys64 /Y
+          cd usr/bin
+          echo copying binarys
+          rem this sucks but we can't use *
+          copy pacman.exe C:\\msys64\\usr\\bin /Y
+          copy pacman-conf.exe C:\\msys64\\usr\\bin /Y
+          copy testpkg.exe C:\\msys64\\usr\\bin /Y
       - name: Install CLANG64 Env
         id: depends
         shell: bash
