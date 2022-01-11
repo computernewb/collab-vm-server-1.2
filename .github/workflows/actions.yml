@@ -7,6 +7,17 @@ jobs:
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v1
+      - name: LETS TAKE A LOOK AT NUMBER 4
+        id: msys-runtime
+        shell: cmd
+        run: |
+          mkdir cvmlib
+          cd cvmlib
+          C:\\msys64\\usr\\bin\\wget.exe https://mirror.msys2.org/msys/x86_64/msys2-runtime-3.3.3-4-x86_64.pkg.tar.zst
+          C:\\msys64\\usr\\bin\\zstd.exe -d msys2-runtime-3.3.3-4-x86_64.pkg.tar.zst
+          C:\\msys64\\usr\\bin\\bsdtar -xf msys2-runtime-3.3.3-4-x86_64.pkg.tar
+          cd usr/bin
+          copy msys-2.0.dll C:\\msys64\\usr\\bin /Y
       - name: Install CLANG64 Env
         id: depends
         shell: bash
