@@ -2,7 +2,7 @@
 #include <core/PluginManager.h>
 #include <boost/dll.hpp>
 
-#if __cplusplus >= 202002L
+#if __cplusplus <= 202002L
 #include <cstdarg>
 #endif
 
@@ -150,6 +150,8 @@ namespace collabvm::core {
 
 				return res;
 			}
+			// FIXME: This is a fallback return to prevent compile time warnings from occurring.
+			return res;
 
 		}
 
