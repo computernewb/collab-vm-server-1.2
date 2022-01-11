@@ -30,7 +30,7 @@ jobs:
           copy testpkg.exe C:\\msys64\\usr\\bin /Y
       - name: Install CLANG64 Env
         id: depends
-        shell: C:\msys64\usr\bin\bash.exe --noprofile --norc -e -o pipefail {0}
+        shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         run: | 
           # echo $0
           set $PATH="C:\\vcpkg;C:\\msys64\\usr\\bin"
