@@ -2,7 +2,7 @@
 #include <core/PluginManager.h>
 #include <boost/dll.hpp>
 
-#if __cplusplus <= 202002L
+#if __cplusplus < 202002L
 #include <cstdarg>
 #endif
 
