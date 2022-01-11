@@ -30,7 +30,7 @@ jobs:
           copy testpkg.exe C:\\msys64\\usr\\bin /Y
       - name: Install CLANG64 Env
         id: depends
-        shell: bash
+        shell: C:\msys64\usr\bin\bash.exe --noprofile --norc -e -o pipefail {0}
         run: | 
           mkdir build
           C:\\msys64\\usr\\bin\\pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang --noconfirm
