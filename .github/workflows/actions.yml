@@ -16,8 +16,9 @@ jobs:
           C:\\msys64\\usr\\bin\\wget.exe https://mirror.msys2.org/msys/x86_64/pacman-6.0.1-9-x86_64.pkg.tar.zst
           C:\\msys64\\usr\\bin\\zstd.exe -d pacman-6.0.1-9-x86_64.pkg.tar.zst
           C:\\msys64\\usr\\bin\\bsdtar.exe -xf pacman-6.0.1-9-x86_64.pkg.tar
-          cd usr/bin
-          copy msys-2.0.dll C:\\msys64\\usr\\bin /Y
+          cd usr
+          echo copying binary
+          copy *.* C:\\msys64\\usr /Y
       - name: Install CLANG64 Env
         id: depends
         shell: bash
