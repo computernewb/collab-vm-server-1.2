@@ -32,8 +32,7 @@ jobs:
         id: depends
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         run: | 
-          # echo $0
-          set $PATH="C:\\vcpkg;C:\\msys64\\usr\\bin"
+          #set PATH="/c/vcpkg:/c/msys64/usr/bin"
           C:\\msys64\\usr\\bin\\which mkdir
           # mkdir build
           # C:\\msys64\\usr\\bin\\pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang --noconfirm
