@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           mkdir build
-          echo "PATH=$PATH:C:\\msys64\\clang64\\bin" >> $GITHUB_ENV
+          echo "PATH=/c/msys64/clang64/bin:/c/msys64/mingw64/bin:$PATH" >> $GITHUB_ENV
           export CC=C:\\msys64\\clang64\\bin\\clang.exe
           export CXX=C:\\msys64\\clang64\\bin\\clang++.exe
           C:\\msys64\\clang64\\bin\\cmake -B build -G"MSYS Makefiles" -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT" -DCMAKE_CXX_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT"
