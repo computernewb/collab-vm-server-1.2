@@ -1,6 +1,7 @@
 
 #include <core/PluginManager.h>
 #include <boost/dll.hpp>
+#include <stdarg.h>
 
 // TODO: Should find a better place to include this
 #define SPDLOG_FMT_EXTERNAL // why do I need to define this lol
@@ -27,16 +28,14 @@ namespace collabvm::core {
 				vsprintf(&buf[0], mp, va);
 				va_end(va);
 
-				// hope your compiler supports this!
-				using enum plugin::IPluginApi::LogLevel;
 				switch(logLevel) {
-					case Info:
+					case plugin::IPluginApi::LogLevel::Info:
 						spdlog::info(std::string_view(buf));
 						break;
-					case Warning:
+					case plugin::IPluginApi::LogLevel::Warning:
 						spdlog::warn(buf);
 						break;
-					case Error:
+					case plugin::IPluginApi::LogLevel::Error:
 						spdlog::error(buf);
 						break;
 				}
@@ -146,16 +145,22 @@ namespace collabvm::core {
 
 				return res;
 			}
+
+			return res;
 		}
 
 		bool PluginManager::Init() {
 			// resize to a sane size
 			g_PluginSos.resize(5);
-			
 			if(!std::filesystem::is_directory(std::filesystem::current_path() / "plugins") || !std::filesystem::exists(std::filesystem::current_path() / "plugins")) {
-				// TODO: Throw error if we don't have write permissions
 				spdlog::info("PluginManager::Init: Plugins folder not found. Creating folder.");
-				std::filesystem::create_directory(std::filesystem::current_path() / "plugins");
+				try {
+					std::filesystem::create_directory(std::filesystem::current_path() / "plugins");
+				}
+				catch (...) {
+					spdlog::error("PluginManager::Init: Unable to create plugins folder!");
+					return false;
+				}
 			}
 
 			for(auto& it : std::filesystem::directory_iterator(std::filesystem::current_path() / "plugins")) {
@@ -165,7 +170,6 @@ namespace collabvm::core {
 				}
 			}
 
-			// FIXME: would there ever be a fatal case?
 			return true;
 		}
 
