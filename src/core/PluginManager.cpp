@@ -160,7 +160,7 @@ namespace collabvm::core {
 				try {
 					std::filesystem::create_directory(std::filesystem::current_path() / "plugins");
 				}
-				catch (...) {
+				catch (const std::exception&) {
 					spdlog::error("PluginManager::Init: Unable to create plugins folder!");
 					return false;
 				}
