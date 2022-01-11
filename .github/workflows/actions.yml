@@ -32,7 +32,7 @@ jobs:
         id: depends
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         run: | 
-          pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang --noconfirm
+          pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang mingw-w64-clang-x86_64-make --noconfirm
       - name: Build dependancies
         id: buildd
         shell: bash
@@ -41,7 +41,7 @@ jobs:
           echo "PATH=/c/msys64/clang64/bin:/c/msys64/mingw64/bin:$PATH" >> $GITHUB_ENV
           export CC=C:\\msys64\\clang64\\bin\\clang.exe
           export CXX=C:\\msys64\\clang64\\bin\\clang++.exe
-          C:\\msys64\\clang64\\bin\\cmake -B build -G"MSYS Makefiles" -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT" -DCMAKE_CXX_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT"
+          C:\\msys64\\clang64\\bin\\cmake -B build -G"MSYS Makefiles" -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM="mingw32-make" -DCMAKE_C_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT" -DCMAKE_CXX_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT"
       - name: Build server
         id: build
         shell: bash
