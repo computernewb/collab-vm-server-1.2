@@ -138,18 +138,19 @@ namespace collabvm::core {
 					case PluginLoadError::NotServerPlugin: {
 						// Try loading as a coreplugin next
 						return HandlePluginLoad<true, false>(so);
-					}; break;
-
+						break;
+					}
+					
 					case PluginLoadError::NotCorePlugin: {
 						// Try loading as a controllerplugin.
 						return HandlePluginLoad<false, true>(so);
-					}; break;
+						break;
+					}
 				}
 
 				return res;
 			}
 
-			return res;
 		}
 
 		bool PluginManager::Init() {
