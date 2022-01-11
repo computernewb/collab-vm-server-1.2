@@ -1,7 +1,10 @@
 
 #include <core/PluginManager.h>
 #include <boost/dll.hpp>
-#include <stdarg.h>
+
+#if __cplusplus >= 202002L
+#include <cstdarg>
+#endif
 
 // TODO: Should find a better place to include this
 #define SPDLOG_FMT_EXTERNAL // why do I need to define this lol
