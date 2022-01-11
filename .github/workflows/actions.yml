@@ -33,17 +33,24 @@ jobs:
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         run: | 
           pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang --noconfirm
-      - name: Build
-        id: build
+      - name: Build dependancies
+        id: buildd
         shell: bash
         run: |
           mkdir build
           echo "PATH=$PATH:C:\\msys64\\clang64\\bin" >> $GITHUB_ENV
           export CC=C:\\msys64\\clang64\\bin\\clang.exe
           export CXX=C:\\msys64\\clang64\\bin\\clang++.exe
-          C:\\msys64\\clang64\\bin\\cmake -B build -G"MSYS Makefiles" -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
+          C:\\msys64\\clang64\\bin\\cmake -B build -G"MSYS Makefiles" -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT" -DCMAKE_CXX_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT"
+      - name: Build server
+        id: build
+        shell: bash
+        run: |
+          echo "PATH=$PATH:C:\\msys64\\clang64\\bin" >> $GITHUB_ENV
+          export CC=C:\\msys64\\clang64\\bin\\clang.exe
+          export CXX=C:\\msys64\\clang64\\bin\\clang++.exe
           cd build
-          cmake --build . -DCMAKE_C_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT" -DCMAKE_CXX_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT"
+          cmake --build .
           
   ubuntu_x64: # Latest version of Ubuntu
     runs-on: ubuntu-latest
