@@ -32,12 +32,12 @@ jobs:
         id: depends
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         run: | 
-          mkdir build
           pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang --noconfirm
       - name: Build
         id: build
         shell: bash
         run: |
+          mkdir build
           echo "PATH=$PATH:C:\\msys64\\clang64\\bin" >> $GITHUB_ENV
           export CC=C:\\msys64\\clang64\\bin\\clang.exe
           export CXX=C:\\msys64\\clang64\\bin\\clang++.exe
@@ -48,7 +48,7 @@ jobs:
   ubuntu_x64: # Latest version of Ubuntu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@master
         with: 
           submodules: true
       - name: Install Dependencies
