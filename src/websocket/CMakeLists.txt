@@ -14,7 +14,10 @@ add_library(collabvm_websocket
 
 target_include_directories(collabvm_websocket PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(collabvm_websocket PRIVATE Boost::system fmt::fmt spdlog::spdlog)
-
+if(WIN32)
+	# This is required for BCryptGenRandom via AsioImplementation
+	target_link_libraries(collabvm_websocket PRIVATE bcrypt)
+endif()
 
 
 # Tell beast some stuff

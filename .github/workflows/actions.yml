@@ -3,59 +3,50 @@ name: CollabVM Server
 on: [push, pull_request]
 
 jobs:
-  windows_x64: # Windows Server 2019 (x64)
+  # windows_x64_vcpkg:
+    # runs-on: windows-2019
+    # steps:
+      # - uses: actions/checkout@main
+      # - name: FIXME
+        # id: warning
+        # shell: bash
+        # run: |
+          # echo "The vcpkg workflow is disabled due to packaging issues"
+          # echo "example: boost on win64 from vcpkg is msvc-intristic"
+       
+  windows_x64_clang64: # Windows Server 2019 (x64)
     runs-on: windows-2019
     steps:
-      - uses: actions/checkout@v1
-      # - name: LETS TAKE A LOOK AT NUMBER 4
-        # id: msys-runtime
-        # shell: cmd
-        # run: |
-          # mkdir cvmlib
-          # cd cvmlib
-          # echo getting pacman-6.0.1-9-x86_64.pkg.tar.zst
-          # C:\\msys64\\usr\\bin\\wget.exe https://mirror.msys2.org/msys/x86_64/pacman-6.0.1-9-x86_64.pkg.tar.zst
-          # C:\\msys64\\usr\\bin\\zstd.exe -d pacman-6.0.1-9-x86_64.pkg.tar.zst
-          # C:\\msys64\\usr\\bin\\bsdtar.exe -xf pacman-6.0.1-9-x86_64.pkg.tar          
-          # echo getting msys2-runtime-3.3.3-4-x86_64.pkg.tar
-          # C:\\msys64\\usr\\bin\\wget.exe https://mirror.msys2.org/msys/x86_64/msys2-runtime-3.3.3-4-x86_64.pkg.tar.zst
-          # C:\\msys64\\usr\\bin\\zstd.exe -d msys2-runtime-3.3.3-4-x86_64.pkg.tar.zst
-          # C:\\msys64\\usr\\bin\\bsdtar.exe -xf msys2-runtime-3.3.3-4-x86_64.pkg.tar
-          # cd usr/bin
-          # echo copying binarys
-          # rem this sucks but we can't use *
-          # copy msys-2.0.dll C:\\msys64\\usr\\bin /Y
-          # copy pacman.exe C:\\msys64\\usr\\bin /Y
-          # copy pacman-conf.exe C:\\msys64\\usr\\bin /Y
-          # copy testpkg.exe C:\\msys64\\usr\\bin /Y
-      - name: Install CLANG64 Env
+      - uses: actions/checkout@main
+      - name: Install CLANG64 Env and Dependencies
         id: depends
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         run: | 
-          pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang mingw-w64-clang-x86_64-make --noconfirm
-      - name: Build dependancies
-        id: buildd
-        shell: bash
+          pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang mingw-w64-clang-x86_64-make mingw-w64-clang-x86_64-boost mingw-w64-clang-x86_64-fmt mingw-w64-clang-x86_64-spdlog --noconfirm
+      - name: Setup build directory
+        id: setup
+        shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+        working-directory: ${{ GITHUB_WORKSPACE }}
         run: |
-          mkdir build
-          echo "PATH=/c/msys64/clang64/bin:/c/msys64/mingw64/bin:$PATH" >> $GITHUB_ENV
-          export CC=C:\\msys64\\clang64\\bin\\clang.exe
-          export CXX=C:\\msys64\\clang64\\bin\\clang++.exe
-          C:\\msys64\\clang64\\bin\\cmake -B build -G"MSYS Makefiles" -DCMAKE_TOOLCHAIN_FILE=C:\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM="mingw32-make" -DCMAKE_C_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT" -DCMAKE_CXX_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT"
+          PATH=/c/msys64/clang64/bin:/c/msys64/mingw64/bin:$PATH
+          export CC=/c/msys64/clang64/bin/clang
+          export CXX=/c/msys64/clang64/bin/clang++
+          cmake -B build -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM="mingw32-make" -DCMAKE_C_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT" -DCMAKE_CXX_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT"
       - name: Build server
         id: build
-        shell: bash
+        shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+        working-directory: ${{ GITHUB_WORKSPACE }}
         run: |
-          echo "PATH=$PATH:C:\\msys64\\clang64\\bin" >> $GITHUB_ENV
-          export CC=C:\\msys64\\clang64\\bin\\clang.exe
-          export CXX=C:\\msys64\\clang64\\bin\\clang++.exe
+          PATH=/c/msys64/clang64/bin:/c/msys64/mingw64/bin:$PATH
+          export CC=/c/msys64/clang64/bin/clang
+          export CXX=/c/msys64/clang64/bin/clang++
           cd build
           cmake --build .
           
   ubuntu_x64: # Latest version of Ubuntu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@main
         with: 
           submodules: true
       - name: Install Dependencies
