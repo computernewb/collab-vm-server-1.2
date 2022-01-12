@@ -26,7 +26,7 @@ jobs:
       - name: Setup build directory
         id: setup
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-        working-directory: ${{ GITHUB_WORKSPACE }}
+        working-directory: ${{ env.GITHUB_WORKSPACE }}
         run: |
           PATH=/c/msys64/clang64/bin:/c/msys64/mingw64/bin:$PATH
           export CC=/c/msys64/clang64/bin/clang
@@ -35,7 +35,7 @@ jobs:
       - name: Build server
         id: build
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-        working-directory: ${{ GITHUB_WORKSPACE }}
+        working-directory: ${{ env.GITHUB_WORKSPACE }}
         run: |
           PATH=/c/msys64/clang64/bin:/c/msys64/mingw64/bin:$PATH
           export CC=/c/msys64/clang64/bin/clang
