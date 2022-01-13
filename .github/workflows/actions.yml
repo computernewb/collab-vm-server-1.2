@@ -31,18 +31,18 @@ jobs:
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         working-directory: ${{ env.GITHUB_WORKSPACE }}
         run: |
-          PATH=/c/msys64/${{matrix.set.base}64/bin:/c/msys64/mingw64/bin:$PATH
-          export CC=/c/msys64/${{matrix.set.base}64/bin/${{matrix.set.compiler}}
-          export CXX=/c/msys64/${{matrix.set.base}64/bin/${{matrix.set.xxcompiler}}
+          PATH=/c/msys64/${{matrix.set.base}}64/bin:/c/msys64/mingw64/bin:$PATH
+          export CC=/c/msys64/${{matrix.set.base}}64/bin/${{matrix.set.compiler}}
+          export CXX=/c/msys64/${{matrix.set.base}}64/bin/${{matrix.set.xxcompiler}}
           cmake -B build -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM="mingw32-make" -DCMAKE_C_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT" -DCMAKE_CXX_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT"
       - name: Build server
         id: build
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         working-directory: ${{ env.GITHUB_WORKSPACE }}
         run: |
-          PATH=/c/msys64/${{matrix.set.base}64/bin:/c/msys64/mingw64/bin:$PATH
-          export CC=/c/msys64/${{matrix.set.base}64/bin/${{matrix.set.compiler}}
-          export CXX=/c/msys64/${{matrix.set.base}64/bin/${{matrix.set.xxcompiler}}
+          PATH=/c/msys64/${{matrix.set.base}}64/bin:/c/msys64/mingw64/bin:$PATH
+          export CC=/c/msys64/${{matrix.set.base}}64/bin/${{matrix.set.compiler}}
+          export CXX=/c/msys64/${{matrix.set.base}}64/bin/${{matrix.set.xxcompiler}}
           cd build
           cmake --build .
           
