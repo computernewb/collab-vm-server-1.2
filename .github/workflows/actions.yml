@@ -16,9 +16,12 @@ jobs:
        
   windows_x64_clang64: # Windows Server 2019 (x64)
     runs-on: windows-2019
+    strategy:
+      matrix:
+        set: [{"base": "ucrt", "compiler": "gcc", "xxcompiler": "g++"},{"base": "clang", "compiler": "clang", "xxcompiler": "clang++"}]
     steps:
       - uses: actions/checkout@main
-      - name: Install CLANG64 Env and Dependencies
+      - name: Install ${{strategy.matrix.set.base}}64 Env and Dependencies
         id: depends
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         run: | 
