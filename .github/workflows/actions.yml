@@ -14,7 +14,7 @@ jobs:
           # echo "The vcpkg workflow is disabled due to packaging issues"
           # echo "example: boost on win64 from vcpkg is msvc-intristic"
        
-  windows_x64_clang64: # Windows Server 2019 (x64)
+  windows_x64_msys2: # Windows Server 2019 (x64)
     runs-on: windows-2019
     strategy:
       matrix:
@@ -25,24 +25,24 @@ jobs:
         id: depends
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         run: | 
-          pacman -S mingw-w64-clang-x86_64-cmake mingw-w64-clang-x86_64-clang mingw-w64-clang-x86_64-make mingw-w64-clang-x86_64-boost mingw-w64-clang-x86_64-fmt mingw-w64-clang-x86_64-spdlog --noconfirm
+          pacman -S mingw-w64-${{matrix.set.base}}-x86_64-cmake mingw-w64-${{matrix.set.base}}-x86_64-${{matrix.set.compiler}} mingw-w64-${{matrix.set.base}}-x86_64-make mingw-w64-${{matrix.set.base}}-x86_64-boost mingw-w64-${{matrix.set.base}}-x86_64-fmt mingw-w64-${{matrix.set.base}}-x86_64-spdlog --noconfirm
       - name: Setup build directory
         id: setup
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         working-directory: ${{ env.GITHUB_WORKSPACE }}
         run: |
-          PATH=/c/msys64/clang64/bin:/c/msys64/mingw64/bin:$PATH
-          export CC=/c/msys64/clang64/bin/clang
-          export CXX=/c/msys64/clang64/bin/clang++
+          PATH=/c/msys64/${{matrix.set.base}64/bin:/c/msys64/mingw64/bin:$PATH
+          export CC=/c/msys64/${{matrix.set.base}64/bin/${{matrix.set.compiler}}
+          export CXX=/c/msys64/${{matrix.set.base}64/bin/${{matrix.set.xxcompiler}}
           cmake -B build -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM="mingw32-make" -DCMAKE_C_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT" -DCMAKE_CXX_FLAGS="-DBOOST_ASIO_HAS_STD_INVOKE_RESULT"
       - name: Build server
         id: build
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         working-directory: ${{ env.GITHUB_WORKSPACE }}
         run: |
-          PATH=/c/msys64/clang64/bin:/c/msys64/mingw64/bin:$PATH
-          export CC=/c/msys64/clang64/bin/clang
-          export CXX=/c/msys64/clang64/bin/clang++
+          PATH=/c/msys64/${{matrix.set.base}64/bin:/c/msys64/mingw64/bin:$PATH
+          export CC=/c/msys64/${{matrix.set.base}64/bin/${{matrix.set.compiler}}
+          export CXX=/c/msys64/${{matrix.set.base}64/bin/${{matrix.set.xxcompiler}}
           cd build
           cmake --build .
           
