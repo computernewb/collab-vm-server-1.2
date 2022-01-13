@@ -8,7 +8,7 @@ add_library(collabvm_core
 )
 
 target_include_directories(collabvm_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(collabvm_core PRIVATE Boost::system)
+target_link_libraries(collabvm_core PRIVATE Boost::system Boost::filesystem)
 
 add_library(collabvm::core ALIAS collabvm_core)
 
