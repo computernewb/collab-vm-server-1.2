@@ -21,7 +21,7 @@ jobs:
         set: [{"base": "ucrt", "compiler": "gcc", "xxcompiler": "g++"},{"base": "clang", "compiler": "clang", "xxcompiler": "clang++"}]
     steps:
       - uses: actions/checkout@main
-      - name: Install ${{strategy.matrix.set.base}}64 Env and Dependencies
+      - name: Install ${{matrix.set.base}}64 Env and Dependencies
         id: depends
         shell: C:\\msys64\\usr\\bin\\env.exe -i /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         run: | 
