@@ -20,11 +20,11 @@ jobs:
         id: llvm
         run: |
           # We need the latest version of Clang to build the server.
-          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+          sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"              
       - name: Build
         id: build
         run: |
-          cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+          cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14
           cmake --build build
       - name: Upload to GitHub Release
         uses: svenstaro/upload-release-action@2.2.1
