@@ -15,6 +15,13 @@ include(cmake/CollabVM.cmake)
 
 set(CMAKE_CXX_STANDARD 20)
 
+if(MSVC)
+	if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+		message(STATUS "Adding MSVC band-aid compile flags")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus /Zc:preprocessor /D_CRT_SECURE_NO_WARNINGS")
+	endif()
+endif()
+
 # Dependencies
 find_package(Boost REQUIRED COMPONENTS system filesystem program_options)
 find_package(Threads REQUIRED)
