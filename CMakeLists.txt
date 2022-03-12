@@ -16,9 +16,16 @@ include(cmake/CollabVM.cmake)
 set(CMAKE_CXX_STANDARD 20)
 
 if(MSVC)
+	message(STATUS "Adding MSVC band-aid compile flags")
+
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus /D_CRT_SECURE_NO_WARNINGS")
+
 	if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-		message(STATUS "Adding MSVC band-aid compile flags")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus /Zc:preprocessor /D_CRT_SECURE_NO_WARNINGS")
+		# MSVC seems to need another param to enable the "conformant preprocessor".
+		# Not that building WORKS on MSVC, because "conformant" isn't really all THAT conformant,
+		# but it's trying!
+		message(STATUS "Adding (REAL) MSVC band-aid compile flags...")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:preprocessor")
 	endif()
 endif()
 
