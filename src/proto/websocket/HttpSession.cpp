@@ -24,7 +24,7 @@ namespace collabvm::websocket {
 	namespace detail {
 
 		struct HttpSession : public std::enable_shared_from_this<HttpSession> {
-			explicit HttpSession(tcp::socket&& socket, const std::shared_ptr<Server>& server)
+			explicit HttpSession(tcp::socket&& socket, std::shared_ptr<Server> server)
 				: stream(std::move(socket)),
 				  queue(*this),
 				  server(server) {
@@ -211,7 +211,7 @@ namespace collabvm::websocket {
 
 	} // namespace detail
 
-	std::shared_ptr<detail::HttpSession> RunHttpSession(tcp::socket&& socket, const std::shared_ptr<Server>& server) {
+	std::shared_ptr<detail::HttpSession> RunHttpSession(tcp::socket&& socket, std::shared_ptr<Server> server) {
 		auto sp = std::make_shared<detail::HttpSession>(std::move(socket), server);
 		sp->Run();
 		return sp;

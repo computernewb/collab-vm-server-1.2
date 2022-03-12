@@ -9,7 +9,7 @@
 
 namespace collabvm::websocket {
 
-	std::shared_ptr<detail::Listener> RunListener(net::io_context& ioc, tcp::endpoint&& ep, const std::shared_ptr<Server>& server);
+	std::shared_ptr<detail::Listener> RunListener(net::io_context& ioc, tcp::endpoint&& ep, std::shared_ptr<Server> server);
 
 	Server::Server(net::io_context& ioc)
 		: ioc(ioc) {

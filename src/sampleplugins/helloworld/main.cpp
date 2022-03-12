@@ -3,7 +3,7 @@
 //
 // This file is licensed under the GNU Lesser General Public License Version 3
 // for external usage in plugins. Text is provided in LICENSE-PLUGIN.
-// If you cannot access it, https://www.gnu.org/licenses/lgpl-3.0.html
+// If you cannot access it, please see https://www.gnu.org/licenses/lgpl-3.0.html.
 //
 
 // A basic hello world plugin. Does not really implement anything useful.
@@ -11,10 +11,8 @@
 #include <PluginAPI.h>
 
 // Symbols imported or are expected to exist for the
-// common plugin code. Only touch these if you're writing
-// a core plugin (e.g: Core VM or Display plugin.)
+// common plugin code.
 extern collabvm::plugin::IPluginApi* g_PluginApi;
-bool g_IsCorePlugin = false;
 
 // The plugin implementation class.
 struct HelloWorld : public collabvm::plugin::IServerPlugin {

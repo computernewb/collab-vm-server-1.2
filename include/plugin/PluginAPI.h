@@ -18,10 +18,31 @@
 #include <new>
 
 // SOME maybeDOs:
-// - Better buffer passing between boundaries
+// - Better passing of.. well, anything, between plugin/server boundaries.
 //	 (or way of indicating lifetime expectation which is ABI safe, e.g: Copied<T*> or ExpectedToLast<T*>)
 // - Better passing of string data.
 //	 (length / ptr pair?)
+// - Pointers shouldn't mean "optional values", we should use STL vocab types for this
+//	(e.g: eastl::optional<T>, or if optional isn't abi safe enough, our own abstraction which explicitly converts)
+//
+// NB: We can use our pinned EASTL version for all of these.
+//
+// Real TODO's:
+//	plugin(or core?)::Signal<R(Args...)>. 
+//		Connecting a function to a signal means on signalObj(args...), that all of the connected functions will fire in order.
+//		For vocabulary reasons, Signal::operator() == Signal::emit(), and emit() can be used if so desired to spell it out.
+//
+//	We can use this in IPluginAPI to provide optional signals that plugins
+//	can listen for to implement whatever they want.
+//
+//	Techinically we could also use vtfuncs which are spelled out to only be filled by the plugin, but:
+//		- it's more shoddy to do that
+//		- it's way less typesafe
+//		- that assumes a this/context pointer (which may not be desired)
+//		- this only allows one listener, rather than an arbitrary amount.
+//
+//	Most important of all, it's not elegant like providing a Signal type is.
+//	So signals it is.
 
 namespace collabvm::plugin {
 
@@ -50,6 +71,7 @@ namespace collabvm::plugin {
 	 * Interface for CollabVM users.
 	 */
 	struct IUser {
+		// TODO for roles flesh this out
 		enum class Type : std::uint8_t {
 			Unregistered,
 			Registered,
@@ -60,8 +82,8 @@ namespace collabvm::plugin {
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, IUserEntry*, GetUserEntry);
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, IUser::Type, GetType);
 
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, void, Kick, const utf8char* reason /* Optional, pass nullptr for "no reason" */);
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, void, Ban, bool isForever, const utf8char* reason /* Optional, pass nullptr for "no reason" */);
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, void, Kick, const utf8char* reason /* Optional, pass empty literal for "no reason". */);
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUser, void, Ban, bool isForever, const utf8char* reason /* Optional, pass empty literal for "no reason". */);
 	};
 
 	/**
@@ -84,33 +106,8 @@ namespace collabvm::plugin {
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void*, Malloc, std::size_t size);
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, Free, void* ptr);
 
-		// websocket stuff
-
-		/**
-		 * Register a usermessage with the given ID and handler.
-		 * the server will dispatch to this plugin automatically.
-		 *
-		 * \param[in] id The user-message ID.
-		 * \param[in] handler The user-message handler.
-		 */
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, std::uint32_t /* "Handle */, RegisterUserMessage, std::uint32_t id, void(*handler)(IPluginApi* plugin, const std::uint8_t* buffer, std::size_t length));
-
-		/**
-		 * Unregister a previously registered (by IPluginApi::RegisterUserMessage()) plugin usermessage.
-		 */
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, UnregisterUserMessage, std::uint32_t handle);
-
-		/**
-		 * Send a message to an individual CollabVM user.
-		 */
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, SendMessage, IUser* user, std::uint8_t* buffer, std::size_t buffer_length);
-
-		/**
-		 * Broadcast a message to all CollabVM users.
-		 */
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IPluginApi, void, BroadcastMessage, std::uint8_t* buffer, std::size_t buffer_length);
-
-		// TODO: more vtfuncs
+		// TODO: more vtfuncs, for e.g: new way of handling usermessages (by doing serialization in-plugin)
+		
 
 		// a shoddy hack because global operators do nothing.
 		// Only use these on the plugin side, please.
@@ -129,14 +126,14 @@ namespace collabvm::plugin {
 		}
 	};
 
-
-
 	/**
 	 * Interface for standard CollabVM server plugins.
 	 */
 	struct IServerPlugin {
-		// Called by the server when it initializes this plugin.
+		// Called by the server to initialize this plugin.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IServerPlugin, void, Init);
+
+		// TODO: Signals for other events.
 	};
 
 } // namespace collabvm::plugin

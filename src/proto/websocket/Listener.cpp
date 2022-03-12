@@ -23,12 +23,12 @@ namespace collabvm::websocket { // NOLINT
 
 namespace collabvm::websocket {
 
-	std::shared_ptr<detail::HttpSession> RunHttpSession(tcp::socket&& socket, const std::shared_ptr<Server>& server);
+	std::shared_ptr<detail::HttpSession> RunHttpSession(tcp::socket&& socket, std::shared_ptr<Server> server);
 
 	namespace detail {
 
 		struct Listener : public std::enable_shared_from_this<Listener> {
-			Listener(net::io_context& ioc, tcp::endpoint&& ep, const std::shared_ptr<Server>& server)
+			Listener(net::io_context& ioc, tcp::endpoint&& ep, std::shared_ptr<Server> server)
 				: ioc(ioc),
 				  acceptor(ioc),
 				  endpoint(std::move(ep)),
@@ -95,7 +95,7 @@ namespace collabvm::websocket {
 
 	} // namespace detail
 
-	std::shared_ptr<detail::Listener> RunListener(net::io_context& ioc, tcp::endpoint&& ep, const std::shared_ptr<Server>& server) {
+	std::shared_ptr<detail::Listener> RunListener(net::io_context& ioc, tcp::endpoint&& ep, std::shared_ptr<Server> server) {
 		auto sp = std::make_shared<detail::Listener>(ioc, std::move(ep), server);
 		sp->Run();
 		return sp;

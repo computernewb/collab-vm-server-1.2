@@ -21,7 +21,7 @@ find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 
-# stuff for git tag stuffs
+# Git tag target.
 add_custom_target(__collabvm_gittag
         COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/GitTag.cmake
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
@@ -31,7 +31,8 @@ set_source_files_properties(${PROJECT_BINARY_DIR}/Version.h PROPERTIES GENERATED
 
 # Include module subdirectories
 add_subdirectory(src/core)
-add_subdirectory(src/websocket)
+add_subdirectory(src/collab)
+add_subdirectory(src/proto)
 add_subdirectory(src/main)
 
 # Add plugin common code and sample plugins

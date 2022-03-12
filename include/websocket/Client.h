@@ -31,7 +31,7 @@ namespace collabvm::websocket {
 			Closing
 		};
 
-		Client(tcp::socket&& socket, const std::shared_ptr<Server>& server);
+		Client(tcp::socket&& socket, std::shared_ptr<Server> server);
 
 		~Client();
 

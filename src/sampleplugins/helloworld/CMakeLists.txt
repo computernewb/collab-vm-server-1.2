@@ -17,4 +17,6 @@ set_target_properties(helloworld PROPERTIES
 
 # MAYBE fix?: Should this be targetized? I'm sort of bordering on no,
 # but we'll see.
+# Update(TM): no, since this will be moved to the plugin API repo,
+# it should not be targetized.
 collabvm_targetize(helloworld)

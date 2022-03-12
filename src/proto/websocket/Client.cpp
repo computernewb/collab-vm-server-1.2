@@ -61,7 +61,7 @@ namespace collabvm::websocket {
 		}
 	};
 
-	Client::Client(tcp::socket&& socket, const std::shared_ptr<Server>& server)
+	Client::Client(tcp::socket&& socket, std::shared_ptr<Server> server)
 		: server(server),
 		  wsStream(std::move(socket)) {
 		messageQueue = std::make_unique<MessageQueue>(*this);
@@ -96,14 +96,15 @@ namespace collabvm::websocket {
 		net::post(wsStream.get_executor(), [self = shared_from_this()] {
 			self->cachedAddress = self->wsStream.next_layer().socket().remote_endpoint().address();
 
-			// TODO: proxy load balancer support
+			// TODO: proxy load balancer support.
+			// Unlike CVM1 i want it to be a runtime option.
 
 			self->wsStream.set_option(beast::websocket::stream_base::decorator([self](beast::websocket::response_type& res) {
 				SetCommonResponseFields(res);
 
 				// If a subprotocol has been selected, add the Sec-Websocket-Protocol header to reflect that.
-				// Firefox wrongly allows connections if we respond with a handshake, while Chromium does the correct
-				// thing and doesn't continue the handshake.
+				// Firefox wrongly allows connections if we respond with an invalid handshake without the subprotocol, 
+				// while Chromium does the correct thing and doesn't continue the handshake.
 
 				if(self->selectedSubprotocol.has_value())
 					res.set(http::field::sec_websocket_protocol, self->selectedSubprotocol.value());
@@ -160,7 +161,7 @@ namespace collabvm::websocket {
 				server->message_handler(weak_from_this(), std::make_shared<Message>(std::string_view { reinterpret_cast<char*>(messageBuffer.data().data()), messageBuffer.size() }));
 		}
 
-		// The Message constructor internally copies data, so we can clear the buffer
+		// The Message constructor internally copies data, so we can clear the buffer once we have called the message handler and it's returned.
 		messageBuffer.clear();
 
 		// Read another WebSocket message

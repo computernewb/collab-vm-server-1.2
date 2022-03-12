@@ -28,7 +28,10 @@
 
 // Define a vtfunc, and a C++-side wrapper which calls
 // the given vtfunc automatically.
-// "args" is varadic and can be omitted
+// "args" is varadic and can be omitted.
+//
+// Unlike C++ native vtables, it is possible for a value to be polymorphic like this.
+// Not that it's a good idea to pass by value vt objects, but you can do it I guess.
 #define COLLABVM_PLUGINABI_DEFINE_VTFUNC(This, Retty, name, args...)                  \
 	Retty (*_COLLABVM_PLUGINABI_NAME_VTFUNC(name))(This*, ##args) { nullptr };        \
 	template<class... Args>                                                           \
@@ -59,7 +62,7 @@ namespace collabvm::plugin {
 	using utf8char = char8_t;
 #else
 	// use uchar then I guess
-	#warning I probably wont be supporting this for long
+	#warning I probably wont be supporting this for long, get a real compiler pl0x
 	using utf8char = unsigned char;
 #endif
 
@@ -70,6 +73,9 @@ namespace collabvm::plugin {
 	 * which will break existing plugins.
 	 */
 	constexpr static auto PLUGIN_ABI_VERSION = 0;
+
+	// TODO?: A root object for all plugin side objects?
+	// don't wanna go full-NanoCOM though.
 
 	namespace detail {
 		/**

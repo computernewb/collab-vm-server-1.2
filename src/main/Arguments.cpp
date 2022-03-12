@@ -9,7 +9,7 @@
 #include <boost/asio/version.hpp>
 #include <boost/beast/version.hpp>
 
-// Only included to get plugin ABI version
+// Only included to get plugin ABI version and CollabVM Server version.
 #include <plugin/PluginAbi.h>
 #include <Version.h>
 
@@ -26,9 +26,9 @@ namespace collabvm::main {
 				("listen,l", po::value<std::string>(&listen_address)->default_value("0.0.0.0"), "The address to listen on. Defaults to all interfaces.")
 				("port,p", po::value<int>(&port)->required(), "The port to listen on")
 				("root,r", po::value<std::string>(&http_dir)->default_value("http"), "The root folder to serve HTTP files from. Currently useless, as there is no HTTP web server (yet!)")
-				("version,V", "Display server & library versions")
-				("verbose,v", "Enable verbose log messages")
-				("help,h", "Show this help screen");
+				("version,V", "Display server, library, and internal versions")
+				("verbose,v", "Enable verbose log messages (for debugging purposes)")
+				("help,h", "Show this help");
 
 			// clang-format on
 
@@ -54,7 +54,6 @@ namespace collabvm::main {
 						  << "\t\b\b\b\b- Boost.Beast v" << BOOST_BEAST_VERSION << '\n'
 						  // internal versions
 						  << "\t\b\b\b\b- CollabVM Plugin ABI v" << reinterpret_cast<int>(plugin::PLUGIN_ABI_VERSION) << '\n';
-						  //<< '\n';
 				std::exit(0);
 			}
 

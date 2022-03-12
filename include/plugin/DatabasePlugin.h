@@ -25,7 +25,11 @@ namespace collabvm::plugin {
 	};
 
 	// unique_ptr like thing for holding a db object
-	// in a safe fashion for a one-owner model
+	// in a safe fashion for a one-owner model.
+	// TODO: SharedDbObject?
+	//
+	// either that, or since we're now gonna be using EASTL, define
+	// shared_db_object as eastl::shared_ptr<T, db_object_deleter<T>>?
 	template<class T>
 	struct UniqueDbObject {
 		constexpr UniqueDbObject() = default;
@@ -91,13 +95,13 @@ namespace collabvm::plugin {
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, const utf8char*, GetUserName);
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, void, SetUserName, const utf8char*);
 
-		// Change the password. Server takes care of hashing the password securely,
-		// the database plugin just needs to store it.
+		// Change the password. The server takes care of hashing the password securely,
+		// the database plugin just needs to store it into the user entry.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, void, ChangePassword, const utf8char* newPassword);
 
-		// role management
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, void, AddRole, snowflake_t roleSnowflake);
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, void, RemoveRole, snowflake_t roleSnowflake);
+		// role management (unused/for way later)
+		//COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, void, AddRole, snowflake_t roleSnowflake);
+		//COLLABVM_PLUGINABI_DEFINE_VTFUNC(IUserEntry, void, RemoveRole, snowflake_t roleSnowflake);
 	};
 
 	// VM ORM repressentation
@@ -106,13 +110,16 @@ namespace collabvm::plugin {
 		using Hypervisor = std::uint16_t;
 
 		// reserved value for invalid hypervisor.
-		// If writing a hv plugin, please don't use this value.
+		// If writing a hv plugin, please, by God, don't use this value.
+		// I'm not fixing this if you do.
 		constexpr static Hypervisor INVALID_HYPERVISOR = -1;
 
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVMEntry, const utf8char*, GetName);
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVMEntry, Hypervisor, GetHypervisorCode);
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVMEntry, const utf8char*, GetDescription);
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVMEntry, const utf8char*, GetMOTD);
+
+		// TODO: use capnp for the blob?
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVMEntry, const utf8char*, GetJsonBlob);
 
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVMEntry, void, SetName, const utf8char* newName);
@@ -122,6 +129,7 @@ namespace collabvm::plugin {
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IVMEntry, void, SetJsonBlob, const utf8char*);
 	};
 
+	// IP data. This data is only partially serialized to the database.
 	struct IIpDataEntry : public IDbObject {
 		enum class CoolDownType {
 			Temporary,
@@ -138,24 +146,26 @@ namespace collabvm::plugin {
 	};
 
 	/**
-	 * Interface for CollabVM Database plugins
+	 * Interface for CollabVM Database plugins to follow.
 	 */
 	struct IDatabasePlugin {
 
-
+		// Initalize the schema, if it's not already initalized.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IDatabasePlugin, void, InitSchema);
 
-		// Create a new VM controller entry in the database
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IDatabasePlugin, IVMEntry*, MaybeCreateVMController);
+		// Create a new VM entry in the database
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IDatabasePlugin, IVMEntry*, MaybeCreateVM);
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IDatabasePlugin, IUserEntry*, MaybeCreateUser);
 
-		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IDatabasePlugin, IVMEntry*, MaybeGetVMControllerById, const utf8char* id);
+		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IDatabasePlugin, IVMEntry*, MaybeGetVMById, const utf8char* id);
 
 		// Maybe get a user by snowflake.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IDatabasePlugin, IUserEntry*, MaybeGetUserEntryBySnow, snowflake_t snowflake);
+
+		// Maybe get a user by username.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IDatabasePlugin, IUserEntry*, MaybeGetUserEntryByName, const utf8char* username);
 
-		// Try deleting a user from the database.
+		// Try deleting a user from the database. May fail.
 		COLLABVM_PLUGINABI_DEFINE_VTFUNC(IDatabasePlugin, bool, TryDeleteUser, snowflake_t snowflake);
 	};
 
