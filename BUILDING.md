@@ -16,6 +16,8 @@ You can use either system library versions (if preferred) or use vcpkg for the g
 
 **TODO**: we might vendor libvncserver and pin it ourselves? idk.
 
+EASTL is provided as a vendor dependency, as part of the plugin API module.
+
 ### CMake
 
 These example directions are for Linux, but they should work basically everywhere CMake is.
