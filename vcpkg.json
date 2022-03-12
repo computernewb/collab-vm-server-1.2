@@ -3,10 +3,7 @@
   "version-string": "3.0.0",
 
   "dependencies": [
-    "boost-asio",
-    "boost-beast",
-    "boost-filesystem",
-    "boost-program-options"
+    "boost",
     "fmt",
     "spdlog"
   ]
