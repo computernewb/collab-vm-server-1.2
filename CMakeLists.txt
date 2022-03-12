@@ -28,6 +28,8 @@ add_custom_target(__collabvm_gittag
         SOURCES ${PROJECT_BINARY_DIR}/Version.h)
 set_source_files_properties(${PROJECT_BINARY_DIR}/Version.h PROPERTIES GENERATED TRUE)
 
+# Include vendor libraries
+add_subdirectory(vendor/collab-vm-plugin-api)
 
 # Include module subdirectories
 add_subdirectory(src/core)
@@ -35,10 +37,3 @@ add_subdirectory(src/collab)
 add_subdirectory(src/proto)
 add_subdirectory(src/main)
 
-# Add plugin common code and sample plugins
-# if requested in the CMake invocation
-if("sampleplugins" IN_LIST COLLABVM_BUILD_FEATURES)
-    message(STATUS "Including sample plugin source code into the build")
-    add_subdirectory(src/plugincommon)
-    add_subdirectory(src/sampleplugins)
-endif()

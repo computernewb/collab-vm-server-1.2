@@ -2,7 +2,7 @@
 #define COLLAB_VM_SERVER_PLUGINMANAGER_H
 
 #include <filesystem>
-#include <plugin/PluginAPI.h>
+#include <collabvm/plugin/PluginAPI.h>
 
 namespace collabvm::core {
 

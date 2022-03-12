@@ -10,7 +10,7 @@
 #include <boost/beast/version.hpp>
 
 // Only included to get plugin ABI version and CollabVM Server version.
-#include <plugin/PluginAbi.h>
+#include <collabvm/plugin/PluginAbi.h>
 #include <Version.h>
 
 namespace po = boost::program_options;
