@@ -1,6 +1,12 @@
 //
-// Created by lily on 12/4/21.
+// CollabVM Server
 //
+// (C) 2021-2022 CollabVM Development Team
+//
+// This file is licensed under the GNU General Public License Version 3.
+// Text is provided in LICENSE.
+//
+
 
 #ifndef COLLAB_VM_SERVER_VNCHACK_H
 #define COLLAB_VM_SERVER_VNCHACK_H

@@ -1,3 +1,11 @@
+//
+// CollabVM Server
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// This file is licensed under the GNU General Public License Version 3.
+// Text is provided in LICENSE.
+//
 
 #include <core/PluginManager.h>
 #include <boost/dll.hpp>
@@ -41,6 +49,9 @@ namespace collabvm::core {
 						break;
 				}
 			}
+
+			// TODO: We'll probably wanna maintain a separate heap, instead of just lazily
+			// handing everything off to malloc.
 
 			void* MallocImpl(std::size_t c) {
 				return malloc(c);

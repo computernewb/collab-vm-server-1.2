@@ -1,6 +1,12 @@
 //
-// Created by lily on 11/21/2021.
+// CollabVM Server
 //
+// (C) 2021-2022 CollabVM Development Team
+//
+// This file is licensed under the GNU General Public License Version 3.
+// Text is provided in LICENSE.
+//
+
 
 #ifndef PIXELBOARD_CLIENT_H
 #define PIXELBOARD_CLIENT_H

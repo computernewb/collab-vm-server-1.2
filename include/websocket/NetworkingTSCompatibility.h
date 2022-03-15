@@ -1,4 +1,13 @@
 //
+// CollabVM Server
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// This file is licensed under the GNU General Public License Version 3.
+// Text is provided in LICENSE.
+//
+
+//
 // This file is provided to use a universal "net" namespace
 // for ASIO.
 //
