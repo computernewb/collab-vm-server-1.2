@@ -25,7 +25,8 @@ $ cmake --build . # or if you know your generator, use make, ninja, whatever.
 # profit?
 ```
 
-To use vcpkg, add `-DCMAKE_TOOLCHAIN_FILE=$VCPKG/scripts/buildsystems/vcpkg.cmake` to the first CMake invocation (clue: the one with `-B build`).
+To use vcpkg, add `-DCMAKE_TOOLCHAIN_FILE=$VCPKG/scripts/buildsystems/vcpkg.cmake` to the first CMake invocation (clue:
+the one with `-B build`).
 
 ## Building Collab3 Repository Documentation
 
