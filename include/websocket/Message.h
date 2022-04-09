@@ -74,6 +74,6 @@ namespace collabvm::websocket {
 		std::vector<std::uint8_t> data_buffer;
 	};
 
-} // namespace collabvm::websocket
+} // namespace collabvm::http
 
 #endif // PIXELBOARD_MESSAGE_H

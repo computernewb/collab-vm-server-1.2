@@ -143,6 +143,6 @@ namespace collabvm::websocket {
 		std::shared_ptr<Server> server;
 	};
 
-} // namespace collabvm::websocket
+} // namespace collabvm::http
 
 #endif // PIXELBOARD_CLIENT_H

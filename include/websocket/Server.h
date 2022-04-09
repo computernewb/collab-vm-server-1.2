@@ -76,6 +76,6 @@ namespace collabvm::websocket {
 		std::shared_ptr<detail::Listener> listener;
 	};
 
-} // namespace collabvm::websocket
+} // namespace collabvm::http
 
 #endif //PIXELBOARD_SERVER_H

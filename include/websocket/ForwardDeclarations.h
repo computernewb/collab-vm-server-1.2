@@ -9,7 +9,7 @@
 
 //
 // This file provides forward declarations for
-// the websocket layer's types, so that a shared_ptr<websocket::*>
+// the http layer's types, so that a shared_ptr<http::*>
 // doesn't end up pulling in Beast/ASIO headers the millisecond it's used.
 //
 
@@ -20,6 +20,6 @@ namespace collabvm::websocket {
 	struct Server;
 	struct Client;
 	struct Message;
-} // namespace collabvm::websocket
+} // namespace collabvm::http
 
 #endif // PIXELBOARD_FORWARDDECLARATIONS_H

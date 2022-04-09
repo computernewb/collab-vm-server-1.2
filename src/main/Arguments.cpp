@@ -10,7 +10,6 @@
 #include <boost/beast/version.hpp>
 
 // Only included to get plugin ABI version and CollabVM Server version.
-#include <collabvm/plugin/PluginAbi.h>
 #include <Version.h>
 
 namespace po = boost::program_options;
@@ -51,9 +50,8 @@ namespace collabvm::main {
 						  // library versions
 						  << "\t\b\b\b\b- Boost " << BOOST_VERSION / 100000 << '.' << BOOST_VERSION / 100 % 1000 << '\n'
 						  << "\t\b\b\b\b- Boost.Asio " << BOOST_ASIO_VERSION / 100000 << '.' << BOOST_ASIO_VERSION / 100 % 1000 << '.' << BOOST_ASIO_VERSION % 100 << '\n'
-						  << "\t\b\b\b\b- Boost.Beast v" << BOOST_BEAST_VERSION << '\n'
+						  << "\t\b\b\b\b- Boost.Beast v" << BOOST_BEAST_VERSION << '\n';
 						  // internal versions
-						  << "\t\b\b\b\b- CollabVM Plugin ABI v" << reinterpret_cast<int>(plugin::PLUGIN_ABI_VERSION) << '\n';
 				std::exit(0);
 			}
 
