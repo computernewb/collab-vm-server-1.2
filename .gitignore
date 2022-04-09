@@ -1,7 +1,3 @@
-# Ignore the binaries and library roots for Windows
-/**/bin/
-/**/obj/
-
 # someone using CMake CLI to build
 build/
 
@@ -9,16 +5,12 @@ build/
 .idea/
 cmake-build-*/
 
-
 # Usually leftovers by yellows111 or off-branch patchers who are testing features
 *.patch
 *.orig
 *.log
 *.patch.*
 *.rej
-
-# Ignore the http binary dir, sometimes it gets left in the source root
-http/
 
 # git mergetool, I *dare* you. - yellows111
 *.swp
