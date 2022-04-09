@@ -1,9 +1,13 @@
 # Core library
 
 add_library(collab3_core
+        # ASIO implmentation
+        AsioImplementation.cpp
+
         util/CommandLine.cpp
         VncHack.cpp
         PluginManager.cpp
+
         )
 
 target_include_directories(collab3_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
@@ -20,6 +24,7 @@ target_compile_definitions(collab3_core PUBLIC
         -DSPDLOG_FMT_EXTERNAL
 
         # ASIO controls
+        -DBOOST_ASIO_SEPARATE_COMPILATION=1
 
         # No more io_service! No more io_context::work!
         -DBOOST_ASIO_NO_DEPRECATED=1
@@ -28,14 +33,6 @@ target_compile_definitions(collab3_core PUBLIC
         -DBOOST_ASIO_DISABLE_BOOST_BIND=1
         -DBOOST_ASIO_DISABLE_BOOST_DATE_TIME=1
         -DBOOST_ASIO_DISABLE_BOOST_REGEX=1
-
-        # Beast controls
-
-        # By default, Boost.Beast uses boost::string_view,
-        # which has no conversion to the standard library std::string_view type.
-        # This is annoying, but thankfully there's an option to make it use
-        # the standard library type.
-        -DBOOST_BEAST_USE_STD_STRING_VIEW
         )
 
 # Targetize

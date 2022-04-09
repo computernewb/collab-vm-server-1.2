@@ -1,9 +1,5 @@
 add_library(proto_http
-        # These files go first because they *will* take the longest time to compile.
-        # And it's best to get them done and over with.
-        # We should probably maybe move these files to a shared static target
-        # for anything in proto/ to reference, when there are multiple proto targets.
-        AsioImplementation.cpp
+        # This file takes a huge time to compile, so leave it first.
         BeastImplementation.cpp
 
         Server.cpp
@@ -20,13 +16,17 @@ target_link_libraries(proto_http PRIVATE
         collab3::core
         )
 
-
 target_compile_definitions(proto_http PUBLIC
 
-        # these defines are ditto of the above note on
-        # ASIO stuff. We could move them into collab3/core
-        -DBOOST_ASIO_SEPARATE_COMPILATION=1
         -DBOOST_BEAST_SEPARATE_COMPILATION=1
+
+        # By default, Boost.Beast uses boost::string_view,
+        # which has no conversion to the standard library std::string_view type.
+        # This is annoying, but thankfully there's an option to make it use
+        # the standard library type.
+        # This is only relevant to projects pulling in proto/http and therefore beast,
+        # so, leave it here.
+        -DBOOST_BEAST_USE_STD_STRING_VIEW
         )
 
 target_include_directories(proto_http PRIVATE ${PROJECT_BINARY_DIR})
