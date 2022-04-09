@@ -7,8 +7,8 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef COLLAB_VM_SERVER_VNCHACK_H
-#define COLLAB_VM_SERVER_VNCHACK_H
+#ifndef CORE_VNCHACK_H
+#define CORE_VNCHACK_H
 
 namespace collab3::core {
 

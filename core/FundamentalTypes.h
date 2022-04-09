@@ -1,5 +1,5 @@
 //
-// CollabVM Server
+// CollabVM 3
 //
 // (C) 2021-2022 CollabVM Development Team
 //
@@ -9,8 +9,8 @@
 
 // Some fundamental types.
 
-#ifndef COLLAB_VM_SERVER_FUNDAMENTALTYPES_H
-#define COLLAB_VM_SERVER_FUNDAMENTALTYPES_H
+#ifndef CORE_FUNDAMENTALTYPES_H
+#define CORE_FUNDAMENTALTYPES_H
 
 #include <stdint.h>
 
@@ -80,4 +80,4 @@ namespace collab3::core {
 
 } // namespace collab3::core
 
-#endif //COLLAB_VM_SERVER_FUNDAMENTALTYPES_H
+#endif //CORE_FUNDAMENTALTYPES_H

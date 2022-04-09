@@ -1,5 +1,5 @@
 //
-// CollabVM Server
+// CollabVM 3
 //
 // (C) 2021-2022 CollabVM Development Team
 //
@@ -7,8 +7,8 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef PIXELBOARD_CLIENT_H
-#define PIXELBOARD_CLIENT_H
+#ifndef PROTO_HTTP_CLIENT_H
+#define PROTO_HTTP_CLIENT_H
 
 #include <any>
 #include <atomic>

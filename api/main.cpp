@@ -1,7 +1,7 @@
 //
-// CollabVM Server
+// CollabVM 3
 //
-// (C) 2021-${YEAR} CollabVM Development Team
+// (C) 2021-2022 CollabVM Development Team
 //
 // This file is licensed under the GNU General Public License Version 3.
 // Text is provided in LICENSE.
@@ -22,7 +22,7 @@
 
 int main(int argc, char** argv) {
 	// maybe global instance this so things can access it?
-	collab3::main::Arguments args;
+	collab3::api::Arguments args;
 	boost::asio::io_context ioc;
 
 	args.Process(argc, argv);
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 
 	// Notify user how many threads the server will spawn to run completion handlers
 	std::cout << "Running server ASIO completion handlers on " << N << " worker threads\n";
-	std::cout << "Your system will actually run " << N + 1 << " worker threads including main thread\n";
+	std::cout << "Your system will actually run " << N + 1 << " worker threads including api thread\n";
 
 	for(int j = 0; j < N; ++j) {
 		threads.emplace_back([&ioc]() {
@@ -54,12 +54,13 @@ int main(int argc, char** argv) {
 #endif
 
 	// Test plugin hosting using core::PluginManager API
+	// moving soon
 	collab3::core::PluginManager pm;
 	if(!pm.Init()) {
 		std::cout << "Uh-oh!\n";
 	}
 
-	// Run the io_service on the main thread.
+	// Run the io_service on the api thread.
 	ioc.run();
 
 #ifdef ENABLE_ASIO_MULTITHREADING

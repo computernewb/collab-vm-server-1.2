@@ -1,5 +1,5 @@
 //
-// CollabVM Server
+// CollabVM 3
 //
 // (C) 2021-2022 CollabVM Development Team
 //

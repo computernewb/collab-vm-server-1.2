@@ -1,5 +1,5 @@
 //
-// CollabVM Server
+// CollabVM 3
 //
 // (C) 2021-2022 CollabVM Development Team
 //
@@ -7,8 +7,8 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef PIXELBOARD_MESSAGE_H
-#define PIXELBOARD_MESSAGE_H
+#ifndef PROTO_HTTP_MESSAGE_H
+#define PROTO_HTTP_MESSAGE_H
 
 #include <cstdint>
 #include <memory>
@@ -76,4 +76,4 @@ namespace collab3::proto_http {
 
 } // namespace collab3::proto_http
 
-#endif // PIXELBOARD_MESSAGE_H
+#endif // PROTO_HTTP_MESSAGE_H

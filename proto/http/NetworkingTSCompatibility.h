@@ -1,5 +1,5 @@
 //
-// CollabVM Server
+// CollabVM 3
 //
 // (C) 2021-2022 CollabVM Development Team
 //
@@ -19,10 +19,10 @@
 // mostly out of Convenience(TM).
 //
 
-#ifndef PIXELBOARD_NETWORKINGTSCOMPATIBILITY_H
-#define PIXELBOARD_NETWORKINGTSCOMPATIBILITY_H
+#ifndef PROTO_HTTP_NETWORKINGTSCOMPATIBILITY_H
+#define PROTO_HTTP_NETWORKINGTSCOMPATIBILITY_H
 
-// Foward declare some stuff
+// Forward declare some stuff
 namespace boost::asio { // NOLINT (this namespace intentionally isn't asio::ip)
 	namespace ip {
 		class tcp;
@@ -44,4 +44,4 @@ namespace beast = boost::beast;
 namespace http = beast::http;
 namespace websocket = beast::websocket;
 
-#endif // PIXELBOARD_NETWORKINGTSCOMPATIBILITY_H
+#endif // PROTO_HTTP_NETWORKINGTSCOMPATIBILITY_H

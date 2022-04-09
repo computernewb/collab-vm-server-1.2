@@ -1,5 +1,5 @@
 //
-// CollabVM Server
+// CollabVM 3
 //
 // (C) 2021-2022 CollabVM Development Team
 //
@@ -13,8 +13,8 @@
 // doesn't end up pulling in Beast/ASIO headers the millisecond it's used.
 //
 
-#ifndef PIXELBOARD_FORWARDDECLARATIONS_H
-#define PIXELBOARD_FORWARDDECLARATIONS_H
+#ifndef PROTO_HTTP_FORWARDDECLARATIONS_H
+#define PROTO_HTTP_FORWARDDECLARATIONS_H
 
 namespace collab3::proto_http {
 	struct Server;
@@ -22,4 +22,4 @@ namespace collab3::proto_http {
 	struct Message;
 } // namespace collab3::proto_http
 
-#endif // PIXELBOARD_FORWARDDECLARATIONS_H
+#endif // PROTO_HTTP_FORWARDDECLARATIONS_H

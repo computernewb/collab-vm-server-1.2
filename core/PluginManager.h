@@ -7,6 +7,8 @@
 // Text is provided in LICENSE.
 //
 
+// todo: move to vmserver backend tree
+
 #ifndef CORE_PLUGINMANAGER_H
 #define CORE_PLUGINMANAGER_H
 

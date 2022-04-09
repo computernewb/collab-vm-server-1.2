@@ -1,4 +1,4 @@
-# CollabVM.cmake: some useful CollabVM cmake functions
+# CollabVM.cmake: some useful Collab3 repo cmake functions
 
 # Adds some stuff to targets to give them CollabVM core defines
 # and misc. options

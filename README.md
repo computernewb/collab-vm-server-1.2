@@ -1,9 +1,10 @@
-## collab-vm-server
+## Collab3
 
-This repository contains the source code to the CollabVM Server. The CollabVM Server powers CollabVM, and it is what you
-will use to host a CollabVM UserVM or mirror.
+This repository contains the source code to the Collab3 repository.
 
-You can either download already compiled binaries, or compile the CollabVM Server yourself. Compilation instructions are
+The Collab3 repo powers the CollabVM site, and it is what you will use to host a CollabVM UserVM or mirror.
+
+You can either download already compiled binaries, or compile the Collab3 repository yourself. Compilation instructions are
 provided in the BUILDING.md file.
 
 CollabVM was coded and written by Cosmic Sans, Dartz, Geodude, and modeco80... And maybe
@@ -15,6 +16,8 @@ CollabVM Server, as well as the Web App and Admin Web App are licensed under
 the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ### How to use
+
+TODO rewrite or just provide this section in the docs
 
 You can read `man doc/collab-vm-server.1`, for arguments, and setting it up is such as:
 

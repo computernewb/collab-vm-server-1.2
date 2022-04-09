@@ -1,5 +1,5 @@
 //
-// CollabVM Server
+// CollabVM 3
 //
 // (C) 2021-2022 CollabVM Development Team
 //
@@ -7,8 +7,8 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef PIXELBOARD_SERVER_H
-#define PIXELBOARD_SERVER_H
+#ifndef PROTO_HTTP_SERVER_H
+#define PROTO_HTTP_SERVER_H
 
 #include <boost/asio/io_context.hpp>
 #include <cstdint>
@@ -77,4 +77,4 @@ namespace collab3::proto_http {
 
 } // namespace collab3::proto_http
 
-#endif //PIXELBOARD_SERVER_H
+#endif //PROTO_HTTP_SERVER_H

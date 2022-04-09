@@ -1,3 +1,12 @@
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// This file is licensed under the GNU General Public License Version 3.
+// Text is provided in LICENSE.
+//
+
 #include "Arguments.h"
 
 #include <boost/program_options.hpp>
@@ -13,7 +22,7 @@
 
 namespace po = boost::program_options;
 
-namespace collab3::main {
+namespace collab3::api {
 
 	void Arguments::Process(int argc, char** argv) {
 		po::options_description desc("Collab3 API Backend - Options");
@@ -78,4 +87,4 @@ namespace collab3::main {
 		return port;
 	}
 
-} // namespace collab3::main
+} // namespace collab3::api

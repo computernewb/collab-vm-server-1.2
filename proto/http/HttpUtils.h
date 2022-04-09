@@ -1,5 +1,14 @@
-#ifndef COLLABVM_HTTPUTILS_H
-#define COLLABVM_HTTPUTILS_H
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// This file is licensed under the GNU General Public License Version 3.
+// Text is provided in LICENSE.
+//
+
+#ifndef PROTO_HTTP_HTTPUTILS_H
+#define PROTO_HTTP_HTTPUTILS_H
 
 #include <boost/beast/http/message.hpp>
 
@@ -18,4 +27,4 @@ namespace collab3::proto_http {
 
 } // namespace collab3::proto_http
 
-#endif // COLLABVM_HTTPUTILS_H
+#endif // PROTO_HTTP_HTTPUTILS_H

@@ -1,9 +1,18 @@
-#ifndef COLLABVM_MAIN_ARGUMENTS_H
-#define COLLABVM_MAIN_ARGUMENTS_H
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// This file is licensed under the GNU General Public License Version 3.
+// Text is provided in LICENSE.
+//
+
+#ifndef API_ARGUMENTS_H
+#define API_ARGUMENTS_H
 
 #include <string>
 
-namespace collab3::main {
+namespace collab3::api {
 
 	// TODO: this class probably won't be needed, either that or adopt a common config store in core
 
@@ -23,6 +32,6 @@ namespace collab3::main {
 		int port;
 	};
 
-} // namespace collab3::main
+} // namespace collab3::api
 
-#endif // COLLABVM_MAIN_ARGUMENTS_H
+#endif // API_ARGUMENTS_H
