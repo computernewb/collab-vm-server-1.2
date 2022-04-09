@@ -17,14 +17,6 @@ jobs:
         with: 
           submodules: true
 
-      - name: Checkout Plugin API Vendored Libraries
-        id: checkout-hack
-        run: |
-          pushd vendor/collab-vm-plugin-api
-          git submodule init
-          git submodule update
-        shell: bash
-
       - name: Install Dependencies And Setup LLVM (Ubuntu)
         id: depends-n-llvm
         if: matrix.os == 'ubuntu-latest'
