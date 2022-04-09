@@ -1,19 +1,16 @@
-## Building Collab3
+Compiling the Collab3 microservices are fairly easy.
 
-Compiling the server's microservices are fairly easy.
-
-### All Required Dependencies
+### Dependencies
 
 GCC 10+ or Clang 11+ are recommended compiler versions.
 
 * Boost 1.75 or above
-* libvncserver
 * fmt
 * spdlog
 
 You can use either system library versions (if preferred) or use vcpkg for the grunt of them.
 
-### CMake
+### Invoking CMake
 
 These example directions are for Linux, but they should work basically everywhere CMake is.
 
@@ -32,4 +29,4 @@ the one with `-B build`).
 
 You'll need to install `mkdocs` and `mkdocs-windmill-dark` via pip.
 
-Then you can run `mkdocs` and the documentation will be in `site/`.
+Run `mkdocs build`. The resulting output will be in `site/`.

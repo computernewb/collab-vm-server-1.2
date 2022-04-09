@@ -1,6 +1,7 @@
-site_name: CollabVM 3
+site_name: Collab3
 
 nav:
   - Home: index.md
+  - 'Building Collab3': building.md
 
 theme: windmill-dark
