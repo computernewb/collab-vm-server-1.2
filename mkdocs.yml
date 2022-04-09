@@ -1,0 +1,6 @@
+site_name: CollabVM 3
+
+nav:
+  - Home: index.md
+
+theme: windmill-dark

@@ -5,6 +5,9 @@ build/
 .idea/
 cmake-build-*/
 
+# mkdocs generated site.
+/site/
+
 # Usually leftovers by yellows111 or off-branch patchers who are testing features
 *.patch
 *.orig
@@ -18,6 +21,3 @@ cmake-build-*/
 *_BASE_*
 *_LOCAL_*
 *_REMOTE_*
-
-# blatantly ignore this for OBVIOUS reasons
-collab-vm.db

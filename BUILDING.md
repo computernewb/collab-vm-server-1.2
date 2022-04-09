@@ -1,6 +1,6 @@
-## Building collab-vm-server 
+## Building Collab3
 
-Compiling the server is fairly easy.
+Compiling the server's microservices are fairly easy.
 
 ### All Required Dependencies
 
@@ -12,11 +12,6 @@ GCC 10+ or Clang 11+ are recommended compiler versions.
 * spdlog
 
 You can use either system library versions (if preferred) or use vcpkg for the grunt of them.
-
-
-**TODO**: we might vendor libvncserver and pin it ourselves? idk.
-
-EASTL is provided as a vendor dependency, as part of the plugin API module.
 
 ### CMake
 
@@ -31,3 +26,9 @@ $ cmake --build . # or if you know your generator, use make, ninja, whatever.
 ```
 
 To use vcpkg, add `-DCMAKE_TOOLCHAIN_FILE=$VCPKG/scripts/buildsystems/vcpkg.cmake` to the first CMake invocation (clue: the one with `-B build`).
+
+## Building Collab3 Repository Documentation
+
+You'll need to install `mkdocs` and `mkdocs-windmill-dark` via pip.
+
+Then you can run `mkdocs` and the documentation will be in `site/`.
