@@ -3,5 +3,5 @@ site_name: Collab3
 nav:
   - Home: index.md
   - 'Building Collab3': building.md
-
+  - 'Collab3 Setup': usage.md
 theme: windmill-dark
