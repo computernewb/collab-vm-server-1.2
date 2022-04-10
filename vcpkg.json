@@ -1,9 +1,0 @@
-{
-  "name": "collab-vm-server",
-  "version-string": "3.0.0",
-  "dependencies": [
-    "boost",
-    "fmt",
-    "spdlog"
-  ]
-}
