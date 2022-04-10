@@ -56,7 +56,8 @@ namespace collab3::api {
 						  << "Compiled with:\n"
 						  // library versions
 						  << "\t\b\b\b\b- Boost " << BOOST_VERSION / 100000 << '.' << BOOST_VERSION / 100 % 1000 << '\n'
-						  << "\t\b\b\b\b- Boost.Asio " << BOOST_ASIO_VERSION / 100000 << '.' << BOOST_ASIO_VERSION / 100 % 1000 << '.' << BOOST_ASIO_VERSION % 100 << '\n'
+						  << "\t\b\b\b\b- Boost.Asio " << BOOST_ASIO_VERSION / 100000 << '.'
+						  << BOOST_ASIO_VERSION / 100 % 1000 << '.' << BOOST_ASIO_VERSION % 100 << '\n'
 						  << "\t\b\b\b\b- Boost.Beast v" << BOOST_BEAST_VERSION << '\n';
 				// internal versions
 				std::exit(0);

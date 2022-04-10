@@ -9,17 +9,17 @@
 
 //
 // This file provides forward declarations for
-// the http layer's types, so that a shared_ptr<http::*>
+// the bhttp layer's types, so that a shared_ptr<bhttp::*>
 // doesn't end up pulling in Beast/ASIO headers the millisecond it's used.
 //
 
 #ifndef PROTO_HTTP_FORWARDDECLARATIONS_H
 #define PROTO_HTTP_FORWARDDECLARATIONS_H
 
-namespace collab3::proto_http {
+namespace collab3::proto::http {
 	struct Server;
-	struct Client;
-	struct Message;
-} // namespace collab3::proto_http
+	struct WebSocketClient;
+	struct WebSocketMessage;
+} // namespace collab3::proto::http
 
 #endif // PROTO_HTTP_FORWARDDECLARATIONS_H

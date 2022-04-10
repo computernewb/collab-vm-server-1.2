@@ -7,27 +7,27 @@
 // Text is provided in LICENSE.
 //
 
-#include "Client.h"
+#include "WebSocketClient.h"
 
 #include <iostream>
 
 #include "HttpUtils.h"
 #include "Server.h"
 
-namespace collab3::proto_http {
+namespace collab3::proto::http {
 
-	struct Client::MessageQueue {
+	struct WebSocketClient::MessageQueue {
 		/**
 		 * The max amount of WebSocket messages we buffer
 		 * inside of this send queue.
 		 */
 		constexpr static auto MAX_MESSAGES = 512;
 
-		Client& self;
-		std::vector<std::shared_ptr<const Message>> messages;
+		WebSocketClient& self;
+		std::vector<std::shared_ptr<const WebSocketMessage>> messages;
 
-		explicit MessageQueue(Client& self)
-			: self(self) {
+		explicit MessageQueue(WebSocketClient& self) :
+			self(self) {
 			messages.reserve(MAX_MESSAGES);
 		}
 
@@ -35,7 +35,7 @@ namespace collab3::proto_http {
 			return messages.size() >= MAX_MESSAGES;
 		}
 
-		std::shared_ptr<const Message>& GetFront() {
+		std::shared_ptr<const WebSocketMessage>& GetFront() {
 			return messages.front();
 		}
 
@@ -51,7 +51,7 @@ namespace collab3::proto_http {
 				self.WriteMessage(messages.front());
 		}
 
-		void Push(std::shared_ptr<const Message> message) {
+		void Push(std::shared_ptr<const WebSocketMessage> message) {
 			if(IsFull())
 				return;
 
@@ -66,34 +66,34 @@ namespace collab3::proto_http {
 		}
 	};
 
-	Client::Client(tcp::socket&& socket, std::shared_ptr<Server> server)
-		: server(server),
-		  wsStream(std::move(socket)) {
+	WebSocketClient::WebSocketClient(tcp::socket&& socket, std::shared_ptr<Server> server) :
+		server(server),
+		wsStream(std::move(socket)) {
 		messageQueue = std::make_unique<MessageQueue>(*this);
 	}
 
 	// Generate the trivial-dtor here
-	// where Client::MessageQueue is fully defined.
-	Client::~Client() = default;
+	// where WebSocketClient::MessageQueue is fully defined.
+	WebSocketClient::~WebSocketClient() = default;
 
-	void Client::SelectSubprotocol(const std::string& subprotocol) {
+	void WebSocketClient::SelectSubprotocol(const std::string& subprotocol) {
 		selectedSubprotocol = subprotocol;
 	}
 
-	std::string_view Client::GetSelectedSubprotocol() {
+	std::string_view WebSocketClient::GetSelectedSubprotocol() {
 		assert(selectedSubprotocol.has_value());
 		return selectedSubprotocol.value();
 	}
 
-	net::ip::address Client::GetRemoteAddress() {
+	net::ip::address WebSocketClient::GetRemoteAddress() {
 		return cachedAddress;
 	}
 
-	Client::State Client::GetState() const {
+	WebSocketClient::State WebSocketClient::GetState() const {
 		return state.load();
 	}
 
-	void Client::Run(http::request<http::string_body>&& request) {
+	void WebSocketClient::Run(bhttp::request<bhttp::string_body>&& request) {
 		// plop in the upgrade request
 		upgradeRequest = std::move(request);
 
@@ -111,7 +111,7 @@ namespace collab3::proto_http {
 				// while Chromium does the correct thing and doesn't continue the handshake.
 
 				if(self->selectedSubprotocol.has_value())
-					res.set(http::field::sec_websocket_protocol, self->selectedSubprotocol.value());
+					res.set(bhttp::field::sec_websocket_protocol, self->selectedSubprotocol.value());
 			}));
 
 			// TODO: permessage-deflate?
@@ -126,11 +126,11 @@ namespace collab3::proto_http {
 			}
 
 			// We can finally accept the connection.
-			self->wsStream.async_accept(self->upgradeRequest, beast::bind_front_handler(&Client::OnAccept, self->shared_from_this()));
+			self->wsStream.async_accept(self->upgradeRequest, beast::bind_front_handler(&WebSocketClient::OnAccept, self->shared_from_this()));
 		});
 	}
 
-	void Client::OnAccept(const boost::system::error_code& ec) {
+	void WebSocketClient::OnAccept(const boost::system::error_code& ec) {
 		if(ec)
 			return;
 
@@ -145,11 +145,11 @@ namespace collab3::proto_http {
 		ReadMessage();
 	}
 
-	void Client::ReadMessage() {
-		wsStream.async_read(messageBuffer, beast::bind_front_handler(&Client::OnRead, shared_from_this()));
+	void WebSocketClient::ReadMessage() {
+		wsStream.async_read(messageBuffer, beast::bind_front_handler(&WebSocketClient::OnRead, shared_from_this()));
 	}
 
-	void Client::OnRead(const boost::system::error_code& ec, std::size_t bytes_transferred) {
+	void WebSocketClient::OnRead(const boost::system::error_code& ec, std::size_t bytes_transferred) {
 		boost::ignore_unused(bytes_transferred);
 
 		if(ec == beast::websocket::error::closed)
@@ -159,32 +159,39 @@ namespace collab3::proto_http {
 
 		if(wsStream.got_binary()) {
 			if(server->message_handler)
-				server->message_handler(weak_from_this(), std::make_shared<Message>(std::span<std::uint8_t> { reinterpret_cast<std::uint8_t*>(messageBuffer.data().data()), messageBuffer.size() }));
+				server->message_handler(weak_from_this(),
+										std::make_shared<WebSocketMessage>(std::span<std::uint8_t> {
+										reinterpret_cast<std::uint8_t*>(messageBuffer.data().data()),
+										messageBuffer.size() }));
 		} else if(wsStream.got_text()) {
 			if(server->message_handler)
-				server->message_handler(weak_from_this(), std::make_shared<Message>(std::string_view { reinterpret_cast<char*>(messageBuffer.data().data()), messageBuffer.size() }));
+				server->message_handler(
+				weak_from_this(),
+				std::make_shared<WebSocketMessage>(
+				std::string_view { reinterpret_cast<char*>(messageBuffer.data().data()), messageBuffer.size() }));
 		}
 
-		// The Message constructor internally copies data, so we can clear the buffer once we have called the message handler and it's returned.
+		// The WebSocketMessage constructor internally copies data, so we can clear the buffer once we have called the message handler and it's returned.
 		messageBuffer.clear();
 
 		// Read another WebSocket message
 		ReadMessage();
 	}
 
-	void Client::WriteMessage(std::shared_ptr<const Message> message) {
+	void WebSocketClient::WriteMessage(std::shared_ptr<const WebSocketMessage> message) {
 		if(!message)
 			return;
 
-		if(message->GetType() == Message::Type::Text)
+		if(message->GetType() == WebSocketMessage::Type::Text)
 			wsStream.text(true);
-		else if(message->GetType() == Message::Type::Binary)
+		else if(message->GetType() == WebSocketMessage::Type::Binary)
 			wsStream.binary(true);
 
-		wsStream.async_write(net::buffer(message->data_buffer), beast::bind_front_handler(&Client::OnWrite, shared_from_this()));
+		wsStream.async_write(net::buffer(message->data_buffer),
+							 beast::bind_front_handler(&WebSocketClient::OnWrite, shared_from_this()));
 	}
 
-	void Client::OnWrite(const boost::system::error_code& ec, std::size_t bytes_transferred) {
+	void WebSocketClient::OnWrite(const boost::system::error_code& ec, std::size_t bytes_transferred) {
 		if(ec)
 			return Close();
 
@@ -192,28 +199,29 @@ namespace collab3::proto_http {
 		messageQueue->OnWrite();
 	}
 
-	void Client::Close() {
+	void WebSocketClient::Close() {
 		state.store(State::Closing);
-		wsStream.async_close(beast::websocket::close_reason(beast::websocket::close_code::normal), [self = shared_from_this()](const boost::system::error_code& ec) {
-			self->state.store(State::Closed);
+		wsStream.async_close(beast::websocket::close_reason(beast::websocket::close_code::normal),
+							 [self = shared_from_this()](const boost::system::error_code& ec) {
+								 self->state.store(State::Closed);
 
-			if(self->server->close_handler)
-				self->server->close_handler(self->weak_from_this());
+								 if(self->server->close_handler)
+									 self->server->close_handler(self->weak_from_this());
 
-			// After this all strong client handles should be relinquished
-			// so this object dies
-		});
+								 // After this all strong client handles should be relinquished
+								 // so this object dies
+							 });
 	}
 
-	void Client::Send(std::shared_ptr<const Message> message) {
+	void WebSocketClient::Send(std::shared_ptr<const WebSocketMessage> message) {
 		if(!messageQueue->IsFull())
 			messageQueue->Push(message);
 	}
 
-	void Client::HardClose() {
+	void WebSocketClient::HardClose() {
 		boost::system::error_code ec;
 		state.store(State::Closing);
 		wsStream.next_layer().socket().close(ec);
 	}
 
-} // namespace collab3::proto_http
+} // namespace collab3::proto::http

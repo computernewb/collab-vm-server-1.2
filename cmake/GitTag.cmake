@@ -25,18 +25,18 @@ file(APPEND ${VERSION_FILENAME} "namespace collab3::version {\n")
 
 # TODO: Fix this logic so just-tag goes on the v3.x.x branches instead
 
-if ("${GIT_BRANCH}" STREQUAL "master")
-    # master/stable releases
-    file(APPEND ${VERSION_FILENAME} "\tconstexpr static char tag[] = \"${GIT_TAG}\";\n")
-else ()
-    if ("${GIT_TAG}" STREQUAL "${GIT_COMMIT}")
-        # git describe --always will fallback to shorthand commit if no tags can describe this version
-        file(APPEND ${VERSION_FILENAME} "\tconstexpr static char tag[] = \"${GIT_TAG}-${GIT_BRANCH}\";\n")
-    else ()
-        # we actually have a tag, so do this instead
-        file(APPEND ${VERSION_FILENAME} "\tconstexpr static char tag[] = \"${GIT_TAG}-${GIT_COMMIT}-${GIT_BRANCH}\";\n")
-    endif ()
-endif ()
+if("${GIT_BRANCH}" STREQUAL "master")
+	# master/stable releases
+	file(APPEND ${VERSION_FILENAME} "\tconstexpr static char tag[] = \"${GIT_TAG}\";\n")
+else()
+	if("${GIT_TAG}" STREQUAL "${GIT_COMMIT}")
+		# git describe --always will fallback to shorthand commit if no tags can describe this version
+		file(APPEND ${VERSION_FILENAME} "\tconstexpr static char tag[] = \"${GIT_TAG}-${GIT_BRANCH}\";\n")
+	else()
+		# we actually have a tag, so do this instead
+		file(APPEND ${VERSION_FILENAME} "\tconstexpr static char tag[] = \"${GIT_TAG}-${GIT_COMMIT}-${GIT_BRANCH}\";\n")
+	endif()
+endif()
 
 file(APPEND ${VERSION_FILENAME} "\tconstexpr static char branch[] = \"${GIT_BRANCH}\";")
 file(APPEND ${VERSION_FILENAME} "\n}\n")
@@ -45,22 +45,22 @@ file(APPEND ${VERSION_FILENAME} "#endif\n")
 file(APPEND ${VERSION_FILENAME} "// Legacy macros for stamping Windows binaries\n")
 file(APPEND ${VERSION_FILENAME} "// with the Git tag/commit/branch in their version manifest, or basic string literal concatenation.\n")
 
-if ("${GIT_BRANCH}" STREQUAL "master")
-    file(APPEND ${VERSION_FILENAME} "\t#define COLLAB3_VERSION_TAG \"${GIT_TAG}\"\n")
-else ()
-    if ("${GIT_TAG}" STREQUAL "${GIT_COMMIT}")
-        # git describe --tags will fallback to shorthand commit if no tags can describe this version
-        file(APPEND ${VERSION_FILENAME} "\t#define COLLAB3_VERSION_TAG \"${GIT_TAG}-${GIT_BRANCH}\"\n")
-    else ()
-        # we actually have a tag, so do this instead
-        file(APPEND ${VERSION_FILENAME} "\t#define COLLAB3_VERSION_TAG \"${GIT_TAG}-${GIT_COMMIT}-${GIT_BRANCH}\"\n")
-    endif ()
-endif ()
+if("${GIT_BRANCH}" STREQUAL "master")
+	file(APPEND ${VERSION_FILENAME} "\t#define COLLAB3_VERSION_TAG \"${GIT_TAG}\"\n")
+else()
+	if("${GIT_TAG}" STREQUAL "${GIT_COMMIT}")
+		# git describe --tags will fallback to shorthand commit if no tags can describe this version
+		file(APPEND ${VERSION_FILENAME} "\t#define COLLAB3_VERSION_TAG \"${GIT_TAG}-${GIT_BRANCH}\"\n")
+	else()
+		# we actually have a tag, so do this instead
+		file(APPEND ${VERSION_FILENAME} "\t#define COLLAB3_VERSION_TAG \"${GIT_TAG}-${GIT_COMMIT}-${GIT_BRANCH}\"\n")
+	endif()
+endif()
 file(APPEND ${VERSION_FILENAME} "\t#define COLLAB3_VERSION_BRANCH \"${GIT_BRANCH}\"\n")
 file(APPEND ${VERSION_FILENAME} "#endif // COLLAB3_VERSION_H\n")
 
-if ("${GIT_TAG}" STREQUAL "${GIT_COMMIT}")
-    message(STATUS "Generated ${VERSION_FILENAME} for commit ${GIT_COMMIT} on branch ${GIT_BRANCH}.")
-else ()
-    message(STATUS "Generated ${VERSION_FILENAME} for commit ${GIT_COMMIT} on tag ${GIT_TAG} on branch ${GIT_BRANCH}.")
-endif ()
+if("${GIT_TAG}" STREQUAL "${GIT_COMMIT}")
+	message(STATUS "Generated ${VERSION_FILENAME} for commit ${GIT_COMMIT} on branch ${GIT_BRANCH}.")
+else()
+	message(STATUS "Generated ${VERSION_FILENAME} for commit ${GIT_COMMIT} on tag ${GIT_TAG} on branch ${GIT_BRANCH}.")
+endif()

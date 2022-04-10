@@ -16,35 +16,35 @@
 #include <string_view>
 #include <vector>
 
-namespace collab3::proto_http {
+namespace collab3::proto::http {
 
 	/**
 	 * Neat wrapper class for WebSocket messages.
 	 */
-	struct Message {
+	struct WebSocketMessage {
 		enum class Type {
 			Text,
 			Binary
 		};
 
 		// trivial-ctor
-		Message() = default;
+		WebSocketMessage() = default;
 
 		/**
 		 * Constructor for creating a text WebSocket message.
 		 *
 		 * \param[in] sv string_view to pass in
 		 */
-		explicit Message(std::string_view sv);
+		explicit WebSocketMessage(std::string_view sv);
 
 		/**
 		 * Constructor for creating a binary WebSocket message.
 		 *
 		 * \param sp Span to pass in
 		 */
-		explicit Message(std::span<std::uint8_t> sp);
+		explicit WebSocketMessage(std::span<std::uint8_t> sp);
 
-		Message& operator=(const Message& other);
+		WebSocketMessage& operator=(const WebSocketMessage& other);
 
 		/**
 		 * Get the type of this message.
@@ -52,7 +52,7 @@ namespace collab3::proto_http {
 		[[nodiscard]] Type GetType() const;
 
 		/**
-		 * Gets the content of this Message as a string,
+		 * Gets the content of this WebSocketMessage as a string,
 		 * if applicable (type == Type::String).
 		 *
 		 * Asserts the above condition.
@@ -60,7 +60,7 @@ namespace collab3::proto_http {
 		[[nodiscard]] std::string_view GetString() const;
 
 		/**
-		 * Get the content of this Message as a span<const uint8_t>,
+		 * Get the content of this WebSocketMessage as a span<const uint8_t>,
 		 * if applicable (type == Type::Binary).
 		 *
 		 * Asserts the above condition.
@@ -68,12 +68,12 @@ namespace collab3::proto_http {
 		[[nodiscard]] std::span<const std::uint8_t> GetBinary() const;
 
 	   private:
-		friend struct Client; // Client can access internal implementation details
+		friend struct WebSocketClient; // WebSocketClient can access internal implementation details
 
 		Type type {};
 		std::vector<std::uint8_t> data_buffer;
 	};
 
-} // namespace collab3::proto_http
+} // namespace collab3::proto::http
 
 #endif // PROTO_HTTP_MESSAGE_H

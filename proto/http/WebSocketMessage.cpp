@@ -7,16 +7,16 @@
 // Text is provided in LICENSE.
 //
 
-#include "Message.h"
+#include "WebSocketMessage.h"
 
 #include <boost/assert.hpp>
 #include <cstring>
 
-namespace collab3::proto_http {
+namespace collab3::proto::http {
 
 	// FIXME: I might be able to use the compiler-default
 	//  assignment? Dunno.
-	Message& Message::operator=(const Message& other) {
+	WebSocketMessage& WebSocketMessage::operator=(const WebSocketMessage& other) {
 		if(&other == this)
 			// Make this a no-op for self-assignment.
 			return *this;
@@ -27,33 +27,30 @@ namespace collab3::proto_http {
 		return *this;
 	}
 
-	Message::Message(std::string_view sv)
-		: type(Type::Text) {
+	WebSocketMessage::WebSocketMessage(std::string_view sv) :
+		type(Type::Text) {
 		data_buffer.resize(sv.size());
 		std::memcpy(&data_buffer[0], sv.data(), sv.size());
 	}
 
-	Message::Message(std::span<std::uint8_t> sp)
-		: type(Type::Binary) {
+	WebSocketMessage::WebSocketMessage(std::span<std::uint8_t> sp) :
+		type(Type::Binary) {
 		data_buffer.resize(sp.size());
 		std::memcpy(&data_buffer[0], sp.data(), sp.size());
 	}
 
-	Message::Type Message::GetType() const {
+	WebSocketMessage::Type WebSocketMessage::GetType() const {
 		return type;
 	}
 
-	std::string_view Message::GetString() const {
+	std::string_view WebSocketMessage::GetString() const {
 		BOOST_ASSERT_MSG(type == Type::Text, "this is not a Text WebSocket message");
-		return {
-			reinterpret_cast<const char*>(data_buffer.data()),
-			data_buffer.size()
-		};
+		return { reinterpret_cast<const char*>(data_buffer.data()), data_buffer.size() };
 	}
 
-	std::span<const std::uint8_t> Message::GetBinary() const {
+	std::span<const std::uint8_t> WebSocketMessage::GetBinary() const {
 		BOOST_ASSERT_MSG(type == Type::Binary, "this is not a Binary WebSocket message");
 		return std::span<const std::uint8_t> { data_buffer.data(), data_buffer.size() };
 	}
 
-} // namespace collab3::proto_http
+} // namespace collab3::proto::http

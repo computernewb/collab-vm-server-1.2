@@ -4,8 +4,8 @@ This repository contains the source code to the Collab3 repository.
 
 The Collab3 repo powers the CollabVM site, and it is what you will use to host a CollabVM UserVM or mirror.
 
-You can either download already compiled binaries, or compile the Collab3 repository yourself. Compilation instructions are
-provided in the BUILDING.md file.
+You can either download already compiled binaries, or compile the Collab3 repository yourself. Compilation instructions
+are provided in the BUILDING.md file.
 
 CollabVM was coded and written by Cosmic Sans, Dartz, Geodude, and modeco80... And maybe
 a [few others.](https://github.com/computernewb/collab-vm-server/graphs/contributors)
@@ -28,7 +28,7 @@ Directory (optional)).
 For example, to start CollabVM Server on TCP port 6004 with the directory for the HTML files served from a folder
 called "collabvm", type `./collab-vm-server -p 6004 -r collabvm`.
 
-The HTTP Directory is optional, if not provided it looks for a folder called "http".
+The HTTP Directory is optional, if not provided it looks for a folder called "bhttp".
 
 When you start the server for the first time, you'll get a message that a new database was created.
 

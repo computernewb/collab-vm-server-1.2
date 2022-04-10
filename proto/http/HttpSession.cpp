@@ -26,21 +26,25 @@
 #include "NetworkingTSCompatibility.h"
 
 // I'm so sorry :(
-#include "Client.h"
+#include "WebSocketClient.h"
 
-namespace collab3::proto_http {
+namespace collab3::proto::http {
 
 	namespace detail {
 
+		/**
+		 * A HTTP session.
+		 */
 		struct HttpSession : public std::enable_shared_from_this<HttpSession> {
-			explicit HttpSession(tcp::socket&& socket, std::shared_ptr<Server> server)
-				: stream(std::move(socket)),
-				  queue(*this),
-				  server(server) {
+			explicit HttpSession(tcp::socket&& socket, std::shared_ptr<Server> server) :
+				stream(std::move(socket)),
+				queue(*this),
+				server(server) {
 			}
 
 			void Run() {
-				net::dispatch(stream.get_executor(), beast::bind_front_handler(&HttpSession::DoRead, shared_from_this()));
+				net::dispatch(stream.get_executor(),
+							  beast::bind_front_handler(&HttpSession::DoRead, shared_from_this()));
 			}
 
 			void DoRead() {
@@ -50,7 +54,10 @@ namespace collab3::proto_http {
 				stream.expires_after(std::chrono::seconds(2));
 
 				// Do the read.
-				boost::beast::http::async_read(stream, message_buffer, req, beast::bind_front_handler(&HttpSession::OnRead, shared_from_this()));
+				boost::beast::http::async_read(stream,
+											   message_buffer,
+											   req,
+											   beast::bind_front_handler(&HttpSession::OnRead, shared_from_this()));
 			}
 
 			void OnRead(const boost::system::error_code& ec, std::size_t bytes_transferred) {
@@ -58,7 +65,7 @@ namespace collab3::proto_http {
 
 				// If the connection closed during read
 				// then close
-				if(ec == http::error::end_of_stream)
+				if(ec == bhttp::error::end_of_stream)
 					return Close();
 
 				// TODO: Probably do something interesting.
@@ -68,20 +75,24 @@ namespace collab3::proto_http {
 
 				if(beast::websocket::is_upgrade(req)) {
 					if(req.target() == "/") {
-						std::make_shared<proto_http::Client>(std::move(stream.release_socket()), server)->Run(std::move(req));
+						std::make_shared<proto::http::WebSocketClient>(std::move(stream.release_socket()), server)
+						->Run(std::move(req));
 						return;
 					}
 
 					// Send a proper error out if the above condition isn't met.
 
-					http::response<http::string_body> res { http::status::bad_request, req.version() };
+					bhttp::response<bhttp::string_body> res { bhttp::status::bad_request, req.version() };
 					SetCommonResponseFields(res);
 					res.body() = "WebSocket connection needs to be at /.";
 					queue.Push(std::move(res));
 				} else {
-					spdlog::info("[IP {}] HTTP Server: {} {}", stream.socket().remote_endpoint().address().to_string(), http::to_string(req.method()), req.target());
+					spdlog::info("[IP {}] HTTP Server: {} {}",
+								 stream.socket().remote_endpoint().address().to_string(),
+								 bhttp::to_string(req.method()),
+								 req.target());
 
-					http::response<http::string_body> res { http::status::ok, req.version() };
+					bhttp::response<bhttp::string_body> res { bhttp::status::ok, req.version() };
 					SetCommonResponseFields(res);
 
 					// nice little page
@@ -97,7 +108,7 @@ namespace collab3::proto_http {
 					"</body>\r\n"
 					"</html>\r\n";
 
-					res.set(http::field::content_type, "text/html");
+					res.set(bhttp::field::content_type, "text/html");
 
 					// Put it into the response queue.
 					// The server will eventually get to it.
@@ -134,8 +145,8 @@ namespace collab3::proto_http {
 			 * Response queue for outgoing HTTP messages.
 			 */
 			struct ResponseQueue {
-				explicit ResponseQueue(HttpSession& session)
-					: self(session) {
+				explicit ResponseQueue(HttpSession& session) :
+					self(session) {
 					queue.reserve(MAX_ITEMS);
 				}
 
@@ -160,19 +171,22 @@ namespace collab3::proto_http {
 				}
 
 				template<class Body, class Fields>
-				void operator()(http::response<Body, Fields>&& message) {
+				void operator()(bhttp::response<Body, Fields>&& message) {
 					// work implementation
 					struct MessageWorkImpl : public MessageWork {
 						HttpSession& self;
-						http::response<Body, Fields> msg;
+						bhttp::response<Body, Fields> msg;
 
-						MessageWorkImpl(HttpSession& session, http::response<Body, Fields>&& msg)
-							: self(session),
-							  msg(std::move(msg)) {
+						MessageWorkImpl(HttpSession& session, bhttp::response<Body, Fields>&& msg) :
+							self(session),
+							msg(std::move(msg)) {
 						}
 
 						void operator()() override {
-							http::async_write(self.stream, msg, beast::bind_front_handler(&HttpSession::OnWrite, self.shared_from_this(), msg.need_eof()));
+							bhttp::async_write(
+							self.stream,
+							msg,
+							beast::bind_front_handler(&HttpSession::OnWrite, self.shared_from_this(), msg.need_eof()));
 						}
 					};
 
@@ -185,7 +199,7 @@ namespace collab3::proto_http {
 				}
 
 				template<class Body, class Fields>
-				void Push(http::response<Body, Fields>&& message) {
+				void Push(bhttp::response<Body, Fields>&& message) {
 					return this->operator()(std::move(message));
 				}
 
@@ -214,7 +228,7 @@ namespace collab3::proto_http {
 
 			beast::tcp_stream stream;
 			beast::flat_buffer message_buffer;
-			http::request<http::string_body> req;
+			bhttp::request<bhttp::string_body> req;
 
 			ResponseQueue queue;
 
@@ -229,4 +243,4 @@ namespace collab3::proto_http {
 		return sp;
 	}
 
-} // namespace collab3::proto_http
+} // namespace collab3::proto::http

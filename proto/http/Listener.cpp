@@ -19,25 +19,25 @@
 #include "ForwardDeclarations.h"
 #include "NetworkingTSCompatibility.h"
 
-// forward decl of http session for prototype
-namespace collab3::proto_http { // NOLINT
+// forward decl of bhttp session for prototype
+namespace collab3::proto::http { // NOLINT
 	namespace detail {
 		struct HttpSession;
 	}
-} // namespace collab3::proto_http
+} // namespace collab3::proto::http
 
-namespace collab3::proto_http {
+namespace collab3::proto::http {
 
 	std::shared_ptr<detail::HttpSession> RunHttpSession(tcp::socket&& socket, std::shared_ptr<Server> server);
 
 	namespace detail {
 
 		struct Listener : public std::enable_shared_from_this<Listener> {
-			Listener(net::io_context& ioc, tcp::endpoint&& ep, std::shared_ptr<Server> server)
-				: ioc(ioc),
-				  acceptor(ioc),
-				  endpoint(std::move(ep)),
-				  server(server) {
+			Listener(net::io_context& ioc, tcp::endpoint&& ep, std::shared_ptr<Server> server) :
+				ioc(ioc),
+				acceptor(ioc),
+				endpoint(std::move(ep)),
+				server(server) {
 			}
 
 			~Listener() {
@@ -74,7 +74,8 @@ namespace collab3::proto_http {
 
 		   private:
 			void AcceptOne() {
-				acceptor.async_accept(net::make_strand(ioc), boost::beast::bind_front_handler(&Listener::OnAccept, shared_from_this()));
+				acceptor.async_accept(net::make_strand(ioc),
+									  boost::beast::bind_front_handler(&Listener::OnAccept, shared_from_this()));
 			}
 
 			void OnAccept(const boost::system::error_code& ec, tcp::socket socket) {
@@ -100,10 +101,11 @@ namespace collab3::proto_http {
 
 	} // namespace detail
 
-	std::shared_ptr<detail::Listener> RunListener(net::io_context& ioc, tcp::endpoint&& ep, std::shared_ptr<Server> server) {
+	std::shared_ptr<detail::Listener> RunListener(net::io_context& ioc, tcp::endpoint&& ep,
+												  std::shared_ptr<Server> server) {
 		auto sp = std::make_shared<detail::Listener>(ioc, std::move(ep), server);
 		sp->Run();
 		return sp;
 	}
 
-} // namespace collab3::proto_http
+} // namespace collab3::proto::http

@@ -20,15 +20,15 @@
 #include <optional>
 
 #include "ForwardDeclarations.h"
-#include "Message.h"
 #include "NetworkingTSCompatibility.h"
+#include "WebSocketMessage.h"
 
-namespace collab3::proto_http {
+namespace collab3::proto::http {
 
 	/**
 	 * A WebSocket client.
 	 */
-	struct Client : public std::enable_shared_from_this<Client> {
+	struct WebSocketClient : public std::enable_shared_from_this<WebSocketClient> {
 		enum class State {
 			Closed,
 			Validating,
@@ -36,9 +36,9 @@ namespace collab3::proto_http {
 			Closing
 		};
 
-		Client(tcp::socket&& socket, std::shared_ptr<Server> server);
+		WebSocketClient(tcp::socket&& socket, std::shared_ptr<Server> server);
 
-		~Client();
+		~WebSocketClient();
 
 		template<class T>
 		T& GetUserData() noexcept {
@@ -81,7 +81,7 @@ namespace collab3::proto_http {
 		/**
 		 * Send a message.
 		 */
-		void Send(std::shared_ptr<const Message> message);
+		void Send(std::shared_ptr<const WebSocketMessage> message);
 
 		/**
 		 * Close the WebSocket connection.
@@ -90,7 +90,7 @@ namespace collab3::proto_http {
 
 		// If you call this I won't like you anymore
 
-		void Run(http::request<http::string_body>&& request);
+		void Run(bhttp::request<bhttp::string_body>&& request);
 
 	   private:
 		void OnAccept(const boost::system::error_code& ec);
@@ -100,11 +100,11 @@ namespace collab3::proto_http {
 		void OnRead(const boost::system::error_code& ec, std::size_t bytes_transferred);
 
 		/**
-		 * Write a single Message.
+		 * Write a single WebSocketMessage.
 		 *
 		 * \param[in] message The message to write
 		 */
-		void WriteMessage(std::shared_ptr<const Message> message);
+		void WriteMessage(std::shared_ptr<const WebSocketMessage> message);
 
 		void OnWrite(const boost::system::error_code& ec, std::size_t bytes_transferred);
 
@@ -128,20 +128,20 @@ namespace collab3::proto_http {
 
 		// basically just random data
 
-		http::request<http::string_body> upgradeRequest;
+		bhttp::request<bhttp::string_body> upgradeRequest;
 		std::optional<std::string> selectedSubprotocol;
 
 		// fwd decl - don't want it here!
 		struct MessageQueue;
 
 		/**
-		 * Message queue instance.
+		 * WebSocketMessage queue instance.
 		 */
 		std::unique_ptr<MessageQueue> messageQueue;
 
 		std::shared_ptr<Server> server;
 	};
 
-} // namespace collab3::proto_http
+} // namespace collab3::proto::http
 
 #endif // PIXELBOARD_CLIENT_H

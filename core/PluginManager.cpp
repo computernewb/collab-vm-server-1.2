@@ -14,9 +14,10 @@
 namespace collab3::core {
 
 	bool PluginManager::Init() {
-		// TODO: Gotta rethink this
+		// TODO: Gotta rethink this. Should also try to not use as many temporaries.
 
-		if(!std::filesystem::is_directory(std::filesystem::current_path() / "plugins") || !std::filesystem::exists(std::filesystem::current_path() / "plugins")) {
+		if(!std::filesystem::is_directory(std::filesystem::current_path() / "plugins") ||
+		   !std::filesystem::exists(std::filesystem::current_path() / "plugins")) {
 			spdlog::info("PluginManager: Plugins folder not found. Creating folder.");
 
 			try {

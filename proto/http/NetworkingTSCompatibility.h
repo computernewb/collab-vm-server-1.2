@@ -41,7 +41,7 @@ namespace boost::beast {
 } // namespace boost::beast
 
 namespace beast = boost::beast;
-namespace http = beast::http;
-namespace websocket = beast::websocket;
+namespace bhttp = beast::http;
+namespace bwebsocket = beast::websocket;
 
 #endif // PROTO_HTTP_NETWORKINGTSCOMPATIBILITY_H

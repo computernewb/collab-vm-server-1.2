@@ -1,6 +1,8 @@
 # Clang-Format file for collab-vm-server
 
-BasedOnStyle: Google
+Language: Cpp
+BasedOnStyle: Chromium
+Standard: c++20
 
 # Force left pointer alignment,
 # and don't let it be derived.
@@ -11,28 +13,33 @@ PointerAlignment: Left
 # it won't indent with tabs even with UseTab set to Always
 TabWidth: 4
 IndentWidth: 4
-
-SpacesInSquareBrackets: false
-
 UseTab: Always
 
+SpacesInSquareBrackets: false
 IndentPPDirectives: BeforeHash
 
-AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortLambdasOnASingleLine: None
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
 
+PackConstructorInitializers: Never
 BinPackArguments: true
 BinPackParameters: true
-BreakConstructorInitializers: BeforeColon
+BreakConstructorInitializers: AfterColon
 BreakStringLiterals: false
 
-#ColumnLimit: 130
+AllowAllArgumentsOnNextLine: false
+
 ColumnLimit: 0
 CompactNamespaces: false
 
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
+
+#ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ContinuationIndentWidth: 0
 
 # turning this on causes major issues with initializer lists,

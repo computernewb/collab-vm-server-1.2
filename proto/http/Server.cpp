@@ -11,14 +11,15 @@
 
 #include <boost/asio/ip/tcp.hpp>
 
-#include "Client.h"
+#include "WebSocketClient.h"
 
-namespace collab3::proto_http {
+namespace collab3::proto::http {
 
-	std::shared_ptr<detail::Listener> RunListener(net::io_context& ioc, tcp::endpoint&& ep, std::shared_ptr<Server> server);
+	std::shared_ptr<detail::Listener> RunListener(net::io_context& ioc, tcp::endpoint&& ep,
+												  std::shared_ptr<Server> server);
 
-	Server::Server(net::io_context& ioc)
-		: ioc(ioc) {
+	Server::Server(net::io_context& ioc) :
+		ioc(ioc) {
 	}
 
 	Server::~Server() {
@@ -50,7 +51,7 @@ namespace collab3::proto_http {
 		close_handler = std::move(close);
 	}
 
-	bool Server::SendMessage(std::weak_ptr<Client> client, std::shared_ptr<const Message> message) {
+	bool Server::SendMessage(std::weak_ptr<WebSocketClient> client, std::shared_ptr<const WebSocketMessage> message) {
 		try {
 			if(auto sp = client.lock()) {
 				sp->Send(message);
@@ -62,4 +63,4 @@ namespace collab3::proto_http {
 
 		return false;
 	}
-} // namespace collab3::proto_http
+} // namespace collab3::proto::http

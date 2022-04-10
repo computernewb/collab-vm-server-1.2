@@ -36,10 +36,7 @@ namespace collab3::core {
 			 * \return a Point<T> with the origin.
 			 */
 			constexpr Point<T> GetOrigin() const {
-				return Point<T> {
-					.x = left,
-					.y = top
-				};
+				return Point<T> { .x = left, .y = top };
 			}
 
 			/**
@@ -47,10 +44,7 @@ namespace collab3::core {
 			 * \return a Point<T> which contains the calculated size of the rect
 			 */
 			constexpr Point<T> GetSize() const {
-				return Point<T> {
-					.x = right - left,
-					.y = bottom - top
-				};
+				return Point<T> { .x = right - left, .y = bottom - top };
 			}
 
 			// more methods...
