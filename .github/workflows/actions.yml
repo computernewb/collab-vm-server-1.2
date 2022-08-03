@@ -23,7 +23,7 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
              sudo apt install -y libvncserver-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev cmake ninja-build
-             sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh 14)"
+             sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh) 14"
           fi
         shell: bash
 
