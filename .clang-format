@@ -1,4 +1,4 @@
-# Clang-Format file for collab-vm-server
+# Clang-Format for collab3 repository C++ code
 
 Language: Cpp
 BasedOnStyle: Chromium

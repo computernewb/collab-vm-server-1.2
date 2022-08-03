@@ -53,4 +53,8 @@ namespace collab3::proto::http {
 		return std::span<const std::uint8_t> { data_buffer.data(), data_buffer.size() };
 	}
 
+	std::size_t WebSocketMessage::GetSize() const {
+		return data_buffer.size();
+	}
+
 } // namespace collab3::proto::http

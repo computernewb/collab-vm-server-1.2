@@ -1,7 +1,10 @@
 site_name: Collab3
 
+copyright: 'Copyright 2020-2022 <a href="https://computernewb.com">Computernewb Development Team</a>, under the GNU General Public License Version 3.'
+
 nav:
   - Home: index.md
+  - About: about.md
   - 'Building Collab3': building.md
   - 'Collab3 Setup': usage.md
 theme: windmill-dark

@@ -12,7 +12,7 @@
 #ifndef CORE_FUNDAMENTALTYPES_H
 #define CORE_FUNDAMENTALTYPES_H
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace collab3::core {
 
@@ -24,6 +24,7 @@ namespace collab3::core {
 			T y;
 		};
 
+		// TODO: x-y-w-h. We're not windows.
 		template<class T>
 		struct Rect {
 			T left;
@@ -55,22 +56,22 @@ namespace collab3::core {
 	/**
 	 * A rectangle using uint32_t as its backing type.
 	 */
-	using Rect = detail::Rect<uint32_t>;
+	using Rect = detail::Rect<std::uint32_t>;
 
 	/**
 	 * A rectangle using uint16_t as its backing type.
 	 */
-	using Rect16 = detail::Rect<uint16_t>;
+	using Rect16 = detail::Rect<std::uint16_t>;
 
 	/**
 	 * A point using uint32_t as its backing type.
 	 */
-	using Point = detail::Point<uint32_t>;
+	using Point = detail::Point<std::uint32_t>;
 
 	/**
 	 * A point using uint16_t as its backing type.
 	 */
-	using Point16 = detail::Point<uint16_t>;
+	using Point16 = detail::Point<std::uint16_t>;
 
 } // namespace collab3::core
 

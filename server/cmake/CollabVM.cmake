@@ -6,7 +6,7 @@ function(collabvm_targetize target)
 	target_compile_definitions(${target} PRIVATE "$<$<CONFIG:DEBUG>:COLLABVM_CORE_DEBUG>")
 
 	# Set up their include so that core/... works as expected
-	target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR})
+	target_include_directories(${target} PRIVATE ../..)
 
 	if("asan" IN_LIST COLLABVM_BUILD_FEATURES)
 		# Error if someone's trying to mix asan and tsan together,

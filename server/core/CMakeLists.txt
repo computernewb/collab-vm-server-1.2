@@ -4,13 +4,11 @@ add_library(collab3_core
 		# ASIO implmentation
 		AsioImplementation.cpp
 
-		util/CommandLine.cpp
-		VncHack.cpp
-		PluginManager.cpp
+#		util/CommandLine.cpp
 
 		)
 
-target_include_directories(collab3_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(collab3_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(collab3_core PRIVATE Boost::system)
 
 target_link_libraries(collab3_core PUBLIC

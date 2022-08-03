@@ -68,10 +68,8 @@ namespace collab3::proto::http {
 				if(ec == bhttp::error::end_of_stream)
 					return Close();
 
-				// TODO: Probably do something interesting.
-				// 		Like allow routing. We'll need this for the API microservice.
-				//		Steal code from dis15 for type-erased http bodies, probably.
-				//		We should also probably not hardcode websocket path(s).
+				// TODO: Routing.
+				// 	Will need a whole rethink of the http codebase, but I'm All For It.
 
 				if(beast::websocket::is_upgrade(req)) {
 					if(req.target() == "/") {

@@ -14,7 +14,7 @@
 #include <iostream>
 
 // Version headers
-#include <Version.h>
+#include <server/core/Version.h>
 
 #include <boost/asio/version.hpp>
 #include <boost/beast/version.hpp>
@@ -22,16 +22,17 @@
 
 namespace po = boost::program_options;
 
-namespace collab3::api {
+namespace collab3::host {
 
 	void Arguments::Process(int argc, char** argv) {
-		po::options_description desc("Collab3 API Backend - Options");
+		po::options_description desc("Collab3 Backend - Options");
 		po::variables_map vm;
 		try {
 			// clang-format off
 			desc.add_options()
-				("listen,l", po::value<std::string>(&listen_address)->default_value("0.0.0.0"), "The address to listen on. Defaults to all interfaces.")
-				("port,p", po::value<int>(&port)->required(), "The port to listen on")
+				("listen,l", po::value<std::string>(&listen_address)->default_value("0.0.0.0"), "The address to listen on HTTP and WebSockets. Defaults to all interfaces.")
+				("port,p", po::value<int>(&port)->required(), "The port to listen on.")
+				("proxy,P", "Enable load balancing proxy support.")
 				("version,V", "Display server, library, and internal versions")
 				("verbose,v", "Enable verbose log messages (for debugging purposes)")
 				("help,h", "Show this help");
@@ -52,7 +53,7 @@ namespace collab3::api {
 #endif
 
 			if(vm.count("version")) {
-				std::cout << "Collab3 API Backend" << version::tag << BUILDSUFFIX_CAT " - AlphaBetas Edition \n\n"
+				std::cout << "Collab3 Backend" << version::tag << BUILDSUFFIX_CAT " - AlphaBetas Edition \n\n"
 						  << "Compiled with:\n"
 						  // library versions
 						  << "\t\b\b\b\b- Boost " << BOOST_VERSION / 100000 << '.' << BOOST_VERSION / 100 % 1000 << '\n'

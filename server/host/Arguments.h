@@ -7,12 +7,12 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef API_ARGUMENTS_H
-#define API_ARGUMENTS_H
+#ifndef HOST_ARGUMENTS_H
+#define HOST_ARGUMENTS_H
 
 #include <string>
 
-namespace collab3::api {
+namespace collab3::host {
 
 	// TODO: this class probably won't be needed, either that or adopt a common config store in core
 

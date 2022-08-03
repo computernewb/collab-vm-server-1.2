@@ -35,6 +35,19 @@ namespace collab3::proto::http {
 			return messages.size() >= MAX_MESSAGES;
 		}
 
+		/**
+		 * Get the current total size of the backpressure queue.
+		 *
+		 */
+		[[nodiscard]] std::size_t GetBackPressureSize() const {
+			std::size_t ret = 0;
+
+			for(auto& message : messages)
+				ret += message->GetSize();
+
+			return ret;
+		}
+
 		std::shared_ptr<const WebSocketMessage>& GetFront() {
 			return messages.front();
 		}
@@ -103,7 +116,7 @@ namespace collab3::proto::http {
 			// TODO: proxy load balancer support.
 			// Unlike CVM1 i want it to be a runtime option.
 
-			self->wsStream.set_option(beast::websocket::stream_base::decorator([self](beast::websocket::response_type& res) {
+			self->wsStream.set_option(bwebsocket::stream_base::decorator([self](bwebsocket::response_type& res) {
 				SetCommonResponseFields(res);
 
 				// If a subprotocol has been selected, add the Sec-Websocket-Protocol header to reflect that.
@@ -160,21 +173,20 @@ namespace collab3::proto::http {
 		if(wsStream.got_binary()) {
 			if(server->message_handler)
 				server->message_handler(weak_from_this(),
-										std::make_shared<WebSocketMessage>(std::span<std::uint8_t> {
-										reinterpret_cast<std::uint8_t*>(messageBuffer.data().data()),
-										messageBuffer.size() }));
+										std::make_shared<WebSocketMessage>(
+										std::span<std::uint8_t> { reinterpret_cast<std::uint8_t*>(messageBuffer.data().data()), messageBuffer.size() }));
 		} else if(wsStream.got_text()) {
 			if(server->message_handler)
-				server->message_handler(
-				weak_from_this(),
-				std::make_shared<WebSocketMessage>(
-				std::string_view { reinterpret_cast<char*>(messageBuffer.data().data()), messageBuffer.size() }));
+				server->message_handler(weak_from_this(),
+										std::make_shared<WebSocketMessage>(
+										std::string_view { reinterpret_cast<char*>(messageBuffer.data().data()), messageBuffer.size() }));
 		}
 
-		// The WebSocketMessage constructor internally copies data, so we can clear the buffer once we have called the message handler and it's returned.
+		// The WebSocketMessage constructor internally copies data, so we can clear the buffer once the message
+		// handler has returned.
 		messageBuffer.clear();
 
-		// Read another WebSocket message
+		// Read another WebSocket message.
 		ReadMessage();
 	}
 

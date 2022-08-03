@@ -1,8 +1,12 @@
-Compiling the Collab3 microservices are fairly easy.
+Compiling the Collab3 monorepo is fairly easy.
 
-### Dependencies
+## Notice
 
-GCC 10+ or Clang 11+ are recommended compiler versions.
+Windows support is 
+
+## Dependencies
+
+GCC 11+ or Clang 13+ are recommended compiler versions.
 
 * Boost 1.75 or above
 * fmt
@@ -10,7 +14,7 @@ GCC 10+ or Clang 11+ are recommended compiler versions.
 
 You can use either system library versions (if preferred) or use vcpkg for the grunt of them.
 
-### Invoking CMake
+## Invoking CMake
 
 These example directions are for Linux, but they should work basically everywhere CMake is.
 
@@ -24,6 +28,8 @@ $ cmake --build . # or if you know your generator, use make, ninja, whatever.
 
 To use vcpkg, add `-DCMAKE_TOOLCHAIN_FILE=$VCPKG/scripts/buildsystems/vcpkg.cmake` to the first CMake invocation (clue:
 the one with `-B build`).
+
+For now, you'll get one `collab3-host` executable in the build root. This is the one you should run.
 
 ## Building Collab3 Repository Documentation
 

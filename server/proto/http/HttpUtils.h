@@ -13,7 +13,7 @@
 #include <boost/beast/http/message.hpp>
 
 #include "NetworkingTSCompatibility.h"
-#include "Version.h"
+#include <server/core/Version.h>
 
 namespace collab3::proto::http {
 
@@ -22,7 +22,7 @@ namespace collab3::proto::http {
 	 */
 	template<class Body, class Fields>
 	inline void SetCommonResponseFields(bhttp::response<Body, Fields>& res) {
-		res.set(bhttp::field::server, "CollabVM3/" COLLAB3_VERSION_TAG);
+		res.set(bhttp::field::server, "CollabVM/" COLLAB3_VERSION_TAG);
 	}
 
 } // namespace collab3::proto::http

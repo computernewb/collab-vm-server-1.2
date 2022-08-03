@@ -67,6 +67,8 @@ namespace collab3::proto::http {
 		 */
 		[[nodiscard]] std::span<const std::uint8_t> GetBinary() const;
 
+		[[nodiscard]] std::size_t GetSize() const;
+
 	   private:
 		friend struct WebSocketClient; // WebSocketClient can access internal implementation details
 
