@@ -18,7 +18,9 @@ jobs:
         id: depends-n-llvm
         run: |
          sudo apt install -y libvncserver-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev cmake ninja-build
-         sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh) 14 all"
+         wget https://apt.llvm.org/llvm.sh
+         chmod +x llvm.sh
+         sudo ./llvm.sh 14 all
         shell: bash
 
       - name: Build
