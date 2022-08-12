@@ -17,11 +17,6 @@ target_link_libraries(collab3-host PRIVATE
 target_include_directories(collab3-host PRIVATE ${PROJECT_BINARY_DIR})
 add_dependencies(collab3-host __collabvm_gittag)
 
-if(WIN32)
-	# Windows is big stupid
-	target_link_libraries(collab3-host PRIVATE ws2_32 wsock32)
-endif()
-
 # make the temporary host server output in the top level of your build dir rather than server/host/
 set_target_properties(collab3-host PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}

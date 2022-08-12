@@ -19,20 +19,9 @@ include(server/cmake/CollabVM.cmake)
 # TODO: collabvm_targetize should set this as a per-project param.
 set(CMAKE_CXX_STANDARD 20)
 
-if(MSVC)
-	message(WARNING "Windows support is untested, and may fall out of flux.")
-
-	message(STATUS "Adding MSVC band-aid compile flags")
-
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus /D_CRT_SECURE_NO_WARNINGS")
-
-	if(NOT "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-		# MSVC seems to need another param to enable the "conformant preprocessor".
-		# Not that building WORKS on MSVC, because "conformant" isn't really all THAT conformant,
-		# but it's trying!
-		message(STATUS "Adding (REAL) MSVC band-aid compile flags...")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:preprocessor")
-	endif()
+# catch any attempt to compile for windows, whether it be VS or mingw
+if(MSVC OR WIN32)
+	message(FATAL_ERROR "Windows is not supported.")
 endif()
 
 # Dependencies
