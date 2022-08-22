@@ -7,8 +7,8 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef PROTO_HTTP_CLIENT_H
-#define PROTO_HTTP_CLIENT_H
+#ifndef CORE_HTTP_WEBSOCKETCLIENT_H
+#define CORE_HTTP_WEBSOCKETCLIENT_H
 
 #include <any>
 #include <atomic>
@@ -23,7 +23,7 @@
 #include "NetworkingTSCompatibility.h"
 #include "WebSocketMessage.h"
 
-namespace collab3::proto::http {
+namespace collab3::core::http {
 
 	/**
 	 * A WebSocket client.
@@ -142,6 +142,6 @@ namespace collab3::proto::http {
 		std::shared_ptr<Server> server;
 	};
 
-} // namespace collab3::proto::http
+} // namespace collab3::core::http
 
-#endif // PIXELBOARD_CLIENT_H
+#endif // CORE_HTTP_WEBSOCKETCLIENT_H

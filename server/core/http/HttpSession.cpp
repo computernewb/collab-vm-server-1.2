@@ -28,7 +28,7 @@
 // I'm so sorry :(
 #include "WebSocketClient.h"
 
-namespace collab3::proto::http {
+namespace collab3::core::http {
 
 	namespace detail {
 
@@ -73,7 +73,7 @@ namespace collab3::proto::http {
 
 				if(beast::websocket::is_upgrade(req)) {
 					if(req.target() == "/") {
-						std::make_shared<proto::http::WebSocketClient>(std::move(stream.release_socket()), server)
+						std::make_shared<core::http::WebSocketClient>(std::move(stream.release_socket()), server)
 						->Run(std::move(req));
 						return;
 					}
@@ -241,4 +241,4 @@ namespace collab3::proto::http {
 		return sp;
 	}
 
-} // namespace collab3::proto::http
+} // namespace collab3::core::http

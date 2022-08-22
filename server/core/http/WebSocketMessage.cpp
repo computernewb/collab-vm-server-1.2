@@ -12,7 +12,7 @@
 #include <boost/assert.hpp>
 #include <cstring>
 
-namespace collab3::proto::http {
+namespace collab3::core::http {
 
 	// FIXME: I might be able to use the compiler-default
 	//  assignment? Dunno.
@@ -57,4 +57,4 @@ namespace collab3::proto::http {
 		return data_buffer.size();
 	}
 
-} // namespace collab3::proto::http
+} // namespace collab3::core::http

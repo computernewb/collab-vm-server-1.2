@@ -7,8 +7,8 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef PROTO_HTTP_MESSAGE_H
-#define PROTO_HTTP_MESSAGE_H
+#ifndef CORE_HTTP_MESSAGE_H
+#define CORE_HTTP_MESSAGE_H
 
 #include <cstdint>
 #include <memory>
@@ -16,7 +16,9 @@
 #include <string_view>
 #include <vector>
 
-namespace collab3::proto::http {
+namespace collab3::core::http {
+
+	// TODO: use unique_ptr<T[]>, forbid copying.
 
 	/**
 	 * Neat wrapper class for WebSocket messages.
@@ -76,6 +78,6 @@ namespace collab3::proto::http {
 		std::vector<std::uint8_t> data_buffer;
 	};
 
-} // namespace collab3::proto::http
+} // namespace collab3::core::http
 
-#endif // PROTO_HTTP_MESSAGE_H
+#endif // CORE_HTTP_MESSAGE_H

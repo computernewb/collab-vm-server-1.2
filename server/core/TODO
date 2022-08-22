@@ -1,0 +1,19 @@
+Config:
+- add TOML store
+    TOML store should be like:
+
+    [collab3.host]
+    listen_at = "127.0.0.1"
+    listen_port = 2000
+
+    which will write to the namespace collab3.host
+    (collab3 being a namespace in the global namespace)
+
+bespoke boost HTTP wrapper:
+- rewrite ALL code to use coroutines, to simplify it
+- refactor server code
+- Add a routing layer
+- Allow buffer generator (it was merged in)
+
+WebRTC:
+- do it lol

@@ -20,13 +20,13 @@
 #include "NetworkingTSCompatibility.h"
 
 // forward decl of bhttp session for prototype
-namespace collab3::proto::http { // NOLINT
+namespace collab3::core::http { // NOLINT
 	namespace detail {
 		struct HttpSession;
 	}
-} // namespace collab3::proto::http
+} // namespace collab3::core::http
 
-namespace collab3::proto::http {
+namespace collab3::core::http {
 
 	std::shared_ptr<detail::HttpSession> RunHttpSession(tcp::socket&& socket, std::shared_ptr<Server> server);
 
@@ -108,4 +108,4 @@ namespace collab3::proto::http {
 		return sp;
 	}
 
-} // namespace collab3::proto::http
+} // namespace collab3::core::http

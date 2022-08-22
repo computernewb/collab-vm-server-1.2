@@ -13,7 +13,7 @@
 
 #include "WebSocketClient.h"
 
-namespace collab3::proto::http {
+namespace collab3::core::http {
 
 	std::shared_ptr<detail::Listener> RunListener(net::io_context& ioc, tcp::endpoint&& ep,
 												  std::shared_ptr<Server> server);
@@ -51,16 +51,4 @@ namespace collab3::proto::http {
 		close_handler = std::move(close);
 	}
 
-	bool Server::SendMessage(std::weak_ptr<WebSocketClient> client, std::shared_ptr<const WebSocketMessage> message) {
-		try {
-			if(auto sp = client.lock()) {
-				sp->Send(message);
-				return true;
-			}
-		} catch(...) {
-			return false;
-		}
-
-		return false;
-	}
-} // namespace collab3::proto::http
+} // namespace collab3::core::http

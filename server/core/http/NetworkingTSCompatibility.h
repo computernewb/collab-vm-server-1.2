@@ -19,8 +19,8 @@
 // mostly out of Convenience(TM).
 //
 
-#ifndef PROTO_HTTP_NETWORKINGTSCOMPATIBILITY_H
-#define PROTO_HTTP_NETWORKINGTSCOMPATIBILITY_H
+#ifndef CORE_HTTP_NETWORKINGTSCOMPATIBILITY_H
+#define CORE_HTTP_NETWORKINGTSCOMPATIBILITY_H
 
 // Forward declare some stuff
 namespace boost::asio { // NOLINT (this namespace intentionally isn't asio::ip)
@@ -44,4 +44,4 @@ namespace beast = boost::beast;
 namespace bhttp = beast::http;
 namespace bwebsocket = beast::websocket;
 
-#endif // PROTO_HTTP_NETWORKINGTSCOMPATIBILITY_H
+#endif // CORE_HTTP_NETWORKINGTSCOMPATIBILITY_H

@@ -14,7 +14,7 @@
 #include "HttpUtils.h"
 #include "Server.h"
 
-namespace collab3::proto::http {
+namespace collab3::core::http {
 
 	struct WebSocketClient::MessageQueue {
 		/**
@@ -236,4 +236,4 @@ namespace collab3::proto::http {
 		wsStream.next_layer().socket().close(ec);
 	}
 
-} // namespace collab3::proto::http
+} // namespace collab3::core::http

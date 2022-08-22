@@ -41,7 +41,7 @@ set_source_files_properties(${PROJECT_BINARY_DIR}/Version.h PROPERTIES GENERATED
 
 # Include module subdirectories
 add_subdirectory(server/core)
-add_subdirectory(server/proto)
+#add_subdirectory(server/proto)
 add_subdirectory(server/api)
 
 # temporary host for all modules

@@ -7,8 +7,8 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef PROTO_HTTP_SERVER_H
-#define PROTO_HTTP_SERVER_H
+#ifndef CORE_HTTP_SERVER_H
+#define CORE_HTTP_SERVER_H
 
 #include <boost/asio/io_context.hpp>
 #include <cstdint>
@@ -20,18 +20,11 @@
 #include "ForwardDeclarations.h"
 #include "NetworkingTSCompatibility.h"
 
-// (insert loyal pledge to kick the person who made windows
-// headers as garbage as they are here)
-#ifdef _WIN32
-	#ifdef SendMessage
-		#undef SendMessage
-	#endif
-#endif
 
 // whatever I give up - fully define WebSocketClient here
 #include "WebSocketClient.h"
 
-namespace collab3::proto::http {
+namespace collab3::core::http {
 
 	// forward declare further internals
 	namespace detail {
@@ -65,8 +58,6 @@ namespace collab3::proto::http {
 		using Open_t = std::function<void(std::weak_ptr<WebSocketClient>)>;
 		using Close_t = std::function<void(std::weak_ptr<WebSocketClient>)>;
 		using Message_t = std::function<void(std::weak_ptr<WebSocketClient>, std::shared_ptr<const WebSocketMessage>)>;
-		// TODO: Http_t ?
-		//  that'd imply needing to export some http session stuff though..
 
 		// TODO: HTTP routing + maybe middleware?.
 
@@ -78,8 +69,6 @@ namespace collab3::proto::http {
 		void SetClose(Close_t&&);
 		void SetMessage(Message_t&&);
 
-		[[deprecated("Use the WebSocket client API, and eat exceptions yourself. Will be removed in v3.0.0")]] bool
-		SendMessage(std::weak_ptr<WebSocketClient> client, std::shared_ptr<const WebSocketMessage> message);
 
 	   protected:
 		Validate_t validate_handler;
@@ -92,6 +81,6 @@ namespace collab3::proto::http {
 		std::shared_ptr<detail::Listener> listener;
 	};
 
-} // namespace collab3::proto::http
+} // namespace collab3::core::http
 
-#endif //PROTO_HTTP_SERVER_H
+#endif //CORE_HTTP_SERVER_H

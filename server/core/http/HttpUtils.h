@@ -7,15 +7,15 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef PROTO_HTTP_HTTPUTILS_H
-#define PROTO_HTTP_HTTPUTILS_H
+#ifndef CORE_HTTP_HTTPUTILS_H
+#define CORE_HTTP_HTTPUTILS_H
 
 #include <boost/beast/http/message.hpp>
 
 #include "NetworkingTSCompatibility.h"
 #include <server/core/Version.h>
 
-namespace collab3::proto::http {
+namespace collab3::core::http {
 
 	/**
 	 * Set any common HTTP response fields.
@@ -25,6 +25,6 @@ namespace collab3::proto::http {
 		res.set(bhttp::field::server, "CollabVM/" COLLAB3_VERSION_TAG);
 	}
 
-} // namespace collab3::proto::http
+} // namespace collab3::core::http
 
-#endif // PROTO_HTTP_HTTPUTILS_H
+#endif // CORE_HTTP_HTTPUTILS_H
