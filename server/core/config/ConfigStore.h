@@ -45,6 +45,15 @@ namespace collab3::core {
 
 		ConfigStore::ArrayProxy operator[](const ConfigKey& key);
 
+		// FIXME: Let's just make ArrayProxy have a handle to the map,
+		// 	 and add a Set<T>() routine to it. This should be more idiomatic.
+		//	 Could even move ValueExists() to it.
+		/**
+		 * Add a value.
+		 *
+		 * Note that this decays variant construction to the routine
+		 * this is called in, so this shouldn't be too bad.
+		 */
 		template<class T>
 		void AddValue(const ConfigKey& key, const T& value) {
 			if(!ValueExists(key))
@@ -52,13 +61,15 @@ namespace collab3::core {
 		}
 
 	   private:
+
 		/**
 		 * Array proxy object.
+		 * This is what you interact with
 		 */
 		struct ArrayProxy {
 			struct InvalidType : public std::exception {
 				[[nodiscard]] const char* what() const noexcept override {
-					return "As<T>() type different than stored type. Use Is<T>().";
+					return "As<T>() type different than stored type. Use Is<T>() to type-check.";
 				}
 			};
 
