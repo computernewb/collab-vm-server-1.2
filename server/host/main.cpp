@@ -24,11 +24,13 @@ int main(int argc, char** argv) {
 
 	collab3::core::ConfigStore store;
 
-	store.AddValue("test", "Does this work?");
-	store.AddValue("test2", true);
-	store.AddValue("test3", static_cast<std::int64_t>(120));
-	store.AddValue("test4", static_cast<std::uint64_t>(120));
+	// Set some values
+	store["test"].Set("Does this work?");
+	store["test2"].Set(true);
+	store["test3"].Set(static_cast<std::int64_t>(120));
+	store["test4"].Set(static_cast<std::uint64_t>(120));
 
+	// Try reading them out
 	std::cout << "test: \"" << store["test"].As<std::string>() << "\"\n";
 	std::cout << "test2: \"" << store["test2"].As<bool>() << "\"\n";
 	std::cout << "test3: \"" << store["test3"].As<std::int64_t>() << "\"\n";

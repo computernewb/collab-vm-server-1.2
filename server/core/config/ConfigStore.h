@@ -16,8 +16,9 @@ namespace collab3::core {
 	/**
 	 * Configuration store.
 	 *
-	 * This serves as a basis for backends to store
-	 * configuration data as they parse it.
+	 * This serves as a basis for configuration backends to store
+	 * configuration data, and for code to read from or set additional
+	 * values as you go.
 	 */
 	struct ConfigStore {
 		using ConfigKey = std::string;
@@ -27,7 +28,6 @@ namespace collab3::core {
 		using ConfigValue = std::variant<
 			bool,
 
-			// Integer types (I know this is wasteful but /shrug)
 			std::uint64_t,
 			std::int64_t,
 
@@ -37,39 +37,19 @@ namespace collab3::core {
 		>;
 		// clang-format on
 
-	   private:
-		struct ArrayProxy;
-	   public:
-
-		bool ValueExists(const ConfigKey& key) const;
-
-		ConfigStore::ArrayProxy operator[](const ConfigKey& key);
-
-		// FIXME: Let's just make ArrayProxy have a handle to the map,
-		// 	 and add a Set<T>() routine to it. This should be more idiomatic.
-		//	 Could even move ValueExists() to it.
 		/**
-		 * Add a value.
-		 *
-		 * Note that this decays variant construction to the routine
-		 * this is called in, so this shouldn't be too bad.
-		 */
-		template<class T>
-		void AddValue(const ConfigKey& key, const T& value) {
-			if(!ValueExists(key))
-				valueMap.insert({ key, value });
-		}
-
-	   private:
-
-		/**
-		 * Array proxy object.
-		 * This is what you interact with
+		 * Array proxy object, used to allow a sane(r) API.
 		 */
 		struct ArrayProxy {
 			struct InvalidType : public std::exception {
 				[[nodiscard]] const char* what() const noexcept override {
 					return "As<T>() type different than stored type. Use Is<T>() to type-check.";
+				}
+			};
+
+			struct NonExistentValue : public std::exception {
+				[[nodiscard]] const char* what() const noexcept override {
+					return "Non-existent value lookup. Use Set() beforehand or Exists() to check.";
 				}
 			};
 
@@ -82,11 +62,11 @@ namespace collab3::core {
 			 * \returns The value object.
 			 */
 			template<class T>
-			[[nodiscard]] T& As() const {
+			[[nodiscard]] const T& As() const {
 				if(!Is<T>())
 					throw InvalidType();
 
-				return std::get<T>(underlyingValue);
+				return std::get<T>(MaybeFetchValue());
 			}
 
 			/**
@@ -96,19 +76,36 @@ namespace collab3::core {
 			 */
 			template<class T>
 			[[nodiscard]] constexpr bool Is() const {
-				return std::holds_alternative<T>(underlyingValue);
+				return std::holds_alternative<T>(MaybeFetchValue());
+			}
+
+			template<class T>
+			constexpr void Set(const T& value) {
+				SetBase(ConfigValue { value });
 			}
 
 		   private:
 			friend ConfigStore;
 
-			constexpr explicit ArrayProxy(ConfigValue& value) :
-				underlyingValue(value) {
+			constexpr explicit ArrayProxy(ConfigStore& store, const ConfigKey& key) :
+				underlyingStore(store),
+				key(key) {
 			}
 
-			ConfigValue& underlyingValue;
+			void SetBase(const ConfigValue& value);
+			[[nodiscard]] ConfigValue& MaybeFetchValue() const;
+			[[nodiscard]] bool Exists() const;
+
+			ConfigStore& underlyingStore;
+			const ConfigKey& key;
 		};
 
+		ConfigStore::ArrayProxy operator[](const ConfigKey& key);
+
+		// More functions?
+		// (iteration for saving, too, probably.)
+
+	   private:
 		std::unordered_map<ConfigKey, ConfigValue> valueMap;
 	};
 

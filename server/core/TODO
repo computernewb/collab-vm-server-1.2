@@ -1,5 +1,5 @@
 Config:
-- add TOML store
+- add TOML backend
     TOML store should be like:
 
     [collab3.host]

@@ -7,15 +7,23 @@
 
 namespace collab3::core {
 
-	bool ConfigStore::ValueExists(const ConfigStore::ConfigKey& key) const {
-		return valueMap.find(key) != valueMap.end();
+	ConfigStore::ArrayProxy ConfigStore::operator[](const ConfigStore::ConfigKey& key) {
+		return ArrayProxy(*this, key);
 	}
 
-	ConfigStore::ArrayProxy ConfigStore::operator[](const ConfigStore::ConfigKey& key) {
-		if(!ValueExists(key))
-			throw std::out_of_range("Key does not exist");
+	ConfigStore::ConfigValue& ConfigStore::ArrayProxy::MaybeFetchValue() const {
+		if(!Exists())
+			throw NonExistentValue();
 
-		return ArrayProxy(valueMap[key]);
+		return underlyingStore.valueMap[key];
+	}
+
+	void ConfigStore::ArrayProxy::SetBase(const ConfigStore::ConfigValue& value) {
+		underlyingStore.valueMap[key] = value;
+	}
+
+	bool ConfigStore::ArrayProxy::Exists() const {
+		return underlyingStore.valueMap.contains(key);
 	}
 
 }
