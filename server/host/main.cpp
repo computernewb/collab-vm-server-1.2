@@ -15,7 +15,7 @@
 
 #include "Arguments.h"
 
-#include <server/core/config/ConfigStore.h>
+#include <core/config/ConfigStore.h>
 
 int main(int argc, char** argv) {
 	// maybe global instance this so things can access it?

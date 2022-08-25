@@ -2,7 +2,7 @@
 // Created by lily on 8/22/22.
 //
 
-#include <server/core/config/ConfigStore.h>
+#include <core/config/ConfigStore.h>
 #include <stdexcept>
 
 namespace collab3::core {

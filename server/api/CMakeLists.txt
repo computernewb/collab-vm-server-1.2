@@ -8,7 +8,7 @@ target_link_libraries(collab3-api PUBLIC
 )
 
 target_include_directories(collab3-api PRIVATE ${PROJECT_BINARY_DIR})
-add_dependencies(collab3-api __collabvm_gittag)
+add_dependencies(collab3-api __collab3_server_gittag)
 
 collabvm_targetize(collab3-api)
 

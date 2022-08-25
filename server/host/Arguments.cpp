@@ -14,7 +14,7 @@
 #include <iostream>
 
 // Version headers
-#include <server/core/Version.h>
+#include <core/Version.h>
 
 #include <boost/asio/version.hpp>
 #include <boost/beast/version.hpp>

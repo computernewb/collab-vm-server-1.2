@@ -11,4 +11,4 @@
 
 // Include a file in core as a test.
 // This should work; if it doesn't there's probably bigger fish to fry
-#include <server/core/http/HttpUtils.h>
+#include <core/http/HttpUtils.h>

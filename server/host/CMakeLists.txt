@@ -15,7 +15,7 @@ target_link_libraries(collab3-host PRIVATE
 		collab3::api)
 
 target_include_directories(collab3-host PRIVATE ${PROJECT_BINARY_DIR})
-add_dependencies(collab3-host __collabvm_gittag)
+add_dependencies(collab3-host __collab3_server_gittag)
 
 # make the temporary host server output in the top level of your build dir rather than server/host/
 set_target_properties(collab3-host PROPERTIES

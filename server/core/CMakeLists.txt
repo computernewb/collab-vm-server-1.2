@@ -51,7 +51,7 @@ target_compile_definitions(collab3_core PUBLIC
 		)
 
 target_include_directories(collab3_core PRIVATE ${PROJECT_BINARY_DIR})
-add_dependencies(collab3_core __collabvm_gittag)
+add_dependencies(collab3_core __collab3_server_gittag)
 
 # Targetize
 collabvm_targetize(collab3_core)
