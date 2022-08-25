@@ -12,8 +12,12 @@ Config:
 bespoke boost HTTP wrapper:
 - rewrite ALL code to use coroutines, to simplify it
 - refactor server code
-- Add a routing layer
+- Add a router layer, because I really need one
 - Allow buffer generator (it was merged in)
+? Move websocket code to another partition, for organization
 
 WebRTC:
-- do it lol
+- Implement bits and pieces of the protocols of the stack
+- implement ASIO library for everything
+- ...
+- ???
