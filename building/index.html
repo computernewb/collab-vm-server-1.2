@@ -99,23 +99,23 @@
 </ul>
 <p>You can use either system library versions (if preferred) or use vcpkg for the grunt of them.</p>
 <h1 id="building-collab3-monorepo-c-code">Building Collab3 Monorepo C++ Code</h1>
+<p>The general formula is:</p>
 <pre><code class="language-bash">$ cmake -B build --preset $PRESET
 $ cmake --build build
 # ...
 # profit?
 </code></pre>
-<p>$PRESET can be:</p>
+<p>where $PRESET can be:</p>
 <ul>
 <li>release : Release build</li>
 <li>debug : Debug build</li>
 <li>debug-asan : Debug build (with AddressSanitizer enabled)</li>
 <li>debug-tsan : Debug build (with ThreadSanitizer enabled)</li>
 </ul>
-<p>There are also some others, but they are <em>only</em> for use by our CI.</p>
-<p>To use vcpkg, add <code>--toolchain $VCPKG/scripts/buildsystems/vcpkg.cmake</code> to the first CMake invocation (clue:
-the one with <code>-B build</code>).</p>
+<p>There are also a few others, but they are <em>only</em> for use by our CI, and shouldn't be used.</p>
+<p>To use vcpkg, add <code>--toolchain $VCPKG/scripts/buildsystems/vcpkg.cmake</code> to the CMake generation command line.</p>
 <p>For now, you'll get one <code>collab3-host</code> executable in the build root. This is the one you should run.</p>
-<!-- TODO: The agent will need another configure/build step.. -->
+<!-- TODO: The agent will need another configure/build step, at least for Windows. -->
 
 <h1 id="building-collab3-monorepo-documentation">Building Collab3 Monorepo Documentation</h1>
 <p>Note that usually you won't have to do this, as the <a href="https://computernewb.github.io/collab3">web documentation</a> will update
