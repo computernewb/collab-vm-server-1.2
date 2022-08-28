@@ -112,7 +112,7 @@ $ cmake --build build
 <li>debug-tsan : Debug build (with ThreadSanitizer enabled)</li>
 </ul>
 <p>There are also some others, but they are <em>only</em> for use by our CI.</p>
-<p>To use vcpkg, add <code>-DCMAKE_TOOLCHAIN_FILE=$VCPKG/scripts/buildsystems/vcpkg.cmake</code> to the first CMake invocation (clue:
+<p>To use vcpkg, add <code>--toolchain $VCPKG/scripts/buildsystems/vcpkg.cmake</code> to the first CMake invocation (clue:
 the one with <code>-B build</code>).</p>
 <p>For now, you'll get one <code>collab3-host</code> executable in the build root. This is the one you should run.</p>
 <!-- TODO: The agent will need another configure/build step.. -->
