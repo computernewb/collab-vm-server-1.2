@@ -1,12 +1,19 @@
-Compiling the Collab3 monorepo is fairly easy.
+Compiling the Collab3 monorepo code is fairly easy.
 
-## Notice
+# Notice
 
-Windows support is 
+Windows is not supported by the Collab3 developers, and the project will not configure if targeting a Windows platform.
 
-## Dependencies
+This is an intentional change, and it will not be reverted until:
 
-GCC 11+ or Clang 13+ are recommended compiler versions.
+- DBus p2p works on Windows
+- Windows QEMU supports modules, and passing handles to and from QEMU and another process
+
+# Dependencies
+
+GCC 11+ or Clang 14+ are recommended compiler versions, however newer versions are acceptable too.
+
+Libraries:
 
 * Boost 1.75 or above
 * fmt
@@ -14,9 +21,7 @@ GCC 11+ or Clang 13+ are recommended compiler versions.
 
 You can use either system library versions (if preferred) or use vcpkg for the grunt of them.
 
-## Invoking CMake
-
-These example directions are for Linux, but they should work basically everywhere CMake is.
+# Building Collab3 Monorepo C++ Code
 
 ```bash
 $ cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release
@@ -31,8 +36,15 @@ the one with `-B build`).
 
 For now, you'll get one `collab3-host` executable in the build root. This is the one you should run.
 
-## Building Collab3 Repository Documentation
+<!-- TODO: The agent will need another configure/build step.. -->
 
-You'll need to install `mkdocs` and `mkdocs-windmill-dark` via pip.
+# Building Collab3 Monorepo Documentation
 
-Run `mkdocs build`. The resulting output will be in `site/`.
+Note that usually you won't have to do this, as the [web site](https://computernewb.github.io/collab3) will update
+upon any changes to documentation. For development purposes though:
+
+You'll need to install `mkdocs` via pip.
+
+Run `mkdocs build`. 
+
+The resulting output will be in `site/`, and you can host this wherever you want.
