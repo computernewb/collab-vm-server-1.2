@@ -7,15 +7,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os }}
+        build:
+          - name: debug
+            preset: ci-debug
+          - name: release
+            preset: ci-release
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
         with:
           submodules: true
 
       - name: Install Dependencies And Setup LLVM
-        id: depends-n-llvm
+        id: setup
         run: |
          sudo apt install -y libvncserver-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev cmake ninja-build
          wget https://apt.llvm.org/llvm.sh
@@ -23,9 +27,9 @@ jobs:
          sudo ./llvm.sh 14 all
         shell: bash
 
-      - name: Build
+      - name: Build Collab3 C++ Bits
         id: build
         run: |
-          cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-14 -DCMAKE_CXX_COMPILER=clang++-14
-          cmake --build build
+          cmake -B build-${{matrix.build.preset}} --preset ${{matrix.build.preset}}
+          cmake --build build-${{matrix.build.preset}}
         shell: bash
