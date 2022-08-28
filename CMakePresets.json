@@ -52,7 +52,7 @@
       "name": "release",
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
 
@@ -60,7 +60,7 @@
       "name": "debug",
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
 
