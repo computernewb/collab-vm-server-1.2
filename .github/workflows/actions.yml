@@ -1,17 +1,37 @@
-name: CollabVM Server
+name: Collab3 CI
 
-on: [ push, pull_request ]
+on:
+  push:
+    paths:
+      - cmake/**
+      - "CMakeLists.txt"
+      - "CMakePresets.json"
+      - "vcpkg.json"
+      # agent/**
+      - server/**
+  pull_request:
+    paths:
+      - cmake/**
+      - "CMakeLists.txt"
+      - "CMakePresets.json"
+      - "vcpkg.json"
+      # agent/**
+      - server/**
 
 jobs:
   build:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
+        # This defines all the possible ci build configs in one spot.
+        # These run in parallel.
+        # Right now this controls only the C++ code.
         build:
           - name: debug
             preset: ci-debug
           - name: release
             preset: ci-release
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -28,8 +48,8 @@ jobs:
         shell: bash
 
       - name: Build Collab3 C++ Bits
-        id: build
+        id: build-cpp-code
         run: |
           cmake -B build-${{matrix.build.preset}} --preset ${{matrix.build.preset}}
-          cmake --build build-${{matrix.build.preset}}
+          cmake --build build-${{matrix.build.preset}} -j $(nproc)
         shell: bash
