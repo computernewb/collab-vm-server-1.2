@@ -24,12 +24,20 @@ You can use either system library versions (if preferred) or use vcpkg for the g
 # Building Collab3 Monorepo C++ Code
 
 ```bash
-$ cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release
-$ cd build
-$ cmake --build . # or if you know your generator, use make, ninja, whatever.
+$ cmake -B build --preset $PRESET
+$ cmake --build build
 # ...
 # profit?
 ```
+
+$PRESET can be:
+
+- release : Release build
+- debug : Debug build
+- debug-asan : Debug build (with AddressSanitizer enabled)
+- debug-tsan : Debug build (with ThreadSanitizer enabled)
+
+There are also some others, but they are *only* for use by our CI.
 
 To use vcpkg, add `-DCMAKE_TOOLCHAIN_FILE=$VCPKG/scripts/buildsystems/vcpkg.cmake` to the first CMake invocation (clue:
 the one with `-B build`).
@@ -40,10 +48,13 @@ For now, you'll get one `collab3-host` executable in the build root. This is the
 
 # Building Collab3 Monorepo Documentation
 
-Note that usually you won't have to do this, as the [web site](https://computernewb.github.io/collab3) will update
-upon any changes to documentation. For development purposes though:
+Note that usually you won't have to do this, as the [web documentation](https://computernewb.github.io/collab3) will update
+upon any changes to the documentation in the `master` branch. 
 
-You'll need to install `mkdocs` via pip.
+For development/local purposes, though:
+
+## Prerequisites
+- `mkdocs`
 
 Run `mkdocs build`. 
 

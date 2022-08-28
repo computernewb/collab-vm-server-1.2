@@ -46,6 +46,40 @@
         "CMAKE_CXX_COMPILER": "clang++-14",
         "COLLABVM_BUILD_FEATURES": "tsan"
       }
+    },
+
+    {
+      "name": "release",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+      }
+    },
+
+    {
+      "name": "debug",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+      }
+    },
+
+    {
+      "name": "debug-asan",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "COLLABVM_BUILD_FEATURES": "asan"
+      }
+    },
+
+    {
+      "name": "debug-tsan",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "COLLABVM_BUILD_FEATURES": "tsan"
+      }
     }
   ]
 }
