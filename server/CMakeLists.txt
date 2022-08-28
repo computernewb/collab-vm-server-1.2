@@ -6,7 +6,7 @@ project(collab3-server
 		DESCRIPTION "CollabVM 3.0"
 		)
 
-collabvm_add_tag_target(__collab3_server_gittag ${PROJECT_BINARY_DIR}/core)
+collab3_add_tag_target(__collab3_server_gittag ${PROJECT_BINARY_DIR}/core)
 
 # Include module subdirectories
 add_subdirectory(core)

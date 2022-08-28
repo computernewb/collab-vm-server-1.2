@@ -2,7 +2,7 @@
 
 This repository contains the source code to the Collab3 project.
 
-The components built by the Collab3 repo power the CollabVM site.
+The components built by the Collab3 monorepo power the CollabVM site.
 
 CollabVM was coded and written by Cosmic Sans, Dartz, modeco80, and a [few others.](https://github.com/computernewb/collab-vm-server/graphs/contributors)
 

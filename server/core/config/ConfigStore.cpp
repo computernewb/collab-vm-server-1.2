@@ -3,7 +3,6 @@
 //
 
 #include <core/config/ConfigStore.h>
-#include <stdexcept>
 
 namespace collab3::core {
 

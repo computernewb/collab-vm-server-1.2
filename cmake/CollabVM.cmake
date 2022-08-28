@@ -2,11 +2,17 @@
 
 # Adds some stuff to targets to give them CollabVM core defines
 # and misc. options
-function(collabvm_targetize target)
+function(collab3_target target)
 	target_compile_definitions(${target} PRIVATE "$<$<CONFIG:DEBUG>:COLLABVM_CORE_DEBUG>")
 
 	# Set up their include so that including project headers works as expected
 	target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR})
+
+	# set C++ standard up
+	set_target_properties(${TARGET} PROPERTIES
+			CXX_STANDARD 20
+			CXX_STANDARD_REQUIRED ON
+	)
 
 	if("asan" IN_LIST COLLABVM_BUILD_FEATURES)
 		# Error if someone's trying to mix asan and tsan together,
@@ -28,7 +34,7 @@ function(collabvm_targetize target)
 
 endfunction()
 
-function(collabvm_add_tag_target name output_path)
+function(collab3_add_tag_target name output_path)
 	add_custom_target(${name}
 			COMMAND ${CMAKE_COMMAND} -P ${COLLAB3_TOP}/cmake/GitTag.cmake
 			WORKING_DIRECTORY ${output_path}
