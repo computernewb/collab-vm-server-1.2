@@ -39,7 +39,7 @@ $PRESET can be:
 
 There are also some others, but they are *only* for use by our CI.
 
-To use vcpkg, add `-DCMAKE_TOOLCHAIN_FILE=$VCPKG/scripts/buildsystems/vcpkg.cmake` to the first CMake invocation (clue:
+To use vcpkg, add `--toolchain $VCPKG/scripts/buildsystems/vcpkg.cmake` to the first CMake invocation (clue:
 the one with `-B build`).
 
 For now, you'll get one `collab3-host` executable in the build root. This is the one you should run.
