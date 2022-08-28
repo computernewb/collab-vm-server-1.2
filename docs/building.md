@@ -23,6 +23,8 @@ You can use either system library versions (if preferred) or use vcpkg for the g
 
 # Building Collab3 Monorepo C++ Code
 
+The general formula is:
+
 ```bash
 $ cmake -B build --preset $PRESET
 $ cmake --build build
@@ -30,21 +32,20 @@ $ cmake --build build
 # profit?
 ```
 
-$PRESET can be:
+where $PRESET can be:
 
 - release : Release build
 - debug : Debug build
 - debug-asan : Debug build (with AddressSanitizer enabled)
 - debug-tsan : Debug build (with ThreadSanitizer enabled)
 
-There are also some others, but they are *only* for use by our CI.
+There are also a few others, but they are *only* for use by our CI, and shouldn't be used.
 
-To use vcpkg, add `--toolchain $VCPKG/scripts/buildsystems/vcpkg.cmake` to the first CMake invocation (clue:
-the one with `-B build`).
+To use vcpkg, add `--toolchain $VCPKG/scripts/buildsystems/vcpkg.cmake` to the CMake generation command line.
 
 For now, you'll get one `collab3-host` executable in the build root. This is the one you should run.
 
-<!-- TODO: The agent will need another configure/build step.. -->
+<!-- TODO: The agent will need another configure/build step, at least for Windows. -->
 
 # Building Collab3 Monorepo Documentation
 
