@@ -7,7 +7,10 @@ on:
       - "CMakeLists.txt"
       - "CMakePresets.json"
       - "vcpkg.json"
+      # Future directories:
+      # protocol/**
       # agent/**
+      # webapp/**
       - server/**
   pull_request:
     paths:
@@ -15,7 +18,10 @@ on:
       - "CMakeLists.txt"
       - "CMakePresets.json"
       - "vcpkg.json"
+      # Future directories:
+      # protocol/**
       # agent/**
+      # webapp/**
       - server/**
 
 jobs:

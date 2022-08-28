@@ -1,4 +1,4 @@
-# Core library
+# Core collab3 library
 
 add_library(collab3_core
 		# Header only implementation files
@@ -25,7 +25,7 @@ target_link_libraries(collab3_core PUBLIC
 		)
 
 target_compile_definitions(collab3_core PUBLIC
-		# We always use fmt as a seperate library,
+		# We always use fmt as a separate library,
 		# so stop spdlog's detection logic right in its tracks.
 		-DSPDLOG_FMT_EXTERNAL
 
@@ -47,6 +47,9 @@ target_compile_definitions(collab3_core PUBLIC
 		# which has no conversion to the standard library std::string_view type.
 		# This is annoying, but thankfully there's an option to make it use
 		# the standard library type.
+		# (this might be getting phased out soon and the library switching
+		#  to boost::string_view with no option, but that converts to the
+		#  C++17 standard one no problem.)
 		-DBOOST_BEAST_USE_STD_STRING_VIEW
 		)
 
