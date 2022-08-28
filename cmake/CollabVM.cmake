@@ -9,7 +9,7 @@ function(collab3_target target)
 	target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR})
 
 	# set C++ standard up
-	set_target_properties(${TARGET} PROPERTIES
+	set_target_properties(${target} PROPERTIES
 			CXX_STANDARD 20
 			CXX_STANDARD_REQUIRED ON
 	)
