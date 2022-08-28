@@ -46,6 +46,8 @@
               </ul>
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="./">About</a>
+    <ul class="current">
+    </ul>
                 </li>
               </ul>
               <ul>
@@ -79,7 +81,38 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <p>The Collab3 monorepo is a fully rewritten version of the CollabVM server.</p>
+                <p>The Collab3 monorepo is a fully rewritten version of the CollabVM project.</p>
+<h1 id="philosophy">Philosophy</h1>
+<ul>
+<li>One monorepo for everything in the project</li>
+<li>Checking out the repository shouldn't be painful</li>
+<li>
+<p>Better development experience (one clone command versus 3-4...)</p>
+<ul>
+<li>No project submodules (less time needed to update a superproject, more time to write code)</li>
+</ul>
+</li>
+<li>
+<p>Fast, readable, and modular modern C++20 code</p>
+</li>
+<li>Hacking on the codebase shouldn't be a daunting task <ul>
+<li>Awaitable + coroutines really help with this on the ASIO front</li>
+</ul>
+</li>
+<li>
+<p>Development &amp; additional features encouraged by core developers</p>
+<ul>
+<li>(hopefully made more possible by code clarity/design) </li>
+</ul>
+</li>
+<li>
+<p>Microservices for each core part of the Collab3 server </p>
+</li>
+<li>Currently supported by design with the modular server/api, server/... libraries<ul>
+<li>Which will be split into different services when ready.</li>
+</ul>
+</li>
+</ul>
               
             </div>
           </div><footer>
