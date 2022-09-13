@@ -108,11 +108,28 @@
 <li>
 <p>Microservices for each core part of the Collab3 server </p>
 </li>
-<li>Currently supported by design with the modular server/api, server/... libraries<ul>
-<li>Which will be split into different services when ready.</li>
+<li>Currently supported by design with modular server/api, server/... libraries</li>
 </ul>
-</li>
-</ul>
+<h1 id="source-structure">Source Structure</h1>
+<pre><code> .github/   -&gt; Github files
+ cmake/     -&gt; Global CMake includes
+ docs/      -&gt; MkDocs documentation files
+
+ lib/       -&gt; Project libraries   
+
+ protocol/  -&gt; Shared (between agent, server, webapp) protocol files
+
+ server/    -&gt; Collab3 server
+    api/    -&gt; API module
+    core/   -&gt; Core library
+      config/ 
+      http/
+      util/
+    host/   -&gt; Temp host
+
+  webapp/   -&gt; Webapp
+
+</code></pre>
               
             </div>
           </div><footer>
