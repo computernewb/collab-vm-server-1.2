@@ -84,17 +84,23 @@ namespace collab3::core {
 				SetBase(ConfigValue { value });
 			}
 
+			[[nodiscard]] bool Exists() const noexcept;
+
+			/**
+			 * Remove this value.
+			 */
+			void Remove();
+
 		   private:
 			friend ConfigStore;
 
-			constexpr explicit ArrayProxy(ConfigStore& store, const ConfigKey& key) :
+			constexpr explicit ArrayProxy(ConfigStore& store, const ConfigKey& key) noexcept :
 				underlyingStore(store),
 				key(key) {
 			}
 
 			void SetBase(const ConfigValue& value);
 			[[nodiscard]] ConfigValue& MaybeFetchValue() const;
-			[[nodiscard]] bool Exists() const;
 
 			ConfigStore& underlyingStore;
 			const ConfigKey& key;

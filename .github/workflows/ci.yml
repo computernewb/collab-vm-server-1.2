@@ -48,6 +48,7 @@ jobs:
         with:
           submodules: true
 
+      # TODO: This really *really* should be cached.
       - name: Install Dependencies And Setup LLVM
         id: setup
         run: |
@@ -62,4 +63,11 @@ jobs:
         run: |
           cmake -B build-${{matrix.build.preset}} --preset ${{matrix.build.preset}}
           cmake --build build-${{matrix.build.preset}} -j $(nproc)
+        shell: bash
+
+      - name: Run CTest tests
+        id: test
+        run: |
+          cd build-${{matrix.build.preset}}
+          ctest -VV
         shell: bash

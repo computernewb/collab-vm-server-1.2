@@ -24,11 +24,13 @@ project(collab3
 		DESCRIPTION "CollabVM 3.0"
 		)
 
+include(CTest)
+
 set(COLLAB3_TOP ${PROJECT_SOURCE_DIR})
 
 include(cmake/CollabVM.cmake)
 
-# Dependencies
+# Dependencies of the top level projects
 find_package(Boost REQUIRED COMPONENTS system filesystem program_options)
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
@@ -37,10 +39,17 @@ find_package(spdlog REQUIRED)
 # Top level third party dependencies
 #add_subdirectory(third_party/capnproto)
 
+# Give monorepo access to Catch2 if test builds should be enabled
+if(BUILD_TESTING)
+	find_package(Catch2 2 REQUIRED)
+	include(Catch)
+endif()
+
 # Subprojects part of the Collab3 monorepo.
 # Note that even though these are seperate projects,
 # they *require* this driver CMakeLists at the top of the project,
 # and cannot be built manually. Don't try.
+
 
 add_subdirectory(server)
 

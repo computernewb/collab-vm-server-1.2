@@ -15,3 +15,7 @@ add_subdirectory(api)
 # temporary host for all modules
 add_subdirectory(host)
 
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

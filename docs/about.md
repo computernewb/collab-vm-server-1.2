@@ -14,5 +14,26 @@ The Collab3 monorepo is a fully rewritten version of the CollabVM project.
     - (hopefully made more possible by code clarity/design) 
 
 - Microservices for each core part of the Collab3 server 
-  - Currently supported by design with the modular server/api, server/... libraries
-    - Which will be split into different services when ready.
+  - Currently supported by design with modular server/api, server/... libraries
+
+# Source Structure
+```
+ .github/   -> Github files
+ cmake/     -> Global CMake includes
+ docs/      -> MkDocs documentation files
+ 
+ lib/       -> Project libraries   
+   
+ protocol/  -> Shared (between agent, server, webapp) protocol files
+  
+ server/    -> Collab3 server
+    api/    -> API module
+    core/   -> Core library
+      config/ 
+      http/
+      util/
+    host/   -> Temp host
+   
+  webapp/   -> Webapp
+ 
+```

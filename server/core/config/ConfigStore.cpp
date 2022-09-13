@@ -17,11 +17,16 @@ namespace collab3::core {
 		return underlyingStore.valueMap[key];
 	}
 
+	void ConfigStore::ArrayProxy::Remove() {
+		if(Exists())
+			underlyingStore.valueMap.erase(key);
+	}
+
 	void ConfigStore::ArrayProxy::SetBase(const ConfigStore::ConfigValue& value) {
 		underlyingStore.valueMap[key] = value;
 	}
 
-	bool ConfigStore::ArrayProxy::Exists() const {
+	bool ConfigStore::ArrayProxy::Exists() const noexcept {
 		return underlyingStore.valueMap.contains(key);
 	}
 
