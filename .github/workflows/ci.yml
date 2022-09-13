@@ -52,7 +52,7 @@ jobs:
       - name: Install Dependencies And Setup LLVM
         id: setup
         run: |
-         sudo apt install -y libvncserver-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev cmake ninja-build
+         sudo apt install -y libvncserver-dev libboost-dev catch2 libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev cmake ninja-build
          wget https://apt.llvm.org/llvm.sh
          chmod +x llvm.sh
          sudo ./llvm.sh 14 all
