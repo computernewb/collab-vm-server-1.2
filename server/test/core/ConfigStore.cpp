@@ -11,7 +11,7 @@ TEST_CASE("ConfigStore default construction", "[ConfigStore]") {
 }
 
 TEST_CASE("ConfigStore value manipulation", "[ConfigStore]") {
-	GIVEN("a default constructed ConfigStore") {
+	GIVEN("a ConfigStore") {
 		ConfigStore store;
 
 		THEN("Looking up a non-existent value fails regardless of type") {
@@ -24,22 +24,23 @@ TEST_CASE("ConfigStore value manipulation", "[ConfigStore]") {
 		THEN("Inserting a value of a given type") {
 			store["value"].Set(static_cast<std::uint64_t>(32));
 
-			AND_THEN("inserting works as expected") {
+			AND_THEN("works as expected, creating the value") {
 				REQUIRE(store["value"].Exists());
 				REQUIRE(store["value"].Is<std::uint64_t>());
 			}
 
-			AND_THEN("Looking up a value with the right type succeeds") {
+			AND_THEN("Conversion to the right type succeeds") {
 				REQUIRE_NOTHROW(store["value"].As<std::uint64_t>());
 			}
 
-			AND_THEN("Looking up a value with the wrong type fails") {
+			AND_THEN("Conversion to the right type succeeds") {
 				REQUIRE_THROWS_AS(store["value"].As<std::string>(), ConfigStore::ArrayProxy::InvalidType);
 			}
 
-			AND_THEN("Removing a existent value works") {
+			AND_THEN("Removing works") {
 				store["value"].Remove();
 
+				// Make sure the value really was removed.
 				REQUIRE(store["value"].Exists() == false);
 				REQUIRE_THROWS_AS(store["value"].As<std::uint64_t>(), ConfigStore::ArrayProxy::NonExistentValue);
 			}

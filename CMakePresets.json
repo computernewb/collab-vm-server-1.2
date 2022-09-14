@@ -12,7 +12,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_C_COMPILER": "clang-14",
-        "CMAKE_CXX_COMPILER": "clang++-14"
+        "CMAKE_CXX_COMPILER": "clang++-14",
+        "COLLABVM_LINKER": "mold"
       }
     },
 
@@ -22,7 +23,8 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_C_COMPILER": "clang-14",
-        "CMAKE_CXX_COMPILER": "clang++-14"
+        "CMAKE_CXX_COMPILER": "clang++-14",
+        "COLLABVM_LINKER": "mold"
       }
     },
 
@@ -33,7 +35,8 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_C_COMPILER": "clang-14",
         "CMAKE_CXX_COMPILER": "clang++-14",
-        "COLLABVM_BUILD_FEATURES": "asan"
+        "COLLABVM_BUILD_FEATURES": "asan",
+        "COLLABVM_LINKER": "mold"
       }
     },
 
@@ -44,7 +47,8 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_C_COMPILER": "clang-14",
         "CMAKE_CXX_COMPILER": "clang++-14",
-        "COLLABVM_BUILD_FEATURES": "tsan"
+        "COLLABVM_BUILD_FEATURES": "tsan",
+        "COLLABVM_LINKER": "mold"
       }
     },
 

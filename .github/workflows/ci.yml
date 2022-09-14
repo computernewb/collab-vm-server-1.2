@@ -3,6 +3,7 @@ name: Collab3 CI
 on:
   push:
     paths:
+      - .github/workflows/ci.yml
       - cmake/**
       - "CMakeLists.txt"
       - "CMakePresets.json"
@@ -26,6 +27,7 @@ on:
 
 jobs:
   build:
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: true
       matrix:
@@ -42,21 +44,26 @@ jobs:
           - name: release
             preset: ci-release
 
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
         with:
           submodules: true
 
-      # TODO: This really *really* should be cached.
-      - name: Install Dependencies And Setup LLVM
-        id: setup
-        run: |
-         sudo apt install -y libvncserver-dev libboost-dev catch2 libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev cmake ninja-build
-         wget https://apt.llvm.org/llvm.sh
-         chmod +x llvm.sh
-         sudo ./llvm.sh 14 all
-        shell: bash
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: mold cmake ninja-build libvncserver-dev libboost-dev catch2 libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev
+          version: 1.0
+
+      #- name: Install Dependencies And Setup LLVM
+      #  id: setup
+      #  run: |
+      #   sudo apt install -y mold
+      #   sudo apt install -y cmake ninja-build
+      #   sudo apt install -y
+      #   wget https://apt.llvm.org/llvm.sh
+      #   chmod +x llvm.sh
+      #   sudo ./llvm.sh 14 all
+      #  shell: bash
 
       - name: Build Collab3 C++ Bits
         id: build-cpp-code

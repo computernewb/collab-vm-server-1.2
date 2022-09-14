@@ -45,6 +45,10 @@ if(BUILD_TESTING)
 	include(Catch)
 endif()
 
+if(NOT "${COLLABVM_LINKER}" STREQUAL "")
+	collab3_set_alternate_linker(${COLLABVM_LINKER})
+endif()
+
 # Subprojects part of the Collab3 monorepo.
 # Note that even though these are seperate projects,
 # they *require* this driver CMakeLists at the top of the project,

@@ -3,6 +3,7 @@ name: Deploy mkdocs to Github Pages
 on:
   push:
     paths:
+      - .github/workflows/mkdocs.yml
       - docs/**
       - mkdocs.yml
 #      - requirements.txt
