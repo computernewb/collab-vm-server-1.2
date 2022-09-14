@@ -33,7 +33,8 @@ jobs:
       matrix:
         # This defines all the possible ci build configs in one spot.
         # These run in parallel.
-        # Right now this controls only the C++ code.
+        # Right now this controls only the C++ server code, but could be
+        # expanded to include webapp/ or other projects.
         build:
           - name: debug
             preset: ci-debug
@@ -54,18 +55,7 @@ jobs:
           packages: mold cmake ninja-build libvncserver-dev libboost-dev catch2 libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev
           version: 1.0
 
-      #- name: Install Dependencies And Setup LLVM
-      #  id: setup
-      #  run: |
-      #   sudo apt install -y mold
-      #   sudo apt install -y cmake ninja-build
-      #   sudo apt install -y
-      #   wget https://apt.llvm.org/llvm.sh
-      #   chmod +x llvm.sh
-      #   sudo ./llvm.sh 14 all
-      #  shell: bash
-
-      - name: Build Collab3 C++ Bits
+      - name: Build Collab3 Server
         id: build-cpp-code
         run: |
           cmake -B build-${{matrix.build.preset}} --preset ${{matrix.build.preset}}

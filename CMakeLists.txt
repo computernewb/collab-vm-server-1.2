@@ -37,7 +37,8 @@ find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 
 # Top level third party dependencies
-#add_subdirectory(third_party/capnproto)
+add_subdirectory(third_party/flatbuffers)
+add_subdirectory(third_party/ctre)
 
 # Give monorepo access to Catch2 if test builds should be enabled
 if(BUILD_TESTING)
