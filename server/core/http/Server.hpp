@@ -17,9 +17,8 @@
 #include <string>
 
 // to pull in some stuff we don't wanna
-#include "ForwardDeclarations.h"
-#include "NetworkingTSCompatibility.h"
-
+#include "ForwardDeclarations.hpp"
+#include "NetworkingTSCompatibility.hpp"
 
 // whatever I give up - fully define WebSocketClient here
 #include "WebSocketClient.h"

@@ -1,17 +1,22 @@
 # Core collab3 library
 
 add_library(collab3_core
-		# Header only implementation files
-		AsioImplementation.cpp
-		http/BeastImplementation.cpp
+
+		# ASIO library
+		asio/AsioImplementation.cpp
+
+		Panic.cpp
 
 		config/ConfigStore.cpp
 
+		# HTTP server codebase
+		http/Route.cpp
 		http/Server.cpp
 		http/Listener.cpp
 		http/HttpSession.cpp
 		http/WebSocketClient.cpp
 		http/WebSocketMessage.cpp
+		http/BeastImplementation.cpp
 
 #		util/CommandLine.cpp
 		)
@@ -22,9 +27,17 @@ target_link_libraries(collab3_core PRIVATE Boost::system)
 target_link_libraries(collab3_core PUBLIC
 		fmt::fmt
 		spdlog::spdlog
+
+		# no nice alias :(
+		ctre
 		)
 
 target_compile_definitions(collab3_core PUBLIC
+		# There isn't really a point to keeping this disabled or a knob atm, since
+		# it is pretty much a free performance gain.
+		# Keep it a knob, but keep it on.
+		-DCOLLAB3_CORE_SYSTEM_EXECUTOR
+
 		# We always use fmt as a separate library,
 		# so stop spdlog's detection logic right in its tracks.
 		-DSPDLOG_FMT_EXTERNAL
@@ -35,6 +48,9 @@ target_compile_definitions(collab3_core PUBLIC
 		# No more io_service! No more io_context::work!
 		-DBOOST_ASIO_NO_DEPRECATED=1
 
+		# Enable io_uring support (we only support Linux anyways :p)
+		-DBOOST_ASIO_DISABLE_EPOLL=1
+
 		# Disable some weird stuff ASIO can do.
 		-DBOOST_ASIO_DISABLE_BOOST_ARRAY=1
 		-DBOOST_ASIO_DISABLE_BOOST_BIND=1
@@ -43,13 +59,16 @@ target_compile_definitions(collab3_core PUBLIC
 
 		-DBOOST_BEAST_SEPARATE_COMPILATION=1
 
+
 		# By default, Boost.Beast uses its own string_view,
 		# which has no conversion to the standard library std::string_view type.
 		# This is annoying, but thankfully there's an option to make it use
 		# the standard library type.
+		#
 		# (this might be getting phased out soon and the library switching
 		#  to boost::string_view with no option, but that converts to the
-		#  C++17 standard one no problem.)
+		#  C++17 standard one no problem, so I personally don't have as much
+		#  of a gripe with that.)
 		-DBOOST_BEAST_USE_STD_STRING_VIEW
 		)
 

@@ -8,11 +8,7 @@ function(collab3_target target)
 	# Set up their include so that including project headers works as expected
 	target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR})
 
-	# set C++ standard up
-	set_target_properties(${target} PROPERTIES
-			CXX_STANDARD 20
-			CXX_STANDARD_REQUIRED ON
-	)
+	target_compile_features(${target} PUBLIC cxx_std_20)
 
 	if("asan" IN_LIST COLLABVM_BUILD_FEATURES)
 		# Error if someone's trying to mix asan and tsan together,

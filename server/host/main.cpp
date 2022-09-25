@@ -13,9 +13,9 @@
 #include <boost/asio/signal_set.hpp>
 #include <iostream>
 
-#include "Arguments.h"
+#include "Arguments.hpp"
 
-#include <core/config/ConfigStore.h>
+#include <core/config/ConfigStore.hpp>
 
 int main(int argc, char** argv) {
 	// maybe global instance this so things can access it?

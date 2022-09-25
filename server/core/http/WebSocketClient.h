@@ -19,9 +19,9 @@
 #include <boost/beast/websocket/stream.hpp>
 #include <optional>
 
-#include "ForwardDeclarations.h"
-#include "NetworkingTSCompatibility.h"
-#include "WebSocketMessage.h"
+#include "ForwardDeclarations.hpp"
+#include "NetworkingTSCompatibility.hpp"
+#include "WebSocketMessage.hpp"
 
 namespace collab3::core::http {
 

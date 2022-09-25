@@ -7,7 +7,7 @@
 // Text is provided in LICENSE.
 //
 
-#include "WebSocketMessage.h"
+#include "WebSocketMessage.hpp"
 
 #include <boost/assert.hpp>
 #include <cstring>

@@ -16,8 +16,8 @@
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core/bind_handler.hpp>
 
-#include "ForwardDeclarations.h"
-#include "NetworkingTSCompatibility.h"
+#include "ForwardDeclarations.hpp"
+#include "NetworkingTSCompatibility.hpp"
 
 // forward decl of bhttp session for prototype
 namespace collab3::core::http { // NOLINT

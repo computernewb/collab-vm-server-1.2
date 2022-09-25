@@ -18,6 +18,7 @@ namespace collab3::core {
 
 	namespace detail {
 
+
 		template<class T>
 		struct Point {
 			T x;
@@ -52,6 +53,22 @@ namespace collab3::core {
 		};
 
 	} // namespace detail
+
+
+	/**
+	 * Type used to communicate byte sizes.
+	 * May become a literal class type later.
+	 */
+	using ByteSize = std::size_t;
+
+	constexpr static inline ByteSize Kb = 1024; // bytes
+	constexpr static inline ByteSize KB = 1000; // bytes
+
+	constexpr static inline ByteSize Mb = 1024 * Kb;
+	constexpr static inline ByteSize MB = 1000 * KB;
+
+	constexpr static inline ByteSize Gb = 1024 * Mb;
+	constexpr static inline ByteSize GB = 1000 * MB;
 
 	/**
 	 * A rectangle using uint32_t as its backing type.

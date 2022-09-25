@@ -11,8 +11,8 @@
 
 #include <iostream>
 
-#include "HttpUtils.h"
-#include "Server.h"
+#include "HttpUtils.hpp"
+#include "Server.hpp"
 
 namespace collab3::core::http {
 

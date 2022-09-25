@@ -7,7 +7,7 @@
 // Text is provided in LICENSE.
 //
 
-#include "Server.h"
+#include "Server.hpp"
 
 #include <boost/asio/ip/tcp.hpp>
 

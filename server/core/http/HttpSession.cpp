@@ -21,9 +21,9 @@
 #include <boost/beast/http/write.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 
-#include "ForwardDeclarations.h"
-#include "HttpUtils.h"
-#include "NetworkingTSCompatibility.h"
+#include "ForwardDeclarations.hpp"
+#include "HttpUtils.hpp"
+#include "NetworkingTSCompatibility.hpp"
 
 // I'm so sorry :(
 #include "WebSocketClient.h"

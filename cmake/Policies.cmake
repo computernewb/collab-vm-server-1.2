@@ -12,6 +12,7 @@ endmacro()
 _new_cmake_policy(CMP0026) # CMake 3.0: Disallow use of the LOCATION property for build targets.
 _new_cmake_policy(CMP0042) # CMake 3.0+ (2.8.12): MacOS "@rpath" in target's install name
 _new_cmake_policy(CMP0046) # warn about non-existent dependencies
+_new_cmake_policy(CMP0048) # CMake 3.0+: project() command now maintains VERSION
 _new_cmake_policy(CMP0054) # CMake 3.1: Only interpret if() arguments as variables or keywords when unquoted.
 _new_cmake_policy(CMP0056) # try_compile() linker flags
 _new_cmake_policy(CMP0066) # CMake 3.7: try_compile(): use per-config flags, like CMAKE_CXX_FLAGS_RELEASE

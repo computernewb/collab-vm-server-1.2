@@ -7,7 +7,7 @@
 // Text is provided in LICENSE.
 //
 
-#include "CommandLine.h"
+#include "CommandLine.hpp"
 
 #include <cstring>
 

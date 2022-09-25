@@ -12,8 +12,8 @@
 
 #include <boost/beast/http/message.hpp>
 
-#include "NetworkingTSCompatibility.h"
 #include <core/Version.h>
+#include "NetworkingTSCompatibility.hpp"
 
 namespace collab3::core::http {
 

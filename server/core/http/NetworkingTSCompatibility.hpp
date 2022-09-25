@@ -22,6 +22,8 @@
 #ifndef CORE_HTTP_NETWORKINGTSCOMPATIBILITY_H
 #define CORE_HTTP_NETWORKINGTSCOMPATIBILITY_H
 
+// FIXME: Remove this file
+
 // Forward declare some stuff
 namespace boost::asio { // NOLINT (this namespace intentionally isn't asio::ip)
 	namespace ip {

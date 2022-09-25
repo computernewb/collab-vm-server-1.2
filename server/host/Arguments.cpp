@@ -7,7 +7,7 @@
 // Text is provided in LICENSE.
 //
 
-#include "Arguments.h"
+#include "Arguments.hpp"
 
 #include <boost/program_options.hpp>
 #include <cstdlib>

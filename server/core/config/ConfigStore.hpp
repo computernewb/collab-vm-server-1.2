@@ -37,21 +37,24 @@ namespace collab3::core {
 		>;
 		// clang-format on
 
+		// TODO: Remove exception, we will instead return a Result<T>
+
+		struct InvalidType : public std::exception {
+			[[nodiscard]] const char* what() const noexcept override {
+				return "As<T>() type different than stored type. Use Is<T>() to type-check.";
+			}
+		};
+
+		struct NonExistentValue : public std::exception {
+			[[nodiscard]] const char* what() const noexcept override {
+				return "Non-existent value lookup. Use Set() beforehand or Exists() to check.";
+			}
+		};
+
 		/**
 		 * Array proxy object, used to allow a sane(r) API.
 		 */
 		struct ArrayProxy {
-			struct InvalidType : public std::exception {
-				[[nodiscard]] const char* what() const noexcept override {
-					return "As<T>() type different than stored type. Use Is<T>() to type-check.";
-				}
-			};
-
-			struct NonExistentValue : public std::exception {
-				[[nodiscard]] const char* what() const noexcept override {
-					return "Non-existent value lookup. Use Set() beforehand or Exists() to check.";
-				}
-			};
 
 			/**
 			 * Get this object as type T.
