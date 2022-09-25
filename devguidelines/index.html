@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Building Collab3 - Collab3</title>
+    <title>Development Guidelines - Collab3</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Building Collab3";
-        var mkdocs_page_input_path = "building.md";
+        var mkdocs_page_name = "Development Guidelines";
+        var mkdocs_page_input_path = "devguidelines.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -48,18 +48,18 @@
                 <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
                 </li>
               </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="./">Building Collab3</a>
-    <ul class="current">
-    </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../building/">Building Collab3</a>
                 </li>
               </ul>
               <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../usage/">Collab3 Setup</a>
                 </li>
               </ul>
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../devguidelines/">Development Guidelines</a>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Development Guidelines</a>
+    <ul class="current">
+    </ul>
                 </li>
               </ul>
       </div>
@@ -76,7 +76,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li>
-      <li>Building Collab3</li>
+      <li>Development Guidelines</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -85,58 +85,75 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <p>Compiling the Collab3 monorepo code is fairly easy.</p>
-<h1 id="notice">Notice</h1>
-<p>Windows is not supported by the Collab3 developers, and the project will not configure if targeting a Windows platform.</p>
-<p>This is an intentional change, and it will not be reverted until:</p>
-<ul>
-<li>DBus p2p works on Windows</li>
-<li>Windows QEMU supports modules, and passing handles to and from QEMU and another process</li>
-</ul>
-<h1 id="dependencies">Dependencies</h1>
-<p>GCC 11+ or Clang 14+ are recommended compiler versions, however newer versions are acceptable too.</p>
-<p>Libraries:</p>
-<ul>
-<li>Boost 1.75 or above</li>
-<li>fmt</li>
-<li>spdlog</li>
-</ul>
-<p>You can use either system library versions (if preferred) or use vcpkg for the grunt of them.</p>
-<h1 id="building-collab3-monorepo-c-code">Building Collab3 Monorepo C++ Code</h1>
-<p>The general formula is:</p>
-<pre><code class="language-bash">$ cmake -B build --preset $PRESET
-$ cmake --build build
-# ...
-# profit?
-</code></pre>
-<p>where $PRESET can be:</p>
-<ul>
-<li>release : Release build</li>
-<li>debug : Debug build</li>
-<li>debug-asan : Debug build (with AddressSanitizer enabled)</li>
-<li>debug-tsan : Debug build (with ThreadSanitizer enabled)</li>
-</ul>
-<p>There are also a few others, but they are <em>only</em> for use by our CI, and shouldn't be used.</p>
-<p>To use vcpkg, add <code>--toolchain $VCPKG/scripts/buildsystems/vcpkg.cmake</code> to the CMake generation command line.</p>
-<p>For now, you'll get one <code>collab3-host</code> executable in the build root. This is the one you should run.</p>
-<!-- TODO: The agent will need another configure/build step, at least for Windows. -->
+                <h1 id="development-guidelines">Development guidelines</h1>
+<p>These are some guidelines for code which is part of the repo.</p>
+<h1 id="javascript">Javascript</h1>
+<p>To be written, but for now don't write some IE8 tier stuff.</p>
+<h1 id="c">C++</h1>
+<h2 id="formatting">Formatting</h2>
+<p>Use clang-format.</p>
+<h2 id="naming">Naming</h2>
+<p>Use .cpp for source files, .hpp for headers. Inline functions do <em>NOT</em> need another implementation file.</p>
+<p>Function and type names should be in PascalCase.</p>
+<p>Variable names are camelCase.</p>
+<p>Underscores should only be used very rarely for private/introspection only fields which <em>need</em> to be public (for instance; in classes which need to stay POD), as they risk UB.</p>
+<p>Class members have no special prefix (because if you're not sure, you can use this-&gt; or the instance to qualify name lookup).</p>
+<p>Example (unformatted because I'm lazy):</p>
+<pre><code class="language-cpp">struct MyStructure {
 
-<h1 id="building-collab3-monorepo-documentation">Building Collab3 Monorepo Documentation</h1>
-<p>Note that usually you won't have to do this, as the <a href="https://computernewb.github.io/collab3">web documentation</a> will update
-upon any changes to the documentation in the <code>master</code> branch. </p>
-<p>For development/local purposes, though:</p>
-<h2 id="prerequisites">Prerequisites</h2>
+    void DoThing();
+
+private:
+
+    std::uint32_t thing{};
+    std::uint32_t otherThing{};
+
+};
+
+void FreeFunction();
+</code></pre>
+<h2 id="language-subset">Language Subset</h2>
+<p>The Collab3 C++ code uses the C++ language, obviously, but we do not use some of the features
+of the C++ language. The later sections describe our C++ language subset in depth.</p>
+<h3 id="exceptions">Exceptions</h3>
+<p>Exceptions and the <code>throw</code> keyword are banned wholly in the collab3 C++ code.
+Rather:</p>
 <ul>
-<li><code>mkdocs</code></li>
+<li>Non-fatal errors are <code>collab3::core::Result&lt;Value, Error&gt;</code>, which can also return/hold success cases (it's also cheap to pass, and doesn't allocate anything, unlike exceptions).</li>
 </ul>
-<p>Run <code>mkdocs build</code>. </p>
-<p>The resulting output will be in <code>site/</code>, and you can host this wherever you want.</p>
+<p>One can handle errors without worrying about the logic being complicated ala:</p>
+<pre><code>auto myResult = co_await MyCoroutineWhichRettysAResult(...);
+
+myResult.Map([](auto&amp; res) {
+    // My coroutine worked
+}).MapError([](auto&amp; err) {
+    // It did not.
+}).OrElse([]() {
+    // Something went *hideously* wrong and the Result was defaulted.
+    // (shouldn't need this case in most cases in "good" code.)
+});
+</code></pre>
+<ul>
+<li>Fatal errors should call <code>collab3::core::Panic()</code> with an optional message.</li>
+<li>The affected service will shut down with a message and print a stack trace (with symbolized names in Debug builds).<ul>
+<li><code>COLLAB3_CORE_ASSERT(...)</code> and <code>COLLAB3_CORE_VERIFY(...)</code> both call Panic() upon failure.</li>
+<li><code>_EXPECT(..., ErrorType, ...)</code> variants will instead return a Result initialized with an <code>ErrorType</code>.</li>
+</ul>
+</li>
+</ul>
+<p>Exceptions to this rule:
+- Constant expressions are allowed to use the <code>throw</code> keyword to induce
+  compile time errors, as this is pretty much the only way to cleanly do so.</p>
+<ul>
+<li>Any code which currently throws before this rule was documented (refactor it out!!!)</li>
+</ul>
+<h3 id="rtti">RTTI</h3>
+<p>Native RTTI is banned, and we use a sort-of-ala LLVM-open-style RTTI system.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../about/" class="btn btn-neutral float-left" title="About"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../usage/" class="btn btn-neutral float-right" title="Collab3 Setup">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../usage/" class="btn btn-neutral float-left" title="Collab3 Setup"><span class="icon icon-circle-arrow-left"></span> Previous</a>
     </div>
 
   <hr/>
@@ -160,10 +177,8 @@ upon any changes to the documentation in the <code>master</code> branch. </p>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../about/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../usage/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
-    
-      <span><a href="../usage/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
