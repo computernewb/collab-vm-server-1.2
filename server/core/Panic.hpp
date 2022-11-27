@@ -1,5 +1,9 @@
 //
-// Created by lily on 9/15/22.
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// SPDX-License-Identifier: GPL-3.0
 //
 
 #pragma once

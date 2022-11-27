@@ -1,0 +1,49 @@
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// SPDX-License-Identifier: GPL-3.0
+//
+
+// Control layer tables/messages
+
+include "types.fbs";
+
+namespace collab3.proto;
+
+enum MouseButton : ubyte {
+    /// No mouse buttons
+    NONE = 0x0,
+
+    LEFT = 0x1,
+    MIDDLE = 0x2,
+    RIGHT = 0x4,
+
+    // just to have 'em, even though
+    // I don't think we can even pass them in, lol
+    MOUSE4 = 0x8,
+    MOUSE5 = 0x10
+}
+
+table KeyMessage {
+    key: ushort;
+    pressed: bool;
+}
+
+table MouseMessage {
+    /// The current mouse buttons. May not be sent
+    buttons: MouseButton = NONE;
+
+    /// The current mouse position. May be relative or absolute.
+    mouse_position: RectUS (required);
+
+    /// True if the mouse is absolute rather than relative.
+    mouse_absolute: bool;
+}
+
+
+union ControlLayerMessage {
+    KeyMessage,
+    MouseMessage
+}

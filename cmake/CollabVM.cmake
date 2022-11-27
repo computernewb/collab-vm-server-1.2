@@ -43,7 +43,7 @@ function(collab3_set_alternate_linker linker)
 	if(LINKER_EXECUTABLE)
 		message(STATUS "Collab3: Using ${COLLABVM_LINKER} to link")
 
-		# This is blegh but I guess it works for a global project-wide linker
+		# This is utterly blegh but I guess it works for a global project-wide linker
 		if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS 12.0.0)
 			add_link_options("-ld-path=${COLLABVM_LINKER}")
 		else()

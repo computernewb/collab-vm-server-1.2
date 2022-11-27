@@ -1,3 +1,11 @@
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// SPDX-License-Identifier: GPL-3.0
+//
+
 #pragma once
 
 #include <boost/asio/bind_executor.hpp>
@@ -57,7 +65,7 @@ namespace collab3::core {
 	 * Call a ASIO operation with a timeout.
 	 * The timer is supplied by the user, and must last until the completion token is called.
 	 *
-	 * \param[in] op The asynchronous operation to wrap with a timeout
+	 * \param[in] op The asynchronous operation to wrap with a timeout (use net::deferred as the CompletionToken)
 	 * \param[in] timer The timer to use as the deadline timer. Must be configured with a expiry beforehand
 	 * \param[in] token The completion token for this operation.
 	 */

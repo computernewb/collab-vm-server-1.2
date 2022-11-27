@@ -13,9 +13,6 @@ The Collab3 monorepo is a fully rewritten version of the CollabVM project.
   - Development & additional features encouraged by core developers
     - (hopefully made more possible by code clarity/design) 
 
-- Microservices for each core part of the Collab3 server 
-  - Currently supported by design with modular server/api, server/... libraries
-
 # Source Structure
 ```
  .github/   -> Github files

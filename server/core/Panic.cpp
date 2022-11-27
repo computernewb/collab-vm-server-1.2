@@ -1,3 +1,10 @@
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// SPDX-License-Identifier: GPL-3.0
+//
 
 #include <core/Panic.hpp>
 

@@ -1,5 +1,9 @@
 //
-// Created by lily on 8/22/22.
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// SPDX-License-Identifier: GPL-3.0
 //
 
 #include <core/config/ConfigStore.hpp>

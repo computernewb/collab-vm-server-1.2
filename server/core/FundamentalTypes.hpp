@@ -3,8 +3,7 @@
 //
 // (C) 2021-2022 CollabVM Development Team
 //
-// This file is licensed under the GNU General Public License Version 3.
-// Text is provided in LICENSE.
+// SPDX-License-Identifier: GPL-3.0
 //
 
 // Some fundamental types.
@@ -17,27 +16,25 @@ namespace collab3::core {
 
 	namespace detail {
 
-
 		template<class T>
 		struct Point {
 			T x;
 			T y;
 		};
 
-		// TODO: x-y-w-h. We're not windows.
 		template<class T>
 		struct Rect {
-			T left;
-			T top;
-			T right;
-			T bottom;
+			T x;
+			T y;
+			T width;
+			T height;
 
 			/**
 			 * Get the origin coordinate as a point.
 			 * \return a Point<T> with the origin.
 			 */
 			constexpr Point<T> GetOrigin() const {
-				return Point<T> { .x = left, .y = top };
+				return Point<T> { .x = x, .y = y };
 			}
 
 			/**
@@ -45,10 +42,10 @@ namespace collab3::core {
 			 * \return a Point<T> which contains the calculated size of the rect
 			 */
 			constexpr Point<T> GetSize() const {
-				return Point<T> { .x = right - left, .y = bottom - top };
+				return Point<T> { .x = width, .y = height };
 			}
 
-			// more methods...
+			// more methods.
 		};
 
 	} // namespace detail

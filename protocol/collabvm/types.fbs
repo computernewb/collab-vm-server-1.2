@@ -1,0 +1,43 @@
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// SPDX-License-Identifier: GPL-3.0
+//
+
+// Core protocol types, used by all the layers.
+
+namespace collab3.proto;
+
+// A point backed by ushort.
+struct PointUS {
+    x: ushort;
+    y: ushort;
+}
+
+// A rect backed by ushorts.
+struct RectUS {
+    x: ushort;
+    y: ushort;
+    width: ushort;
+    height: ushort;
+}
+
+enum UserRank : ubyte {
+    REGISTERED,
+    MODERATOR,
+    ADMINISTRATOR
+}
+
+struct UserReference {
+    /// Snowflake of user id.
+    id: uint64;
+}
+
+table UserObject {
+    username: string (required);
+    discrim: ushort;
+    rank: UserRank = REGISTERED;
+    avatar_url: string (required);
+}

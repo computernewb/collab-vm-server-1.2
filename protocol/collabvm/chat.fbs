@@ -1,0 +1,91 @@
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// SPDX-License-Identifier: GPL-3.0
+//
+
+// Chat layer tables/messages
+
+include "types.fbs";
+
+namespace collab3.proto;
+
+
+table ChatMessageObject {
+    id: uint64;
+
+    user: UserReference;
+
+    // Creation & edit time. Edit time will be 0 on un-edited messages.
+    creation_time: uint64;
+    edit_time: uint64;
+
+    content: string;
+}
+
+table ChatCreateMessage {
+    content: string;
+}
+
+table ChatNewMessage {
+    message: ChatMessageObject (required);
+}
+
+table ChatEditMessage {
+    id: uint64;
+    new_content: string (required);
+}
+
+table ChatDeleteMessage {
+    id: uint64;
+}
+
+table ChatEditedMessage {
+    id: uint64;
+    new_content: string (required);
+}
+
+table ChatDeletedMessage {
+    /// message that was deleted.
+    id: uint64;
+}
+
+
+// used to stream in user objects to the client lazily
+table ChatFillUsersMessage {
+    user: [UserObject];
+}
+
+
+table ChatHistoryMessage {
+    messages: [ChatMessage];
+}
+
+/// Request chat history
+table ChatRequestHistoryMessage {
+    count: ushort; // how many messages to retrieve
+    start: uint64; // 0 means server goes back [count] messages.
+                   // defined time means server finds closest timestamp start
+
+    end: uint64;   // pretty much same as end.
+
+}
+
+
+union ChatLayerMessage {
+    ChatCreateMessage,
+    ChatNewMessage,
+
+    ChatEditMessage,
+    ChatDeleteMessage,
+
+    ChatEditedMessage,
+    ChatDeletedMessage,
+
+    ChatFillUsersMessage,
+
+    ChatHistoryMessage,
+    ChatRequestHistoryMessage
+}

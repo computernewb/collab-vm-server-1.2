@@ -47,6 +47,7 @@ if(BUILD_TESTING)
 	include(Catch)
 endif()
 
+# Use an alternative linker for the project
 if(NOT "${COLLABVM_LINKER}" STREQUAL "")
 	collab3_set_alternate_linker(${COLLABVM_LINKER})
 endif()
@@ -54,7 +55,7 @@ endif()
 # Subprojects part of the Collab3 monorepo.
 # Note that even though these are seperate projects,
 # they *require* this driver CMakeLists at the top of the project,
-# and cannot be built manually. Don't try.
+# and cannot be built manually. Don't try it.
 
 
 add_subdirectory(server)

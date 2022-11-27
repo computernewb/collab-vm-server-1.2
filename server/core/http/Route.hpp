@@ -1,3 +1,11 @@
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// SPDX-License-Identifier: GPL-3.0
+//
+
 // TODO: All interfaces in this file, implement a constexpr parser/generator for route regex strings, ...
 
 #pragma once
