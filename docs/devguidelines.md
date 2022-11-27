@@ -54,7 +54,7 @@ Rather:
 
   One can handle errors without worrying about the logic being complicated ala:
 
-
+```cpp
     auto myResult = co_await MyCoroutineWhichRettysAResult(...);
   
     myResult.Map([](auto& res) {
@@ -65,6 +65,7 @@ Rather:
         // Something went *hideously* wrong and the Result was defaulted.
         // (shouldn't need this case in most cases in "good" code.)
     });
+```
 
 - Fatal errors should call `collab3::core::Panic()` with an optional message.
   - The affected service will shut down with a message and print a stack trace (with symbolized names in Debug builds).
