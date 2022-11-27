@@ -2,6 +2,11 @@
     Note that there are no guarantees on ABI safety (at least yet),
     as core is only expected to be consumed by collab3 binaries
 
+    (dunno about this. If we do this, collab3 will probably end up having to export asio & beast,
+     which are both very much not ABI safe, so dunno /shrug. To "lessen" the pain we could possibly move those
+     to another shared library (or one per library, which is probably better), sover marked with each library's versions,
+     to be nice to ABI.)
+
 
 Config:
 - add TOML backend
@@ -14,15 +19,5 @@ Config:
     which will write to the namespace collab3.host
     (collab3 being a namespace in the global namespace)
 
-bespoke boost HTTP wrapper:
-- rewrite ALL code to use coroutines, to simplify it
-- refactor server code
-- Add a router layer, because I really need one
-- Allow buffer generator (it was merged in)
-? Move websocket code to another partition, for organization
-
-WebRTC:
-- Implement bits and pieces of the protocols of the stack
-- implement ASIO library for everything
-- ...
-- ???
+core/http:
+    - full rewrite, using

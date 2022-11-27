@@ -1,5 +1,4 @@
-#ifndef COLLAB3_CORE_ASIOCONFIG_H
-#define COLLAB3_CORE_ASIOCONFIG_H
+#pragma once
 
 #include <boost/beast/core/basic_stream.hpp>
 #include <boost/beast/core/error.hpp>
@@ -18,44 +17,42 @@
 namespace collab3::core {
 
 	namespace net = boost::asio;
-	namespace ip = net::ip;
-	using tcp = ip::tcp;
+	using tcp = net::ip::tcp;
+	using unix_stream = net::local::stream_protocol;
+
+	using error_code = boost::system::error_code;
 
 	/**
 	 * The type for executors to follow.
 	 * This is the basic executor type.
 	 */
-	using BaseExecutorType =
-#ifdef COLLAB3_CORE_SYSTEM_EXECUTOR
-		net::strand<net::system_executor>;
-#else
-		net::strand<net::io_context::executor_type>;
-#endif
+	using BaseExecutorType = net::system_executor;
 
 	/**
-	 * The (real) type executors follow. This is configured
-	 * to by-default allow asynchronous operations to be
-	 * - tuple returns (use auto [ ec, ... ] to nab at values; also no exceptions)
-	 * - awaitable (use co_await to await)
+	 * The (real) type executors follow.
 	 */
-	using ExecutorType =
-		net::as_tuple_t<net::use_awaitable_t<BaseExecutorType>>::executor_with_default<BaseExecutorType>;
+	using ExecutorType = net::strand<BaseExecutorType>;
 
 	/**
-	 * Awaitable type (configured for the current collab3 executor)
+	 * CompletionToken for allowing usage of coroutines w/o exception handling.
+	 * \see Boost.Asio CompletionToken
 	 */
-	template<class T>
+	constexpr inline auto use_tuple_awaitable = net::as_tuple(net::use_awaitable_t<ExecutorType> {});
+
+	/**
+	 * Awaitable type (configured for the current executor)
+	 */
+	template <class T>
 	using Awaitable = net::awaitable<T, ExecutorType>;
 
-	template<typename Protocol>
+	template <typename Protocol>
+	using AcceptorType = net::basic_socket_acceptor<Protocol, ExecutorType>;
+
+	template <typename Protocol>
 	using SocketType = net::basic_stream_socket<Protocol, ExecutorType>;
 
-	using TcpSocketType = SocketType<tcp>;
-	using UnixStreamSocketType = SocketType<net::local::stream_protocol>;
+	using SteadyTimerType = net::basic_waitable_timer<std::chrono::steady_clock, net::wait_traits<std::chrono::steady_clock>, ExecutorType>;
 
-	using TimerType = net::basic_waitable_timer<std::chrono::steady_clock, net::wait_traits<std::chrono::steady_clock>, ExecutorType>;
-
-	// NB: This stuff should go to a different header, probably.
 
 	namespace beast = boost::beast;
 
@@ -65,6 +62,12 @@ namespace collab3::core {
 	using TcpStreamType = StreamType<tcp>;
 	using UnixStreamStreamType = StreamType<net::local::stream_protocol>;
 
+	/**
+	 * Make an instance of the configured Asio executor type.
+	 */
+	inline ExecutorType MakeExecutor() {
+		return net::make_strand(
+			BaseExecutorType{}
+		);
+	}
 }
-
-#endif //COLLAB3_CORE_ASIOCONFIG_H

@@ -2,8 +2,9 @@
 
 add_library(collab3_core
 
-		# ASIO library
-		asio/AsioImplementation.cpp
+		# ASIO/Beast implementation files
+		asio/AsioImplTu.cpp
+		asio/BeastImplTu.cpp
 
 		Panic.cpp
 
@@ -11,14 +12,6 @@ add_library(collab3_core
 
 		# HTTP server codebase
 		http/Route.cpp
-		http/Server.cpp
-		http/Listener.cpp
-		http/HttpSession.cpp
-		http/WebSocketClient.cpp
-		http/WebSocketMessage.cpp
-		http/BeastImplementation.cpp
-
-#		util/CommandLine.cpp
 		)
 
 target_include_directories(collab3_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

@@ -7,8 +7,7 @@
 // Text is provided in LICENSE.
 //
 
-#ifndef HOST_ARGUMENTS_H
-#define HOST_ARGUMENTS_H
+#pragma once
 
 #include <string>
 
@@ -33,5 +32,3 @@ namespace collab3::host {
 	};
 
 } // namespace collab3::api
-
-#endif // API_ARGUMENTS_H

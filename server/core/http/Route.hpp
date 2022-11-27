@@ -1,7 +1,6 @@
 // TODO: All interfaces in this file, implement a constexpr parser/generator for route regex strings, ...
 
-#ifndef COLLAB3_CORE_HTTP_ROUTE_H
-#define COLLAB3_CORE_HTTP_ROUTE_H
+#pragma once
 
 #include <ctll/fixed_string.hpp>
 #include <ctre.hpp> // FIXME: use ctre-unicode probably?
@@ -111,5 +110,3 @@ namespace collab3::core::http {
 
 	using detail::MakeRoute;
 }
-
-#endif //COLLAB3_CORE_HTTP_ROUTE_H

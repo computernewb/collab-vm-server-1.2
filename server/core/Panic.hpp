@@ -2,8 +2,7 @@
 // Created by lily on 9/15/22.
 //
 
-#ifndef COLLAB3_PANIC_H
-#define COLLAB3_PANIC_H
+#pragma once
 
 //#include <source_location>
 #include <string_view>
@@ -26,4 +25,3 @@ namespace collab3::core {
 
 }
 
-#endif //COLLAB3_PANIC_H

@@ -9,8 +9,7 @@
 
 // Some fundamental types.
 
-#ifndef CORE_FUNDAMENTALTYPES_H
-#define CORE_FUNDAMENTALTYPES_H
+#pragma once
 
 #include <cstdint>
 
@@ -91,5 +90,3 @@ namespace collab3::core {
 	using Point16 = detail::Point<std::uint16_t>;
 
 } // namespace collab3::core
-
-#endif //CORE_FUNDAMENTALTYPES_H
