@@ -8,8 +8,8 @@ on:
       - "CMakeLists.txt"
       - "CMakePresets.json"
       - "vcpkg.json"
+      - protocol/**
       # Future directories:
-      # protocol/**
       # agent/**
       # webapp/**
       - server/**
@@ -19,8 +19,8 @@ on:
       - "CMakeLists.txt"
       - "CMakePresets.json"
       - "vcpkg.json"
+      - protocol/**
       # Future directories:
-      # protocol/**
       # agent/**
       # webapp/**
       - server/**
@@ -32,9 +32,9 @@ jobs:
       fail-fast: true
       matrix:
         # This defines all the possible ci build configs in one spot.
-        # These run in parallel.
+        # These run in parallel on every build.
         # Right now this controls only the C++ server code, but could be
-        # expanded to include webapp/ or other projects.
+        # expanded to include webapp/ or other projects if so desired.
         build:
           - name: debug
             preset: ci-debug
@@ -50,10 +50,11 @@ jobs:
         with:
           submodules: true
 
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: mold cmake ninja-build libvncserver-dev libboost-dev catch2 libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev
-          version: 1.0
+      - name: Install dependencies
+        id: install-deps
+        run: |
+          sudo apt install -y mold cmake ninja-build libvncserver-dev libboost-dev catch2 libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libspdlog-dev libfmt-dev
+        shell: bash
 
       - name: Build Collab3 Server
         id: build-cpp-code
@@ -62,7 +63,7 @@ jobs:
           cmake --build build-${{matrix.build.preset}} -j $(nproc)
         shell: bash
 
-      - name: Run CTest tests
+      - name: Run Collab3 unit tests
         id: test
         run: |
           cd build-${{matrix.build.preset}}
