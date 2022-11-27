@@ -122,16 +122,16 @@ Rather:</p>
 <li>Non-fatal errors are <code>collab3::core::Result&lt;Value, Error&gt;</code>, which can also return/hold success cases (it's also cheap to pass, and doesn't allocate anything, unlike exceptions).</li>
 </ul>
 <p>One can handle errors without worrying about the logic being complicated ala:</p>
-<pre><code>auto myResult = co_await MyCoroutineWhichRettysAResult(...);
+<pre><code class="language-cpp">    auto myResult = co_await MyCoroutineWhichRettysAResult(...);
 
-myResult.Map([](auto&amp; res) {
-    // My coroutine worked
-}).MapError([](auto&amp; err) {
-    // It did not.
-}).OrElse([]() {
-    // Something went *hideously* wrong and the Result was defaulted.
-    // (shouldn't need this case in most cases in "good" code.)
-});
+    myResult.Map([](auto&amp; res) {
+        // My coroutine worked
+    }).MapError([](auto&amp; err) {
+        // It did not.
+    }).OrElse([]() {
+        // Something went *hideously* wrong and the Result was defaulted.
+        // (shouldn't need this case in most cases in &quot;good&quot; code.)
+    });
 </code></pre>
 <ul>
 <li>Fatal errors should call <code>collab3::core::Panic()</code> with an optional message.</li>
