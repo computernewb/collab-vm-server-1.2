@@ -76,7 +76,3 @@ Exceptions to this rule:
   compile time errors, as this is pretty much the only way to cleanly do so.
 
 - Any code which currently throws before this rule was documented (refactor it out!!!)
-  
-### RTTI
-
-Native RTTI is banned, and we use a sort-of-ala LLVM-open-style RTTI system.
