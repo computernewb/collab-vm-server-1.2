@@ -37,6 +37,7 @@ find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 
 # Top level third party dependencies
+set(FLATBUFFERS_BUILD_TESTS OFF)
 add_subdirectory(third_party/flatbuffers)
 add_subdirectory(third_party/ctre)
 

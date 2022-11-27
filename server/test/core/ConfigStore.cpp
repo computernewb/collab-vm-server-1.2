@@ -33,14 +33,14 @@ TEST_CASE("ConfigStore value manipulation", "[ConfigStore]") {
 				REQUIRE_NOTHROW(store["value"].As<std::uint64_t>());
 			}
 
-			AND_THEN("Conversion to the right type succeeds") {
+			AND_THEN("Conversion to the wrong type doesn't succeed") {
 				REQUIRE_THROWS_AS(store["value"].As<std::string>(), ConfigStore::InvalidType);
 			}
 
 			AND_THEN("Removing works") {
 				store["value"].Remove();
 
-				// Make sure the value really was removed.
+				// Let's make sure the value really was removed
 				REQUIRE(store["value"].Exists() == false);
 				REQUIRE_THROWS_AS(store["value"].As<std::uint64_t>(), ConfigStore::NonExistentValue);
 			}
