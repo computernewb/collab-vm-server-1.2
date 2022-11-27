@@ -45,6 +45,9 @@ table ChatDeleteMessage {
 table ChatEditedMessage {
     id: uint64;
     new_content: string (required);
+
+    /// time edit was recieved/processed by server
+    edit_time: uint64;
 }
 
 table ChatDeletedMessage {
