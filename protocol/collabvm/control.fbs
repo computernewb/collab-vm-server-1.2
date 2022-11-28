@@ -42,7 +42,7 @@ table ControlLayerMouseMessage {
     mouse_absolute: bool;
 }
 
-/// Turn queue
+/// Turn queue. Sent upon connection to VM and any updates to the turn queue
 table ControlLayerTurnQueueMessage {
     /// true if the queue is paused (all other fields will not update)
     ///
@@ -56,7 +56,7 @@ table ControlLayerTurnQueueMessage {
     enqueue_time: uint32;
 
     /// all waiting users.
-    user_queue: [UserReference];
+    user_queue: [ObjectReference];
 }
 
 // N.B: it is not at all worth micro-optimizing this as hard, cause
@@ -72,13 +72,17 @@ enum ControlLayerUserEvent : ubyte {
     JOIN,
 
     /// The user has left.
-    LEAVE
+    LEAVE,
+
+    /// The user has changed their username
+    /// (ask chat layer to send new user object?)
+    USERNAME_CHANGED
 
     /// XXX Future events.
 }
 
 table ControlLayerUserEventMessage {
-    user: UserReference (required);
+    user: ObjectReference (required);
     event: ControlLayerUserEvent;
 }
 

@@ -13,76 +13,72 @@ include "types.fbs";
 namespace collab3.proto;
 
 
-table ChatMessageObject {
-    id: uint64;
-
-    user: UserReference;
-
-    // Creation & edit time. Edit time will be 0 on un-edited messages.
-    creation_time: uint64;
-    edit_time: uint64;
-
+table ChatLayerCreateMessage {
     content: string;
 }
 
-table ChatCreateMessage {
-    content: string;
-}
-
-table ChatNewMessage {
+table ChatLayerNewMessage {
     message: ChatMessageObject (required);
 }
 
-table ChatEditMessage {
-    id: uint64;
+table ChatLayerEditMessage {
+    id: ObjectReference;
     new_content: string (required);
 }
 
-table ChatDeleteMessage {
-    id: uint64;
+table ChatLayerDeleteMessage {
+    id: ObjectReference;
 }
 
-table ChatEditedMessage {
-    id: uint64;
+table ChatLayerEditedMessage {
+    id: ObjectReference;
     new_content: string (required);
 
     /// time edit was recieved/processed by server
     edit_time: uint64;
 }
 
-table ChatDeletedMessage {
+table ChatLayerDeletedMessage {
     /// message that was deleted.
     id: uint64;
 }
 
 
 // used to stream in user objects to the client lazily
-table ChatFillUsersMessage {
+table ChatLayerFillUsersMessage {
     user: [UserObject];
 }
 
+table ChatLayerRequestFillUsersMessage {
+    users: [ObjectReference] (required);
+}
 
-table ChatHistoryMessage {
+
+table ChatLayerHistoryMessage {
     messages: [ChatMessage];
 }
 
 /// Request chat history
-table ChatRequestHistoryMessage {
+table ChatLayerRequestHistoryMessage {
     count: ushort; // how many messages to retrieve
-    start: uint64; // 0 means server goes back [count] messages.
+    start: ObjectReference; // 0 means server goes back [count] messages.
                    // defined time means server finds closest timestamp start
 
-    end: uint64;   // pretty much same as end.
+    end: ObjectReference;   // pretty much same as end.
 
 }
 
 
 union ChatLayerMessage {
     ChatCreateMessage,
-    ChatNewMessage,
-
     ChatEditMessage,
     ChatDeleteMessage,
+
+    ChatRequestHistoryMessage
+}
+
+union ChatLayerServerMessage {
+    ChatNewMessage,
 
     ChatEditedMessage,
     ChatDeletedMessage,
@@ -90,5 +86,4 @@ union ChatLayerMessage {
     ChatFillUsersMessage,
 
     ChatHistoryMessage,
-    ChatRequestHistoryMessage
 }

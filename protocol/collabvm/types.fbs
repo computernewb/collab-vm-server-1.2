@@ -25,13 +25,14 @@ struct RectUS {
 }
 
 enum UserRank : ubyte {
+    GUEST,
     REGISTERED,
     MODERATOR,
     ADMINISTRATOR
 }
 
-struct UserReference {
-    /// Snowflake of user id.
+struct ObjectReference {
+    /// Snowflake of remote object id.
     id: uint64;
 }
 
@@ -39,6 +40,18 @@ table UserObject {
     id: uint64;
     username: string (required);
     discrim: ushort;
-    rank: UserRank = REGISTERED;
+    rank: UserRank = GUEST;
     avatar_url: string (required);
+}
+
+table ChatMessageObject {
+    id: uint64;
+
+    user: ObjectReference;
+
+    // Creation & edit time. Edit time will be 0 on un-edited messages.
+    creation_time: uint64;
+    edit_time: uint64;
+
+    content: string;
 }
