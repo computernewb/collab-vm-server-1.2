@@ -6,14 +6,15 @@
 // SPDX-License-Identifier: GPL-3.0
 //
 
-#ifndef CORE_CONFIG_CONFIGSTORE_H
-#define CORE_CONFIG_CONFIGSTORE_H
+#pragma once
 
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <variant>
+
+#include <core/Error.hpp>
 
 namespace collab3::core {
 
@@ -40,6 +41,12 @@ namespace collab3::core {
 			// Array? I don't know what the purpose of that would be.
 		>;
 		// clang-format on
+
+		enum class ErrorCode : std::uint8_t {
+			Ok,
+			InvalidType,
+			ValueNonExistent
+		};
 
 		// TODO: Remove exception, we will instead return a Result<T>
 
@@ -122,6 +129,33 @@ namespace collab3::core {
 		std::unordered_map<ConfigKey, ConfigValue> valueMap;
 	};
 
+	/**
+	 * Specialization of ErrorCategory for ConfigStore::ErrorCode.
+	 */
+	template<>
+	struct ErrorCategory<ConfigStore::ErrorCode> {
+		using CodeType = ConfigStore::ErrorCode;
+
+		static constexpr const char* Message(CodeType errorCode) {
+			using enum ConfigStore::ErrorCode;
+
+			switch(errorCode) {
+				case Ok: return "No error.";
+				case InvalidType: return "As<T>() type different than stored type.";
+				case ValueNonExistent: return "Non-existent value lookup.";
+
+				default: return "";
+			}
+		}
+
+		static constexpr CodeType OkSymbol() {
+			return CodeType::Ok;
+		}
+
+		static constexpr bool Ok(CodeType error) {
+			return error == OkSymbol();
+		}
+	};
+
 } // namespace collab3::core
 
-#endif //CORE_CONFIG_CONFIGSTORE_H
