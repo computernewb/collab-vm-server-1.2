@@ -12,7 +12,7 @@ target_link_libraries(collab3-host PRIVATE
 		Boost::program_options
 
 		# CollabVM service modules
-		collab3::api
+		collab3::core
 )
 
 target_include_directories(collab3-host PRIVATE ${PROJECT_BINARY_DIR})

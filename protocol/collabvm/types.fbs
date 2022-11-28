@@ -36,6 +36,7 @@ struct UserReference {
 }
 
 table UserObject {
+    id: uint64;
     username: string (required);
     discrim: ushort;
     rank: UserRank = REGISTERED;

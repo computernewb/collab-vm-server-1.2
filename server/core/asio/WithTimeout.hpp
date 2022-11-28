@@ -31,15 +31,16 @@ namespace collab3::core::detail {
 			// clang-format off
 			make_parallel_group(
 				net::bind_executor(ex, [&](auto&& token) {
-									return timer.async_wait(std::forward<decltype(token)>(token));
-							   }),
+					return timer.async_wait(std::forward<decltype(token)>(token));
+				}),
 				net::bind_executor(ex, [&](auto&& token) {
-									return net::async_initiate<decltype(token), Signatures...>(std::forward<Initiation>(initiation), token, std::forward<InitArgs>(init_args)...);
-							   }))
-			.async_wait(net::experimental::wait_for_one(),
+					// user's underlying operation.
+					return net::async_initiate<decltype(token), Signatures...>(std::forward<Initiation>(initiation), token, std::forward<InitArgs>(init_args)...);
+				})
+			).async_wait(net::experimental::wait_for_one(),
 				[handler = std::move(handler)](std::array<std::size_t, 2>, std::error_code, auto... underlying_op_results) mutable {
 					std::move(handler)(std::move(underlying_op_results)...);
-				});
+			});
 			// clang-format on
 		}
 	};

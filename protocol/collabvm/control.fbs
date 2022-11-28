@@ -26,12 +26,12 @@ enum MouseButton : ubyte {
     MOUSE5 = 0x10
 }
 
-table KeyMessage {
+table ControlLayerKeyMessage {
     key: ushort;
     pressed: bool;
 }
 
-table MouseMessage {
+table ControlLayerMouseMessage {
     /// The current mouse buttons. May not be sent
     buttons: MouseButton = NONE;
 
@@ -42,8 +42,58 @@ table MouseMessage {
     mouse_absolute: bool;
 }
 
+/// Turn queue
+table ControlLayerTurnQueueMessage {
+    /// true if the queue is paused (all other fields will not update)
+    ///
+    /// This will be true if:
+    /// - only one user is turning (we intentionally pause the queue until another user turns)
+    /// - an moderator or administrator has paused the queue manually
+    paused: bool = false;
 
-union ControlLayerMessage {
-    KeyMessage,
-    MouseMessage
+    /// time in milliseconds that the last entry will be enqueued,
+    /// or 0 if paused/not applicable.
+    enqueue_time: uint32;
+
+    /// all waiting users.
+    user_queue: [UserReference];
+}
+
+// N.B: it is not at all worth micro-optimizing this as hard, cause
+// in this case these are always lightweight references (i.e: a snowflake).
+//
+// so sending e.g 2, 4, even 5 leave events is implicitly cheaper, since we don't send an
+// entire user object over the wire for instances like that.
+//
+// also we don't have to parse numbers or any custom protocol. which kinda helps too.
+
+enum ControlLayerUserEvent : ubyte {
+    /// The user has joined.
+    JOIN,
+
+    /// The user has left.
+    LEAVE
+
+    /// XXX Future events.
+}
+
+table ControlLayerUserEventMessage {
+    user: UserReference (required);
+    event: ControlLayerUserEvent;
+}
+
+
+table ControlLayerTurnRequestMessage {
+    /// no data
+}
+
+union ControlLayerClientMessage {
+    ControlLayerKeyMessage,
+    ControlLayerMouseMessage,
+    ControlLayerTurnRequestMessage
+}
+
+union ControlLayerServerMessage {
+    ControlLayerTurnQueueMessage,
+    ControlLayerUserEventMessage
 }
