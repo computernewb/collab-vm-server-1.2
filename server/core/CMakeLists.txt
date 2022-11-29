@@ -21,6 +21,8 @@ target_link_libraries(collab3_core PUBLIC
 		fmt::fmt
 		spdlog::spdlog
 
+		tl::expected
+
 		# no nice alias :(
 		ctre
 		)

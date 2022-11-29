@@ -31,10 +31,10 @@ int main(int argc, char** argv) {
 	store["test4"].Set(static_cast<std::uint64_t>(120));
 
 	// Try reading them out
-	std::cout << "test: \"" << store["test"].As<std::string>() << "\"\n";
-	std::cout << "test2: \"" << store["test2"].As<bool>() << "\"\n";
-	std::cout << "test3: \"" << store["test3"].As<std::int64_t>() << "\"\n";
-	std::cout << "test4: \"" << store["test4"].As<std::uint64_t>() << "\"\n";
+	std::cout << "test: \"" << store["test"].As<std::string>().value() << "\"\n";
+	std::cout << "test2: \"" << store["test2"].As<bool>().value() << "\"\n";
+	std::cout << "test3: \"" << store["test3"].As<std::int64_t>().value() << "\"\n";
+	std::cout << "test4: \"" << store["test4"].As<std::uint64_t>().value() << "\"\n";
 
 #if 0
 	args.Process(argc, argv);

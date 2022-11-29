@@ -6,8 +6,11 @@
 // SPDX-License-Identifier: GPL-3.0
 //
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include "../Collab3TestExtensions.hpp"
+
 #include <core/config/ConfigStore.hpp>
+
 
 using namespace collab3::core;
 
@@ -23,10 +26,10 @@ TEST_CASE("ConfigStore value manipulation", "[ConfigStore]") {
 		ConfigStore store;
 
 		THEN("Looking up a non-existent value fails regardless of type") {
-			REQUIRE_THROWS_AS(store["XXXINVALID_KEY"].As<bool>(), ConfigStore::NonExistentValue);
-			REQUIRE_THROWS_AS(store["XXXINVALID_KEY"].As<std::string>(), ConfigStore::NonExistentValue);
-			REQUIRE_THROWS_AS(store["XXXINVALID_KEY"].As<std::uint64_t>(), ConfigStore::NonExistentValue);
-			REQUIRE_THROWS_AS(store["XXXINVALID_KEY"].As<std::int64_t>(), ConfigStore::NonExistentValue);
+			REQUIRE_ERROR_AS(store["XXXINVALID_KEY"].As<bool>(), ConfigStoreErrorCode::ValueNonExistent);
+			REQUIRE_ERROR_AS(store["XXXINVALID_KEY"].As<std::string>(), ConfigStoreErrorCode::ValueNonExistent);
+			REQUIRE_ERROR_AS(store["XXXINVALID_KEY"].As<std::uint64_t>(), ConfigStoreErrorCode::ValueNonExistent);
+			REQUIRE_ERROR_AS(store["XXXINVALID_KEY"].As<std::int64_t>(), ConfigStoreErrorCode::ValueNonExistent);
 		}
 
 		THEN("Inserting a value of a given type") {
@@ -42,7 +45,8 @@ TEST_CASE("ConfigStore value manipulation", "[ConfigStore]") {
 			}
 
 			AND_THEN("Conversion to the wrong type doesn't succeed") {
-				REQUIRE_THROWS_AS(store["value"].As<std::string>(), ConfigStore::InvalidType);
+
+				REQUIRE_ERROR_AS(store["value"].As<std::string>(), ConfigStoreErrorCode::InvalidType);
 			}
 
 			AND_THEN("Removing works") {
@@ -50,7 +54,8 @@ TEST_CASE("ConfigStore value manipulation", "[ConfigStore]") {
 
 				// Let's make sure the value really was removed
 				REQUIRE(store["value"].Exists() == false);
-				REQUIRE_THROWS_AS(store["value"].As<std::uint64_t>(), ConfigStore::NonExistentValue);
+
+				REQUIRE_ERROR_AS(store["value"].As<std::uint64_t>(), ConfigStoreErrorCode::ValueNonExistent);
 			}
 		}
 	}

@@ -14,9 +14,45 @@
 #include <unordered_map>
 #include <variant>
 
+#include <core/Result.hpp>
 #include <core/Error.hpp>
 
 namespace collab3::core {
+
+
+	enum class ConfigStoreErrorCode : std::uint8_t {
+		Ok,
+		InvalidType,
+		ValueNonExistent
+	};
+
+	/**
+	 * Specialization of ErrorCategory for ConfigStore::ErrorCode.
+	 */
+	template<>
+	struct ::collab3::core::ErrorCategory<ConfigStoreErrorCode> {
+		using CodeType = ConfigStoreErrorCode;
+
+		static constexpr const char* Message(CodeType errorCode) {
+			using enum ConfigStoreErrorCode;
+
+			switch(errorCode) {
+				case Ok: return "No error.";
+				case InvalidType: return "As<T>() type different than stored type.";
+				case ValueNonExistent: return "Non-existent value lookup.";
+
+				default: return "";
+			}
+		}
+
+		static constexpr CodeType OkSymbol() {
+			return CodeType::Ok;
+		}
+
+		static constexpr bool Ok(CodeType error) {
+			return error == OkSymbol();
+		}
+	};
 
 	/**
 	 * Configuration store.
@@ -42,25 +78,11 @@ namespace collab3::core {
 		>;
 		// clang-format on
 
-		enum class ErrorCode : std::uint8_t {
-			Ok,
-			InvalidType,
-			ValueNonExistent
-		};
 
-		// TODO: Remove exception, we will instead return a Result<T>
 
-		struct InvalidType : public std::exception {
-			[[nodiscard]] const char* what() const noexcept override {
-				return "As<T>() type different than stored type. Use Is<T>() to type-check.";
-			}
-		};
 
-		struct NonExistentValue : public std::exception {
-			[[nodiscard]] const char* what() const noexcept override {
-				return "Non-existent value lookup. Use Set() beforehand or Exists() to check.";
-			}
-		};
+		template<class T>
+		using Result = Result<T, Error<ConfigStoreErrorCode>>;
 
 		/**
 		 * Array proxy object, used to allow a sane(r) API.
@@ -76,11 +98,22 @@ namespace collab3::core {
 			 * \returns The value object.
 			 */
 			template<class T>
-			[[nodiscard]] const T& As() const {
-				if(!Is<T>())
-					throw InvalidType();
+			[[nodiscard]] Result<T> As() const {
+				auto res = Is<T>();
 
-				return std::get<T>(MaybeFetchValue());
+				if(res.has_value()) {
+					if(!res.value())
+						return Result<T> { tl::unexpect, ConfigStoreErrorCode::InvalidType };
+				} else if (!res) {
+					return Result<T> { tl::unexpect, res.error() };
+				}
+
+				auto val = MaybeFetchValue();
+
+				if(val.has_value())
+					return std::get<T>(val.value());
+				else
+					return Result<T>{tl::unexpect, val.error()};
 			}
 
 			/**
@@ -89,8 +122,12 @@ namespace collab3::core {
 			 * \return True if this value is of type T; false otherwise.
 			 */
 			template<class T>
-			[[nodiscard]] constexpr bool Is() const {
-				return std::holds_alternative<T>(MaybeFetchValue());
+			[[nodiscard]] inline Result<bool> Is() const {
+				auto value = MaybeFetchValue();
+				if(!value)
+					return value.error();
+
+				return std::holds_alternative<T>(value.value());
 			}
 
 			template<class T>
@@ -114,7 +151,7 @@ namespace collab3::core {
 			}
 
 			void SetBase(const ConfigValue& value);
-			[[nodiscard]] ConfigValue& MaybeFetchValue() const;
+			[[nodiscard]] Result<ConfigValue> MaybeFetchValue() const;
 
 			ConfigStore& underlyingStore;
 			const ConfigKey& key;
@@ -129,33 +166,7 @@ namespace collab3::core {
 		std::unordered_map<ConfigKey, ConfigValue> valueMap;
 	};
 
-	/**
-	 * Specialization of ErrorCategory for ConfigStore::ErrorCode.
-	 */
-	template<>
-	struct ErrorCategory<ConfigStore::ErrorCode> {
-		using CodeType = ConfigStore::ErrorCode;
 
-		static constexpr const char* Message(CodeType errorCode) {
-			using enum ConfigStore::ErrorCode;
-
-			switch(errorCode) {
-				case Ok: return "No error.";
-				case InvalidType: return "As<T>() type different than stored type.";
-				case ValueNonExistent: return "Non-existent value lookup.";
-
-				default: return "";
-			}
-		}
-
-		static constexpr CodeType OkSymbol() {
-			return CodeType::Ok;
-		}
-
-		static constexpr bool Ok(CodeType error) {
-			return error == OkSymbol();
-		}
-	};
 
 } // namespace collab3::core
 

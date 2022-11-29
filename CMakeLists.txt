@@ -25,6 +25,7 @@ project(collab3
 		)
 
 include(CTest)
+include(FetchContent)
 
 set(COLLAB3_TOP ${PROJECT_SOURCE_DIR})
 
@@ -36,14 +37,27 @@ find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 
+FetchContent_Declare(
+		Catch2
+		GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+		GIT_TAG        v3.2.0
+)
+
+list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
+
 # Top level third party dependencies
 set(FLATBUFFERS_BUILD_TESTS OFF)
+set(EXPECTED_BUILD_TESTS OFF)
 add_subdirectory(third_party/flatbuffers)
 add_subdirectory(third_party/ctre)
+add_subdirectory(third_party/expected)
+
+
+
 
 # Give monorepo access to Catch2 if test builds should be enabled
 if(BUILD_TESTING)
-	find_package(Catch2 2 REQUIRED)
+	FetchContent_MakeAvailable(Catch2)
 	include(Catch)
 endif()
 

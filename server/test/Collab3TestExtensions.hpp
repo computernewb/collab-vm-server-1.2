@@ -22,8 +22,9 @@
  * Require that the given expression returns an expected in the error state,
  * with the given error code.
  */
-#define REQUIRE_ERROR_AS(expr, error_)                                    \
-	do {                                                                  \
-		auto expr_value = expr;                                           \
-		REQUIRE(!expr_value.has_value() && expr_value.error() == error_); \
+#define REQUIRE_ERROR_AS(expr, error_)         \
+	do {                                       \
+		auto expr_value = expr;                \
+		REQUIRE(!expr_value.has_value());      \
+		REQUIRE(expr_value.error() == error_); \
 	} while(0)

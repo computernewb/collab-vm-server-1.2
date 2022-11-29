@@ -4,3 +4,6 @@
 [submodule "third_party/ctre"]
 	path = third_party/ctre
 	url = https://github.com/hanickadot/compile-time-regular-expressions
+[submodule "third_party/expected"]
+	path = third_party/expected
+	url = https://github.com/TartanLlama/expected

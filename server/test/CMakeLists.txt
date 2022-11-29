@@ -1,15 +1,11 @@
 add_executable(collab3-test
-		main.cpp
-
-		# tests
 		core/ConfigStore.cpp
 		)
 
 target_link_libraries(collab3-test PRIVATE
-		Catch2::Catch2
+		Catch2::Catch2WithMain
 		${CMAKE_THREAD_LIBS_INIT}
 
-		# CollabVM service modules
 		collab3::core
 		)
 

@@ -62,4 +62,7 @@ namespace collab3::core {
 		typename Category::CodeType ec{Category::OkSymbol()};
 	};
 
+	template<class EC>
+	Error(EC code) -> Error<EC>;
+
 }

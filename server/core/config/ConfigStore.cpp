@@ -14,9 +14,9 @@ namespace collab3::core {
 		return ArrayProxy(*this, key);
 	}
 
-	ConfigStore::ConfigValue& ConfigStore::ArrayProxy::MaybeFetchValue() const {
+	ConfigStore::Result<ConfigStore::ConfigValue> ConfigStore::ArrayProxy::MaybeFetchValue() const {
 		if(!Exists())
-			throw NonExistentValue();
+			return Result<ConfigValue>{tl::unexpect, ConfigStoreErrorCode::ValueNonExistent};
 
 		return underlyingStore.valueMap[key];
 	}
