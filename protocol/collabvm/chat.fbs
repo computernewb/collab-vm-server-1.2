@@ -69,7 +69,7 @@ table ChatLayerRequestHistoryMessage {
 }
 
 
-union ChatLayerMessage {
+union ChatLayerClientMessage {
     ChatCreateMessage,
     ChatEditMessage,
     ChatDeleteMessage,
