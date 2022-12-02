@@ -4,7 +4,7 @@
 #include <utility>
 
 // Uncomment if you're going to use Websocket-- under a proxy.
-//#define WEBSOCKETMM_SUPPORT_PROXYING
+#define WEBSOCKETMM_SUPPORT_PROXYING
 
 namespace websocketmm {
 
