@@ -116,10 +116,9 @@ namespace websocketmm {
 					// All other elements are just the proxy hops the client has been through,
 					// which we don't really need to care about. (We only care about the client hop)
 
-					http::token_list list(header_val);
-					auto& first = *list.begin();
+					auto len = header_val.find(",");
 
-					auto ip = net::ip::make_address(std::string_view(first.data(), first.length()), ec);
+					auto ip = net::ip::make_address(std::string_view(header_val.data(), len == boost::beast::string_view::npos ? header_val.size() : len), ec);
 
 					if(ec) {
 						// There was an error parsing the IP, so as to not compromise security,
