@@ -3,13 +3,10 @@
 
 add_executable(collab3-host
 		main.cpp
-		Arguments.cpp
 		)
 
 target_link_libraries(collab3-host PRIVATE
 		${CMAKE_THREAD_LIBS_INIT}
-		# Boost
-		Boost::program_options
 
 		# CollabVM service modules
 		collab3::core
@@ -18,7 +15,7 @@ target_link_libraries(collab3-host PRIVATE
 target_include_directories(collab3-host PRIVATE ${PROJECT_BINARY_DIR})
 add_dependencies(collab3-host __collab3_server_gittag)
 
-# make the temporary host server output in the top level of your build dir rather than server/host/
+# make the host server output in the top level of your build dir rather than server/host/
 set_target_properties(collab3-host PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
