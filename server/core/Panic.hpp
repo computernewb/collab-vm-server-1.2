@@ -19,6 +19,8 @@ namespace collab3::core {
 	 */
 	[[noreturn]] void Panic(const std::string_view message);
 
+	// TODO find a better spot for this
+
 	#define COLLAB3_VERIFY(expr) if(!(expr)) collab3::core::Panic("COLLAB3_VERIFY(" #expr ") failed.")
 
 #ifndef NDEBUG

@@ -15,6 +15,4 @@ namespace collab3::core {
 	template<class T, class E>
 	using Result = tl::expected<T, E>;
 
-	//template<class T, class E>
-	//using ResultRef = tl::expected<std::reference_wrapper<T>, E>;
 }

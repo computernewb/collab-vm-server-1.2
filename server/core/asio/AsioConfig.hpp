@@ -50,17 +50,16 @@ namespace collab3::core {
 	/**
 	 * Awaitable type (configured for the current executor)
 	 */
-	template <class T>
+	template<class T>
 	using Awaitable = net::awaitable<T, ExecutorType>;
 
-	template <typename Protocol>
+	template<typename Protocol>
 	using AcceptorType = net::basic_socket_acceptor<Protocol, ExecutorType>;
 
-	template <typename Protocol>
+	template<typename Protocol>
 	using SocketType = net::basic_stream_socket<Protocol, ExecutorType>;
 
 	using SteadyTimerType = net::basic_waitable_timer<std::chrono::steady_clock, net::wait_traits<std::chrono::steady_clock>, ExecutorType>;
-
 
 	namespace beast = boost::beast;
 
@@ -75,7 +74,6 @@ namespace collab3::core {
 	 */
 	inline ExecutorType MakeExecutor() {
 		return net::make_strand(
-			BaseExecutorType{}
-		);
+		BaseExecutorType {});
 	}
-}
+} // namespace collab3::core

@@ -11,7 +11,7 @@ add_library(collab3_core
 		config/ConfigStore.cpp
 
 		# HTTP server codebase
-		http/Route.cpp
+		#http/Route.cpp
 		)
 
 target_include_directories(collab3_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

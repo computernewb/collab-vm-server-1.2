@@ -1,6 +1,16 @@
+//
+// CollabVM 3
+//
+// (C) 2021-2022 CollabVM Development Team
+//
+// SPDX-License-Identifier: GPL-3.0
+//
+
 #pragma once
 
 namespace collab3::core {
+
+	// this isn't great, so I might replace it? idk
 
 	/**
 	 * An error category. Provides functions for working
@@ -17,16 +27,16 @@ namespace collab3::core {
 		// This class should not be created.
 		constexpr ErrorCategory() = delete;
 
-		static constexpr const char* Message(EC);
-		static EC OkSymbol();
-		static bool Ok(EC);
+		//static constexpr const char* Message(EC);
+		//static EC OkSymbol();
+		//static bool Ok(EC);
 	};
 
 	/**
-	 * An error. Light-weight wrapper over an ErrorCategory<EC> instance.
+	 * An error. Light-weight wrapper over an error code.
 	 *
 	 * Error category storage is handled as a part of the type, so all Error(s)
-	 * are literal and trivial.
+	 * are literal and trivial, and only sizeof(EC).
 	 *
 	 * This type *can* be directly used if desired, however it's recommended
 	 * to use it as part of an Expected error argument.
@@ -39,11 +49,14 @@ namespace collab3::core {
 		using CategoryType = Category;
 
 		// Ok error (uses the OkSymbol)
-		constexpr Error() = default;
+		constexpr Error() :
+			Error(Category::OkSymbol()) {
+		}
 
-		constexpr Error(typename Category::CodeType code)
-			: ec(code) {
-
+		constexpr Error(typename Category::CodeType code) :
+			ec(code) {
+			// not a great spot for this kind of thing, but oh well
+			static_assert(sizeof(Error) == sizeof(EC), "Basic assumptions with your compiler seem to be horribly wrong");
 		}
 
 		constexpr const char* Message() {
@@ -59,10 +72,10 @@ namespace collab3::core {
 		}
 
 	   private:
-		typename Category::CodeType ec{Category::OkSymbol()};
+		typename Category::CodeType ec;
 	};
 
 	template<class EC>
 	Error(EC code) -> Error<EC>;
 
-}
+} // namespace collab3::core

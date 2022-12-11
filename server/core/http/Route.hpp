@@ -14,92 +14,66 @@
 #include <ctre.hpp> // FIXME: use ctre-unicode probably?
 #include <memory>
 
+#include <core/asio/AsioConfig.hpp>
+
 namespace collab3::core::http {
 
+	struct Request;
+	struct Response;
 
 	namespace detail {
+
+		//
+		// HTTP template parameters look like:
+		//
+		// {<type>}
+		// <type> can be, and is passed to your callable ala:
+		//		int : int
+		//		str : string
+		//
+		// An example valid template url is something like
+		//	"/api/v0/vm/{str}"
+		//
+		// SlugToTypeList returns a type-list which can later be used to double-check
+		//	that a provided callable CAN actually be called with those arguments. if it can't, that's
+		//	a compile-time error (on behalf of who's ever trying to do that.).
+		//
+		// SlugToRegex returns a ctll::fixed_string which itself will match all the slug parameters.
+		//
+
+
+
 		/**
-		 * Base type for HTTP routes.
+		 * Just so that things don't need to be function templates
+		 * just to work with routes.
 		 */
 		struct RouteBase {
+			virtual ~RouteBase();
 
-			virtual ~RouteBase() = default;
+			virtual bool Matches() const noexcept = 0;
 
-			virtual bool Matches(const std::string& path) const noexcept = 0;
-
-			// how to:
-			// - communicate response (variant return type where tag types indicate what to do?)
-			// - pass request         (...)
-			// - support pmfs         (could just have everything be a lambda, and have that call the class member, but Ehh)
-			virtual void operator()() const = 0;
-
-		   protected:
-			friend struct RouteStorage;
-			RouteBase* nextRoute;
+			virtual Awaitable<void> operator()(std::shared_ptr<Request>, std::shared_ptr<Response>) noexcept = 0;
 		};
 
-		// FIXME: Implement properly.
+		// TODO: I don't know if it's really worth it to do this at compile time
+		// 	maybe should suck it up and use a trie @ runtime
 
-		/**
-		 * A static pool for optimizing route storage.
-		 * Is initialized in the application lifecycle once.
-		 */
-		struct RouteStorage {
-			RouteStorage();
-			~RouteStorage();
 
-			/**
-			 * Allocate a single route in route storage.
-			 */
-			RouteBase* AllocateRoute(std::size_t size);
+		template<ctll::fixed_string RouteSlug, class Fun>
+		struct Route {
 
-		   private:
-
-			constexpr bool Overflow() const {
-				return
-					poolCur >= poolEnd &&
-					poolCur < poolBegin;
-			}
-
-			constexpr bool WouldOverflow(std::size_t count) const noexcept {
-				return (poolCur + count) >= poolEnd;
-			}
-
-			constexpr std::size_t UsedMemory() const noexcept {
-				return (poolCur - poolBegin);
-			}
-
-			constexpr std::size_t FreeMemory() const noexcept {
-				return (poolCur - poolEnd);
-			}
-
-			constexpr bool Full() const noexcept {
-				return FreeMemory() == 0;
-			}
-
-			std::uint8_t* poolBegin{};
-			std::uint8_t* poolEnd{};
-
-			std::uint8_t* poolCur{};
-
-		};
-
-		extern RouteStorage* gRouteStorage;
-
-		template<ctll::fixed_string RouteRegex, class Fun>
-		struct RouteImpl : public RouteBase {
-
-			constexpr explicit RouteImpl(Fun&& fun)
+			constexpr explicit Route(Fun&& fun)
 				: handler(std::move(fun)) {
 
 			}
 
-			bool Matches(const std::string& path) const noexcept override {
-				return ctre::match<RouteRegex>(path);
+			[[nodiscard]] bool Matches(const std::string& path) const noexcept {
+				//return ctre::match<RouteSlug>(path);
 			}
 
-			void operator()() const override {
-				handler();
+			Awaitable<void> operator()(std::shared_ptr<Request>, std::shared_ptr<Response>) noexcept {
+				// N.B: it's probably a good idea we expect this
+				co_await handler();
 			}
 
 		   private:
@@ -110,8 +84,10 @@ namespace collab3::core::http {
 		 * Create a route.
 		 */
 		template<ctll::fixed_string RouteRegex, class Fun>
-		std::unique_ptr<RouteBase> MakeRoute(Fun&& handler) {
-			return std::make_unique<RouteImpl<RouteRegex, Fun>>(std::move(handler));
+		Route<RouteRegex, Fun> MakeRoute(Fun&& handler) {
+			return {
+				std::forward<Fun>(handler)
+			};
 		}
 
 	}

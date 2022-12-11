@@ -53,18 +53,22 @@ namespace collab3::core {
 
 	/**
 	 * Type used to communicate byte sizes.
-	 * May become a literal class type later.
 	 */
 	using ByteSize = std::size_t;
 
-	constexpr static inline ByteSize Kb = 1024; // bytes
-	constexpr static inline ByteSize KB = 1000; // bytes
+#define literal_operator(name, mult) \
+	constexpr inline ByteSize operator ""_##name(unsigned long long value) {	\
+		return value * (mult); \
+	}
 
-	constexpr static inline ByteSize Mb = 1024 * Kb;
-	constexpr static inline ByteSize MB = 1000 * KB;
+	literal_operator(Kb, 1024)
+	literal_operator(KB, 1000)
+	literal_operator(Mb, 1024 * 1024)
+	literal_operator(MB, 1000 * 1000)
+	literal_operator(Gb, 1024 * 1024 * 1024)
+	literal_operator(GB, 1000 * 1000 * 1024)
 
-	constexpr static inline ByteSize Gb = 1024 * Mb;
-	constexpr static inline ByteSize GB = 1000 * MB;
+#undef literal_operator
 
 	/**
 	 * A rectangle using uint32_t as its backing type.

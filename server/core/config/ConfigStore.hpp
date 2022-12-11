@@ -14,11 +14,10 @@
 #include <unordered_map>
 #include <variant>
 
-#include <core/Result.hpp>
 #include <core/Error.hpp>
+#include <core/Result.hpp>
 
 namespace collab3::core {
-
 
 	enum class ConfigStoreErrorCode : std::uint8_t {
 		Ok,
@@ -27,22 +26,23 @@ namespace collab3::core {
 	};
 
 	/**
-	 * Specialization of ErrorCategory for ConfigStore::ErrorCode.
+	 * Specialization of ErrorCategory for ConfigStoreErrorCode.
 	 */
 	template<>
-	struct ::collab3::core::ErrorCategory<ConfigStoreErrorCode> {
+	struct ErrorCategory<ConfigStoreErrorCode> {
 		using CodeType = ConfigStoreErrorCode;
 
 		static constexpr const char* Message(CodeType errorCode) {
 			using enum ConfigStoreErrorCode;
 
+			// clang-format off
 			switch(errorCode) {
-				case Ok: return "No error.";
-				case InvalidType: return "As<T>() type different than stored type.";
-				case ValueNonExistent: return "Non-existent value lookup.";
-
-				default: return "";
+				case Ok:				return "No error.";
+				case InvalidType:		return "Requested type invalid for stored value.";
+				case ValueNonExistent:	return "Requested value does not exist.";
+				default:				return "";
 			}
+			// clang-format on
 		}
 
 		static constexpr CodeType OkSymbol() {
@@ -73,22 +73,16 @@ namespace collab3::core {
 			std::int64_t,
 
 			std::string
-
-			// Array? I don't know what the purpose of that would be.
 		>;
 		// clang-format on
 
-
-
-
 		template<class T>
-		using Result = Result<T, Error<ConfigStoreErrorCode>>;
+		using Result = core::Result<T, Error<ConfigStoreErrorCode>>;
 
 		/**
 		 * Array proxy object, used to allow a sane(r) API.
 		 */
 		struct ArrayProxy {
-
 			/**
 			 * Get this object as type T.
 			 *
@@ -99,21 +93,16 @@ namespace collab3::core {
 			 */
 			template<class T>
 			[[nodiscard]] Result<T> As() const {
-				auto res = Is<T>();
+				// clang-format off
+				return MaybeFetchValue()
+					.and_then([](auto variant) {
+						if(std::holds_alternative<T>(variant))
+							return Result<T> { std::get<T>(variant) };
 
-				if(res.has_value()) {
-					if(!res.value())
 						return Result<T> { tl::unexpect, ConfigStoreErrorCode::InvalidType };
-				} else if (!res) {
-					return Result<T> { tl::unexpect, res.error() };
-				}
+					});
 
-				auto val = MaybeFetchValue();
-
-				if(val.has_value())
-					return std::get<T>(val.value());
-				else
-					return Result<T>{tl::unexpect, val.error()};
+				// clang-format on
 			}
 
 			/**
@@ -123,11 +112,12 @@ namespace collab3::core {
 			 */
 			template<class T>
 			[[nodiscard]] inline Result<bool> Is() const {
-				auto value = MaybeFetchValue();
-				if(!value)
-					return value.error();
-
-				return std::holds_alternative<T>(value.value());
+				// clang-format off
+				return MaybeFetchValue()
+					.and_then([](auto variant) {
+						return Result<bool>(std::holds_alternative<T>(variant));
+					});
+				// clang-format on
 			}
 
 			template<class T>
@@ -166,7 +156,4 @@ namespace collab3::core {
 		std::unordered_map<ConfigKey, ConfigValue> valueMap;
 	};
 
-
-
 } // namespace collab3::core
-

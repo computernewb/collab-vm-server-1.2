@@ -10,6 +10,7 @@ target_link_libraries(collab3-test PRIVATE
 		)
 
 target_include_directories(collab3-test PRIVATE ${PROJECT_BINARY_DIR})
+target_include_directories(collab3-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 add_dependencies(collab3-test __collab3_server_gittag)
 
 collab3_target(collab3-test)

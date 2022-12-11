@@ -40,7 +40,7 @@ table ChatLayerEditedMessage {
 
 table ChatLayerDeletedMessage {
     /// message that was deleted.
-    id: uint64;
+    id: ObjectReference;
 }
 
 
