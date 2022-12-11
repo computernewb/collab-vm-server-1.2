@@ -55,11 +55,10 @@ namespace collab3::core {
 	};
 
 	/**
-	 * Configuration store.
+	 * A configuration store.
 	 *
-	 * This serves as a basis for configuration backends to store
-	 * configuration data, and for code to read from or set additional
-	 * values as you go.
+	 * This serves as a central place for the configuration backends to store
+	 * configuration data, to avoid duplication of such tasks inside of those backends.
 	 */
 	struct ConfigStore {
 		using ConfigKey = std::string;
