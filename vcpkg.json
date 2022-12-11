@@ -1,9 +1,0 @@
-{
-  "name": "collab3",
-  "version-string": "3.0.0",
-  "dependencies": [
-    "boost",
-    "fmt",
-    "spdlog"
-  ]
-}
