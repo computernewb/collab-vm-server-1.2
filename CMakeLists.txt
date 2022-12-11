@@ -32,7 +32,7 @@ set(COLLAB3_TOP ${PROJECT_SOURCE_DIR})
 include(cmake/CollabVM.cmake)
 
 # Dependencies of the top level projects
-find_package(Boost REQUIRED COMPONENTS system filesystem program_options)
+find_package(Boost REQUIRED COMPONENTS system)
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
@@ -52,9 +52,6 @@ add_subdirectory(third_party/flatbuffers)
 add_subdirectory(third_party/ctre)
 add_subdirectory(third_party/expected)
 
-
-
-
 # Give monorepo access to Catch2 if test builds should be enabled
 if(BUILD_TESTING)
 	FetchContent_MakeAvailable(Catch2)
@@ -70,7 +67,6 @@ endif()
 # Note that even though these are seperate projects,
 # they *require* this driver CMakeLists at the top of the project,
 # and cannot be built manually. Don't try it.
-
 
 add_subdirectory(server)
 

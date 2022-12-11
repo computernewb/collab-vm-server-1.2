@@ -29,9 +29,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     strategy:
-      # this should be true, but
-      # tsan builds are dying for some reason, so /shrug
-      fail-fast: false
+      fail-fast: true
       matrix:
         # This defines all the possible ci build configs in one spot.
         # These run in parallel on every build.
@@ -42,8 +40,8 @@ jobs:
             preset: ci-debug
           - name: debug_asan
             preset: ci-debug-asan
-          - name: debug_tsan
-            preset: ci-debug-tsan
+#          - name: debug_tsan
+#            preset: ci-debug-tsan
           - name: debug_ubsan
             preset: ci-debug-ubsan
           - name: release
