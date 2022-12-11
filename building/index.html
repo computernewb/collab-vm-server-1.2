@@ -88,11 +88,7 @@
                 <p>Compiling the Collab3 monorepo code is fairly easy.</p>
 <h1 id="notice">Notice</h1>
 <p>Windows is not supported by the Collab3 developers, and the project will not configure if targeting a Windows platform.</p>
-<p>This is an intentional change, and it will not be reverted until:</p>
-<ul>
-<li>DBus p2p works on Windows</li>
-<li>Windows QEMU supports modules, and passing handles to and from QEMU and another process</li>
-</ul>
+<p>This is an intentional change, and it will not be reverted.</p>
 <h1 id="dependencies">Dependencies</h1>
 <p>GCC 11+ or Clang 14+ are recommended compiler versions, however newer versions are acceptable too.</p>
 <p>Libraries:</p>
@@ -101,7 +97,8 @@
 <li>fmt</li>
 <li>spdlog</li>
 </ul>
-<p>You can use either system library versions (if preferred) or use vcpkg for the grunt of them.</p>
+<p>You can use either system library versions (if preferred) or use Conan.</p>
+<p>TODO: it is planned to use conan by default, and have system libraries be opt-in.</p>
 <h1 id="building-collab3-monorepo-c-code">Building Collab3 Monorepo C++ Code</h1>
 <p>The general formula is:</p>
 <pre><code class="language-bash">$ cmake -B build --preset $PRESET
@@ -115,16 +112,16 @@ $ cmake --build build
 <li>debug : Debug build</li>
 <li>debug-asan : Debug build (with AddressSanitizer enabled)</li>
 <li>debug-tsan : Debug build (with ThreadSanitizer enabled)</li>
+<li>debug-ubsan : Debug build (with UBSanitizer enabled)</li>
 </ul>
-<p>There are also a few others, but they are <em>only</em> for use by our CI, and shouldn't be used.</p>
-<p>To use vcpkg, add <code>--toolchain $VCPKG/scripts/buildsystems/vcpkg.cmake</code> to the CMake generation command line.</p>
+<p>There are also others, but they are <em>only</em> for use by our CI, and shouldn't be used by users directly.</p>
 <p>For now, you'll get one <code>collab3-host</code> executable in the build root. This is the one you should run.</p>
-<!-- TODO: The agent will need another configure/build step, at least for Windows. -->
+<!-- TODO: The agent will need another configure/build step. -->
 
 <h1 id="building-collab3-monorepo-documentation">Building Collab3 Monorepo Documentation</h1>
 <p>Note that usually you won't have to do this, as the <a href="https://computernewb.github.io/collab3">web documentation</a> will update
 upon any changes to the documentation in the <code>master</code> branch. </p>
-<p>For development/local purposes, though:</p>
+<p>For development/local preview purposes, though:</p>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
 <li><code>mkdocs</code></li>

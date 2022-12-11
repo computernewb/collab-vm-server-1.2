@@ -87,17 +87,18 @@
               
                 <h1 id="development-guidelines">Development guidelines</h1>
 <p>These are some guidelines for code which is part of the repo.</p>
-<h1 id="javascript">Javascript</h1>
-<p>To be written, but for now don't write some IE8 tier stuff.</p>
+<h1 id="javascripttypescript">JavaScript/TypeScript</h1>
+<p>To be written, but for now, just don't write some IE8 tier stuff and you'll be fine.</p>
 <h1 id="c">C++</h1>
 <h2 id="formatting">Formatting</h2>
 <p>Use clang-format.</p>
 <h2 id="naming">Naming</h2>
-<p>Use .cpp for source files, .hpp for headers. Inline functions do <em>NOT</em> need another implementation file.</p>
+<p>Use .cpp for source files, .hpp for headers, and .cppm for module interface units.</p>
+<p>Inline functions do <em>not</em> need another implementation file, and inline class member functions should be implemented inside the class body.</p>
 <p>Function and type names should be in PascalCase.</p>
 <p>Variable names are camelCase.</p>
 <p>Underscores should only be used very rarely for private/introspection only fields which <em>need</em> to be public (for instance; in classes which need to stay POD), as they risk UB.</p>
-<p>Class members have no special prefix (because if you're not sure, you can use this-&gt; or the instance to qualify name lookup).</p>
+<p>Class members have no special prefix.</p>
 <p>Example (unformatted because I'm lazy):</p>
 <pre><code class="language-cpp">struct MyStructure {
 
@@ -113,31 +114,26 @@ private:
 void FreeFunction();
 </code></pre>
 <h2 id="language-subset">Language Subset</h2>
-<p>The Collab3 C++ code uses the C++ language, obviously, but we do not use some of the features
+<p>The Collab3 C++ code uses the C++ language, obviously, but we do not use some features
 of the C++ language. The later sections describe our C++ language subset in depth.</p>
 <h3 id="exceptions">Exceptions</h3>
-<p>Exceptions and the <code>throw</code> keyword are banned wholly in the collab3 C++ code.
+<p>Exceptions and the <code>throw</code> keyword are banned in the collab3 server code.
 Rather:</p>
 <ul>
-<li>Non-fatal errors are <code>collab3::core::Result&lt;Value, Error&gt;</code>, which can also return/hold success cases (it's also cheap to pass, and doesn't allocate anything, unlike exceptions).</li>
-</ul>
-<p>One can handle errors without worrying about the logic being complicated ala:</p>
-<pre><code class="language-cpp">    auto myResult = co_await MyCoroutineWhichRettysAResult(...);
-
-    myResult.Map([](auto&amp; res) {
-        // My coroutine worked
-    }).MapError([](auto&amp; err) {
-        // It did not.
-    }).OrElse([]() {
-        // Something went *hideously* wrong and the Result was defaulted.
-        // (shouldn't need this case in most cases in &quot;good&quot; code.)
-    });
-</code></pre>
+<li>Non-fatal errors are <code>collab3::core::Result&lt;Value, Error&gt;</code></li>
+<li>This currently is an alias to <code>tl::expected</code>.</li>
+<li>
+<p>We do not use <code>std::error_code</code>, as it's pretty awful and also requires polymorphism &amp; other iffy things.</p>
 <ul>
-<li>Fatal errors should call <code>collab3::core::Panic()</code> with an optional message.</li>
-<li>The affected service will shut down with a message and print a stack trace (with symbolized names in Debug builds).<ul>
+<li><code>core::Error&lt;EC&gt;</code> &amp; <code>core::ErrorCategory&lt;EC&gt;</code> are our reimplementation, which makes <code>sizeof(Error&lt;EC&gt;) == sizeof(EC)</code>.</li>
+</ul>
+</li>
+<li>
+<p>Fatal/unrecoverable errors should call <code>collab3::core::Panic()</code> with an optional message.</p>
+</li>
+<li>The affected application will shut down with a message and print a stack trace (with symbolized names in Debug builds).<ul>
 <li><code>COLLAB3_CORE_ASSERT(...)</code> and <code>COLLAB3_CORE_VERIFY(...)</code> both call Panic() upon failure.</li>
-<li><code>_EXPECT(..., ErrorType, ...)</code> variants will instead return a Result initialized with an <code>ErrorType</code>.</li>
+<li><code>_EXPECT(..., Error)</code> variants will instead return a Result initialized with an <code>Error</code>.</li>
 </ul>
 </li>
 </ul>
@@ -147,6 +143,8 @@ Rather:</p>
 <ul>
 <li>Any code which currently throws before this rule was documented (refactor it out!!!)</li>
 </ul>
+<h3 id="rtti">RTTI</h3>
+<p>RTTI is allowed, but mostly because it'd be annoying to have to ban it.</p>
               
             </div>
           </div><footer>
