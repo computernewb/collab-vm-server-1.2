@@ -73,7 +73,7 @@ namespace collab3::core {
 	 * Make an instance of the configured Asio executor type.
 	 */
 	inline ExecutorType MakeExecutor() {
-		return net::make_strand(
-		BaseExecutorType {});
+		return net::make_strand(BaseExecutorType {});
 	}
+
 } // namespace collab3::core

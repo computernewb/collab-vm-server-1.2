@@ -10,23 +10,23 @@
 
 namespace collab3::core {
 
-	ConfigStore::ArrayProxy ConfigStore::operator[](const ConfigStore::ConfigKey& key) {
+	ConfigStore::ArrayProxy ConfigStore::operator[](const ConfigStore::ConfigKey& key) noexcept {
 		return ArrayProxy(*this, key);
 	}
 
-	ConfigStore::Result<ConfigStore::ConfigValue> ConfigStore::ArrayProxy::MaybeFetchValue() const {
+	ConfigStore::Result<ConfigStore::ConfigValue> ConfigStore::ArrayProxy::MaybeFetchValue() const noexcept {
 		if(!Exists())
 			return tl::unexpected(ConfigStoreErrorCode::ValueNonExistent);
 
 		return underlyingStore.valueMap[key];
 	}
 
-	void ConfigStore::ArrayProxy::Remove() {
+	void ConfigStore::ArrayProxy::Remove() noexcept {
 		if(Exists())
 			underlyingStore.valueMap.erase(key);
 	}
 
-	void ConfigStore::ArrayProxy::SetBase(const ConfigStore::ConfigValue& value) {
+	void ConfigStore::ArrayProxy::SetBase(const ConfigStore::ConfigValue& value) noexcept {
 		underlyingStore.valueMap[key] = value;
 	}
 

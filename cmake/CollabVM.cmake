@@ -10,6 +10,10 @@ function(collab3_target target)
 
 	target_compile_features(${target} PUBLIC cxx_std_20)
 
+	# Disable exception handling since we ban it
+	target_compile_options(${target} PRIVATE -fno-exceptions)
+	target_link_libraries(${target} PRIVATE -fno-exceptions)
+
 	if("asan" IN_LIST COLLABVM_BUILD_FEATURES)
 		# Error if someone's trying to mix asan and tsan together,
 		# they aren't compatible.
@@ -18,15 +22,17 @@ function(collab3_target target)
 		endif()
 
 		message(STATUS "Enabling ASAN for target ${target} because it was in COLLABVM_BUILD_FEATURES")
-		target_compile_options(${target} PRIVATE "-fsanitize=address")
-		target_link_libraries(${target} PRIVATE "-fsanitize=address")
+		target_compile_options(${target} PRIVATE -fno-exceptions -fsanitize=address)
+		target_link_libraries(${target} PRIVATE -fno-exceptions -fsanitize=address)
 	endif()
 
 	if("tsan" IN_LIST COLLABVM_BUILD_FEATURES)
 		message(STATUS "Enabling TSAN for target ${target} because it was in COLLABVM_BUILD_FEATURES")
-		target_compile_options(${target} PRIVATE "-fsanitize=thread")
-		target_link_libraries(${target} PRIVATE "-fsanitize=thread")
+		target_compile_options(${target} PRIVATE -fno-exceptions -fsanitize=thread)
+		target_link_libraries(${target} PRIVATE -fno-exceptions -fsanitize=thread)
 	endif()
+
+
 
 endfunction()
 

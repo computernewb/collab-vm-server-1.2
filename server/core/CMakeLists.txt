@@ -6,6 +6,8 @@ add_library(collab3_core
 		asio/AsioImplTu.cpp
 		asio/BeastImplTu.cpp
 
+
+		ThrowException.cpp
 		Panic.cpp
 
 		config/ConfigStore.cpp
@@ -52,19 +54,11 @@ target_compile_definitions(collab3_core PUBLIC
 		-DBOOST_ASIO_DISABLE_BOOST_DATE_TIME=1
 		-DBOOST_ASIO_DISABLE_BOOST_REGEX=1
 
+		# no exceptions. get out
+		-DBOOST_ASIO_NO_EXCEPTIONS=1
+		#-DBOOST_ASIO_DISABLE_BOOST_THROW_EXCEPTION=1
+
 		-DBOOST_BEAST_SEPARATE_COMPILATION=1
-
-
-		# By default, Boost.Beast uses its own string_view,
-		# which has no conversion to the standard library std::string_view type.
-		# This is annoying, but thankfully there's an option to make it use
-		# the standard library type.
-		#
-		# (this might be getting phased out soon and the library switching
-		#  to boost::string_view with no option, but that converts to the
-		#  C++17 standard one no problem, so I personally don't have as much
-		#  of a gripe with that.)
-		-DBOOST_BEAST_USE_STD_STRING_VIEW
 		)
 
 target_include_directories(collab3_core PRIVATE ${PROJECT_BINARY_DIR})

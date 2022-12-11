@@ -92,7 +92,7 @@ namespace collab3::core {
 			 * \returns The value object.
 			 */
 			template<class T>
-			[[nodiscard]] Result<T> As() const {
+			[[nodiscard]] Result<T> As() const noexcept {
 				// clang-format off
 				return MaybeFetchValue()
 					.and_then([](auto variant) {
@@ -111,7 +111,7 @@ namespace collab3::core {
 			 * \return True if this value is of type T; false otherwise.
 			 */
 			template<class T>
-			[[nodiscard]] inline Result<bool> Is() const {
+			[[nodiscard]] inline Result<bool> Is() const noexcept {
 				// clang-format off
 				return MaybeFetchValue()
 					.and_then([](auto variant) {
@@ -121,7 +121,7 @@ namespace collab3::core {
 			}
 
 			template<class T>
-			constexpr void Set(const T& value) {
+			constexpr void Set(const T& value) noexcept {
 				SetBase(ConfigValue { value });
 			}
 
@@ -130,7 +130,7 @@ namespace collab3::core {
 			/**
 			 * Remove this value.
 			 */
-			void Remove();
+			void Remove() noexcept;
 
 		   private:
 			friend ConfigStore;
@@ -140,14 +140,14 @@ namespace collab3::core {
 				key(key) {
 			}
 
-			void SetBase(const ConfigValue& value);
-			[[nodiscard]] Result<ConfigValue> MaybeFetchValue() const;
+			void SetBase(const ConfigValue& value) noexcept;
+			[[nodiscard]] Result<ConfigValue> MaybeFetchValue() const noexcept;
 
 			ConfigStore& underlyingStore;
 			const ConfigKey& key;
 		};
 
-		ConfigStore::ArrayProxy operator[](const ConfigKey& key);
+		ConfigStore::ArrayProxy operator[](const ConfigKey& key) noexcept;
 
 		// More functions?
 		// (iteration for saving, too, probably.)
