@@ -29,7 +29,9 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     strategy:
-      fail-fast: true
+      # this should be true, but
+      # tsan builds are dying for some reason, so /shrug
+      fail-fast: false
       matrix:
         # This defines all the possible ci build configs in one spot.
         # These run in parallel on every build.
