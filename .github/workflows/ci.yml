@@ -44,6 +44,8 @@ jobs:
             preset: ci-debug-asan
           - name: debug_tsan
             preset: ci-debug-tsan
+          - name: debug_ubsan
+            preset: ci-debug-ubsan
           - name: release
             preset: ci-release
 
