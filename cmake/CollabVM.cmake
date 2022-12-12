@@ -4,15 +4,10 @@
 # and misc. options
 function(collab3_target target)
 	target_compile_definitions(${target} PRIVATE "$<$<CONFIG:DEBUG>:COLLABVM_CORE_DEBUG>")
-
-	# Set up their include so that including project headers works as expected
 	target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR})
-
 	target_compile_features(${target} PUBLIC cxx_std_20)
 
-	# Disable exception handling since we ban it
-	target_compile_options(${target} PRIVATE -fno-exceptions)
-	target_link_libraries(${target} PRIVATE -fno-exceptions)
+	set(_COLLAB3_CORE_COMPILE_ARGS -Wall -Wextra -Werror -Wno-restrict -fno-exceptions)
 
 	if("asan" IN_LIST COLLABVM_BUILD_FEATURES)
 		# Error if someone's trying to mix asan and tsan together,
@@ -22,20 +17,20 @@ function(collab3_target target)
 		endif()
 
 		message(STATUS "Enabling ASAN for target ${target} because it was in COLLABVM_BUILD_FEATURES")
-		target_compile_options(${target} PRIVATE -fno-exceptions -fsanitize=address)
-		target_link_libraries(${target} PRIVATE -fno-exceptions -fsanitize=address)
+		target_compile_options(${target} PRIVATE ${_COLLAB3_CORE_COMPILE_ARGS} -fsanitize=address)
+		target_link_libraries(${target} PRIVATE ${_COLLAB3_CORE_COMPILE_ARGS} -fsanitize=address)
 	endif()
 
 	if("tsan" IN_LIST COLLABVM_BUILD_FEATURES)
 		message(STATUS "Enabling TSAN for target ${target} because it was in COLLABVM_BUILD_FEATURES")
-		target_compile_options(${target} PRIVATE -fno-exceptions -fsanitize=thread)
-		target_link_libraries(${target} PRIVATE -fno-exceptions -fsanitize=thread)
+		target_compile_options(${target} PRIVATE ${_COLLAB3_CORE_COMPILE_ARGS} -fsanitize=thread)
+		target_link_libraries(${target} PRIVATE ${_COLLAB3_CORE_COMPILE_ARGS} -fsanitize=thread)
 	endif()
 
 	if("ubsan" IN_LIST COLLABVM_BUILD_FEATURES)
 		message(STATUS "Enabling UBSAN for target ${target} because it was in COLLABVM_BUILD_FEATURES")
-		target_compile_options(${target} PRIVATE -fno-exceptions -fsanitize=undefined)
-		target_link_libraries(${target} PRIVATE -fno-exceptions -fsanitize=undefined)
+		target_compile_options(${target} PRIVATE ${_COLLAB3_CORE_COMPILE_ARGS} -fsanitize=undefined)
+		target_link_libraries(${target} PRIVATE ${_COLLAB3_CORE_COMPILE_ARGS} -fsanitize=undefined)
 	endif()
 endfunction()
 

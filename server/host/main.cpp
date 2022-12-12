@@ -11,6 +11,8 @@
 #include <iostream>
 #include <core/config/ConfigStore.hpp>
 
+#include <core/Panic.hpp>
+
 int main(int argc, char** argv) {
 	collab3::core::ConfigStore store;
 
@@ -22,12 +24,15 @@ int main(int argc, char** argv) {
 
 	// read them out, handling the error (if one exists)
 
-	store["test"].As<std::string>()
+	store["tes4t"].As<std::string>()
 		.map([](auto value) {
 			std::cout << "test: \"" << value << "\"\n";
 		})
 		.map_error([](auto error) {
 			std::cout << "err (test): \"" << error.Message() << "\"\n";
+
+			// test panic ability out some
+			COLLAB3_ASSERT(false);
 		});
 
 	store["test2"].As<bool>()
@@ -53,5 +58,6 @@ int main(int argc, char** argv) {
 		.map_error([](auto error) {
 			std::cout << "err (test4): \"" << error.Message() << "\"\n";
 		});
+
 	return 0;
 }
