@@ -1,4 +1,9 @@
 ## collab-vm-server 1.2.11
+
+### Unsupported
+
+This server version is old and unstable, and no longer supported by us. We strongly recommend you use the [TypeScript port](https://github.com/computernewb/collabvm-1.2.ts) instead. We will not provide any support for this server version and may not accept any new UserVMs running it.
+
 This repository contains the source code to the CollabVM Server. The CollabVM Server (obviously) powers CollabVM, and it is what you will use to host a CollabVM UserVM or mirror.
 
 You can either download already compiled binaries, or compile the CollabVM Server yourself. Compilation instructions are provided in the BUILDING.md file. 
